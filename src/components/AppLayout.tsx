@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
@@ -19,6 +20,7 @@ const AppLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tenantName, setTenantName] = useState("MeuPonto");
+  const { applyColor } = useTenantTheme();
 
   useEffect(() => {
     const checkAuth = async () => {
