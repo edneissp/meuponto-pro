@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
@@ -20,6 +20,7 @@ const AppLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tenantName, setTenantName] = useState("MeuPonto");
+  const [isAdmin, setIsAdmin] = useState(false);
   const { applyColor } = useTenantTheme();
 
   useEffect(() => {
@@ -43,6 +44,13 @@ const AppLayout = () => {
           .single();
         if (tenant) setTenantName(tenant.name);
       }
+      // Check admin role
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin");
+      setIsAdmin(!!(roles && roles.length > 0));
     };
     checkAuth();
 
@@ -98,6 +106,21 @@ const AppLayout = () => {
               </Link>
             );
           })}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={() => setSidebarOpen(false)}
+              className={cn(
+                "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                location.pathname === "/admin"
+                  ? "bg-sidebar-primary text-sidebar-primary-foreground"
+                  : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+              )}
+            >
+              <Shield className="h-5 w-5" />
+              Admin
+            </Link>
+          )}
         </nav>
         <div className="p-3 border-t border-sidebar-border">
           <button
