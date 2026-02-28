@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
+import Subscription from "@/pages/Subscription";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
@@ -21,6 +22,7 @@ const AppLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tenantName, setTenantName] = useState("MeuPonto");
   const [isAdmin, setIsAdmin] = useState(false);
+  const [tenantStatus, setTenantStatus] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
 
   useEffect(() => {
@@ -39,10 +41,13 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name")
+          .select("name, subscription_status")
           .eq("id", profile.tenant_id)
           .single();
-        if (tenant) setTenantName(tenant.name);
+        if (tenant) {
+          setTenantName(tenant.name);
+          setTenantStatus(tenant.subscription_status);
+        }
       }
       // Check admin role
       const { data: roles } = await supabase
@@ -64,6 +69,14 @@ const AppLayout = () => {
     await supabase.auth.signOut();
     navigate("/");
   };
+
+  // Block access for pending/suspended tenants (allow payment-status page and admins)
+  const isBlocked = tenantStatus && !["active", "free"].includes(tenantStatus) && !isAdmin;
+  const isPaymentPage = location.pathname.includes("payment-status");
+
+  if (isBlocked && !isPaymentPage) {
+    return <Subscription blocked tenantName={tenantName} />;
+  }
 
   return (
     <div className="flex h-screen overflow-hidden">

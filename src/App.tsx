@@ -8,6 +8,8 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import AdminPanel from "./pages/AdminPanel";
 import AppLayout from "./components/AppLayout";
+import Subscription from "./pages/Subscription";
+import PaymentStatus from "./pages/PaymentStatus";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import POS from "./pages/POS";
@@ -29,6 +31,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/subscription" element={<Subscription />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Products />} />
@@ -36,6 +39,7 @@ const App = () => (
             <Route path="finance" element={<Finance />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<AppSettings />} />
+            <Route path="payment-status" element={<PaymentStatus />} />
           </Route>
           <Route path="*" element={<NotFound />} />
         </Routes>
