@@ -438,6 +438,7 @@ export type Database = {
           logo_url: string | null
           name: string
           primary_color: string | null
+          subscription_status: string
           updated_at: string
         }
         Insert: {
@@ -446,6 +447,7 @@ export type Database = {
           logo_url?: string | null
           name: string
           primary_color?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Update: {
@@ -454,6 +456,7 @@ export type Database = {
           logo_url?: string | null
           name?: string
           primary_color?: string | null
+          subscription_status?: string
           updated_at?: string
         }
         Relationships: []
@@ -502,7 +505,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "owner" | "manager" | "cashier"
+      app_role: "owner" | "manager" | "cashier" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -630,7 +633,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "manager", "cashier"],
+      app_role: ["owner", "manager", "cashier", "admin"],
     },
   },
 } as const
