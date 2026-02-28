@@ -108,7 +108,7 @@ const Landing = () => {
               <div className="text-center mb-8">
                 <h3 className="text-xl font-bold mb-2">Plano Profissional</h3>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-extrabold text-gradient">R$99</span>
+                  <span className="text-5xl font-extrabold text-gradient">R$50</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
                 <p className="text-sm text-muted-foreground mt-2">Tudo incluso, sem limites</p>
