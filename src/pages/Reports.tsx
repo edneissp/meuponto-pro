@@ -6,8 +6,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
-import { AlertTriangle, TrendingUp, Package, CalendarDays } from "lucide-react";
-import { format, subDays, startOfDay, startOfWeek, startOfMonth } from "date-fns";
+import { AlertTriangle, TrendingUp, Package, CalendarDays, BookOpen } from "lucide-react";
+import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Period = "7d" | "30d" | "90d";
@@ -17,6 +17,7 @@ const Reports = () => {
   const [salesByDay, setSalesByDay] = useState<any[]>([]);
   const [topProducts, setTopProducts] = useState<any[]>([]);
   const [stockAlerts, setStockAlerts] = useState<any[]>([]);
+  const [fiadosByCustomer, setFiadosByCustomer] = useState<any[]>([]);
   const [summary, setSummary] = useState({ total: 0, count: 0, avg: 0 });
   const [loading, setLoading] = useState(true);
 
@@ -30,7 +31,7 @@ const Reports = () => {
     setLoading(true);
     const since = subDays(new Date(), periodDays[period]).toISOString();
 
-    await Promise.all([loadSales(since), loadTopProducts(since), loadStockAlerts()]);
+    await Promise.all([loadSales(since), loadTopProducts(since), loadStockAlerts(), loadFiados()]);
     setLoading(false);
   };
 
@@ -114,6 +115,29 @@ const Reports = () => {
     setStockAlerts(alerts);
   };
 
+  const loadFiados = async () => {
+    const { data } = await supabase
+      .from("fiados")
+      .select("id, amount, created_at, notes, customers(name, phone)")
+      .eq("paid", false)
+      .order("created_at", { ascending: false });
+
+    if (!data) return;
+
+    const grouped: Record<string, { name: string; phone: string | null; total: number; count: number; items: any[] }> = {};
+    data.forEach((f: any) => {
+      const name = f.customers?.name || "Desconhecido";
+      const key = name;
+      if (!grouped[key]) grouped[key] = { name, phone: f.customers?.phone || null, total: 0, count: 0, items: [] };
+      grouped[key].total += Number(f.amount);
+      grouped[key].count += 1;
+      grouped[key].items.push(f);
+    });
+
+    const sorted = Object.values(grouped).sort((a, b) => b.total - a.total);
+    setFiadosByCustomer(sorted);
+  };
+
   const badgeVariant = (type: string) => {
     if (type === "out" || type === "expired") return "destructive" as const;
     return "secondary" as const;
@@ -162,6 +186,12 @@ const Reports = () => {
         <TabsList>
           <TabsTrigger value="sales">Vendas por Período</TabsTrigger>
           <TabsTrigger value="products">Produtos Mais Vendidos</TabsTrigger>
+          <TabsTrigger value="fiados">
+            Fiados
+            {fiadosByCustomer.length > 0 && (
+              <Badge variant="destructive" className="ml-2 text-xs">{fiadosByCustomer.reduce((s, c) => s + c.count, 0)}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="alerts">
             Alertas de Estoque
             {stockAlerts.length > 0 && (
@@ -242,6 +272,51 @@ const Reports = () => {
               ) : (
                 <div className="h-64 flex items-center justify-center text-muted-foreground">
                   Nenhuma venda no período selecionado
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Fiados */}
+        <TabsContent value="fiados">
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-primary" />
+                Fiados Pendentes por Cliente
+                {fiadosByCustomer.length > 0 && (
+                  <Badge variant="destructive" className="ml-2">
+                    Total: R$ {fiadosByCustomer.reduce((s, c) => s + c.total, 0).toFixed(2)}
+                  </Badge>
+                )}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {fiadosByCustomer.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Cliente</TableHead>
+                      <TableHead>Telefone</TableHead>
+                      <TableHead className="text-right">Qtd Fiados</TableHead>
+                      <TableHead className="text-right">Total Pendente</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {fiadosByCustomer.map((c, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell className="text-muted-foreground">{c.phone || "—"}</TableCell>
+                        <TableCell className="text-right">{c.count}</TableCell>
+                        <TableCell className="text-right font-semibold">R$ {c.total.toFixed(2)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="h-40 flex items-center justify-center text-muted-foreground">
+                  Nenhum fiado pendente 🎉
                 </div>
               )}
             </CardContent>
