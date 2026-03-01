@@ -5,8 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, Minus, ShoppingCart, Trash2, Banknote, CreditCard, Smartphone } from "lucide-react";
+import { Search, Plus, Minus, ShoppingCart, Trash2, Banknote, CreditCard, Smartphone, BookOpen } from "lucide-react";
 import { toast } from "sonner";
+import FiadoPanel from "@/components/pos/FiadoPanel";
+import CustomerSelectDialog from "@/components/pos/CustomerSelectDialog";
 
 interface Product {
   id: string;
@@ -20,11 +22,18 @@ interface CartItem {
   quantity: number;
 }
 
+interface Customer {
+  id: string;
+  name: string;
+  phone: string | null;
+}
+
 const paymentMethods = [
   { value: "cash", label: "Dinheiro", icon: Banknote },
   { value: "pix", label: "Pix", icon: Smartphone },
   { value: "credit_card", label: "Crédito", icon: CreditCard },
   { value: "debit_card", label: "Débito", icon: CreditCard },
+  { value: "fiado", label: "Fiado", icon: BookOpen },
 ] as const;
 
 const POS = () => {
@@ -34,6 +43,9 @@ const POS = () => {
   const [discount, setDiscount] = useState(0);
   const [payment, setPayment] = useState<string>("cash");
   const [loading, setLoading] = useState(false);
+  const [showFiados, setShowFiados] = useState(false);
+  const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +54,13 @@ const POS = () => {
     };
     load();
   }, []);
+
+  // When fiado is selected, prompt customer selection
+  useEffect(() => {
+    if (payment === "fiado" && !selectedCustomer) {
+      setCustomerDialogOpen(true);
+    }
+  }, [payment]);
 
   const addToCart = (product: Product) => {
     setCart(prev => {
@@ -82,6 +101,10 @@ const POS = () => {
 
   const finalizeSale = async () => {
     if (cart.length === 0) return toast.error("Carrinho vazio");
+    if (payment === "fiado" && !selectedCustomer) {
+      setCustomerDialogOpen(true);
+      return toast.error("Selecione um cliente para o fiado");
+    }
     setLoading(true);
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -114,9 +137,23 @@ const POS = () => {
     const { error: itemsError } = await supabase.from("sale_items").insert(items);
     if (itemsError) { setLoading(false); return toast.error("Erro ao registrar itens"); }
 
-    toast.success(`Venda de R$ ${total.toFixed(2)} finalizada!`);
+    // Create fiado record if payment is fiado
+    if (payment === "fiado" && selectedCustomer) {
+      const { error: fiadoError } = await supabase.from("fiados").insert({
+        tenant_id: profile.tenant_id,
+        customer_id: selectedCustomer.id,
+        sale_id: sale.id,
+        amount: total,
+        notes: `Venda #${sale.id.slice(0, 8)}`,
+      });
+      if (fiadoError) { setLoading(false); return toast.error("Erro ao registrar fiado"); }
+    }
+
+    toast.success(`Venda de R$ ${total.toFixed(2)} finalizada!${payment === "fiado" ? ` (Fiado: ${selectedCustomer?.name})` : ""}`);
     setCart([]);
     setDiscount(0);
+    setSelectedCustomer(null);
+    if (payment === "fiado") setPayment("cash");
     setLoading(false);
 
     const { data: updatedProducts } = await supabase.from("products").select("id, name, sale_price, stock_quantity").eq("is_active", true).order("name");
@@ -125,13 +162,24 @@ const POS = () => {
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
+  // Show fiado panel
+  if (showFiados) {
+    return <FiadoPanel onClose={() => setShowFiados(false)} />;
+  }
+
   return (
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)] animate-fade-in">
       {/* Product grid */}
       <div className="flex-1 flex flex-col min-h-0">
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+        <div className="flex gap-2 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input placeholder="Buscar produto..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <Button variant="outline" className="gap-2" onClick={() => setShowFiados(true)}>
+            <BookOpen className="h-4 w-4" />
+            <span className="hidden sm:inline">Fiados</span>
+          </Button>
         </div>
         <div className="flex-1 overflow-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 auto-rows-min">
           {filtered.map(p => (
@@ -190,11 +238,14 @@ const POS = () => {
 
         {/* Payment */}
         <div className="p-4 border-t border-border space-y-4">
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             {paymentMethods.map(m => (
               <button
                 key={m.value}
-                onClick={() => setPayment(m.value)}
+                onClick={() => {
+                  setPayment(m.value);
+                  if (m.value !== "fiado") setSelectedCustomer(null);
+                }}
                 className={`flex flex-col items-center gap-1 p-2 rounded-lg border text-xs transition-colors ${
                   payment === m.value ? "border-primary bg-accent text-accent-foreground" : "border-border hover:bg-muted"
                 }`}
@@ -204,6 +255,16 @@ const POS = () => {
               </button>
             ))}
           </div>
+
+          {payment === "fiado" && selectedCustomer && (
+            <div className="flex items-center gap-2 p-2 rounded-lg bg-accent/50 text-sm">
+              <BookOpen className="h-4 w-4 text-primary" />
+              <span className="font-medium">{selectedCustomer.name}</span>
+              <Button variant="ghost" size="sm" className="ml-auto h-6 text-xs" onClick={() => setCustomerDialogOpen(true)}>
+                Trocar
+              </Button>
+            </div>
+          )}
 
           <div className="flex items-center gap-2">
             <Label className="text-sm whitespace-nowrap">Desconto R$</Label>
@@ -224,6 +285,18 @@ const POS = () => {
           </Button>
         </div>
       </Card>
+
+      <CustomerSelectDialog
+        open={customerDialogOpen}
+        onClose={() => {
+          setCustomerDialogOpen(false);
+          if (!selectedCustomer) setPayment("cash");
+        }}
+        onSelect={(customer) => {
+          setSelectedCustomer(customer);
+          setCustomerDialogOpen(false);
+        }}
+      />
     </div>
   );
 };
