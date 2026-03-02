@@ -13,7 +13,10 @@ const Dashboard = () => {
 
   useEffect(() => {
     const loadData = async () => {
-      const { data: sales } = await supabase.from("sales").select("*").eq("status", "completed");
+      const today = new Date();
+      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+      const { data: sales } = await supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay);
       const { data: products } = await supabase.from("products").select("id");
 
       if (sales) {
