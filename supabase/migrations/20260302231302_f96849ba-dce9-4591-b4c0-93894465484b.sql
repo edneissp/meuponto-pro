@@ -1,0 +1,1 @@
+ALTER TABLE public.fiados ADD COLUMN paid_amount NUMERIC NOT NULL DEFAULT 0;
