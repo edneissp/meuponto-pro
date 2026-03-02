@@ -6,11 +6,31 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from "recharts";
-import { AlertTriangle, TrendingUp, Package, CalendarDays, BookOpen } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertTriangle, TrendingUp, Package, CalendarDays, BookOpen, Printer } from "lucide-react";
 import { format, subDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type Period = "7d" | "30d" | "90d";
+
+const printSection = (title: string) => {
+  const content = document.getElementById("report-print-area");
+  if (!content) return;
+  const printWindow = window.open("", "_blank", "width=800,height=600");
+  if (!printWindow) return;
+  printWindow.document.write(`<html><head><title>${title}</title><style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; font-size: 12px; padding: 16px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border: 1px solid #ccc; padding: 6px 8px; text-align: left; }
+    th { background: #f5f5f5; font-weight: 600; }
+    h2 { margin-bottom: 8px; }
+    .text-right { text-align: right; }
+    @media print { @page { margin: 10mm; } }
+  </style></head><body><h2>${title}</h2>${content.innerHTML}
+  <script>window.onload=function(){window.print();window.close();}<\/script></body></html>`);
+  printWindow.document.close();
+};
 
 const Reports = () => {
   const [period, setPeriod] = useState<Period>("30d");
@@ -106,7 +126,7 @@ const Reports = () => {
         const daysLeft = Math.ceil((exp.getTime() - today.getTime()) / 86400000);
         if (daysLeft <= 0) {
           alerts.push({ ...p, type: "expired", label: "Vencido" });
-        } else if (daysLeft <= 7) {
+        } else if (daysLeft <= 15) {
           alerts.push({ ...p, type: "expiring", label: `Vence em ${daysLeft}d` });
         }
       }
@@ -203,10 +223,13 @@ const Reports = () => {
         {/* Sales chart */}
         <TabsContent value="sales">
           <Card className="shadow-card">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Receita Diária</CardTitle>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => printSection("Relatório de Vendas")}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
             </CardHeader>
-            <CardContent>
+            <CardContent id="report-print-area">
               <div className="h-72">
                 {salesByDay.length > 0 ? (
                   <ResponsiveContainer width="100%" height="100%">
@@ -231,8 +254,11 @@ const Reports = () => {
         {/* Top products */}
         <TabsContent value="products">
           <Card className="shadow-card">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg">Top 10 Produtos</CardTitle>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => printSection("Relatório de Produtos")}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
             </CardHeader>
             <CardContent>
               {topProducts.length > 0 ? (
@@ -281,7 +307,7 @@ const Reports = () => {
         {/* Fiados */}
         <TabsContent value="fiados">
           <Card className="shadow-card">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <BookOpen className="h-5 w-5 text-primary" />
                 Fiados Pendentes por Cliente
@@ -291,6 +317,9 @@ const Reports = () => {
                   </Badge>
                 )}
               </CardTitle>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => printSection("Relatório de Fiados Pendentes")}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
             </CardHeader>
             <CardContent>
               {fiadosByCustomer.length > 0 ? (
@@ -326,11 +355,14 @@ const Reports = () => {
         {/* Stock alerts */}
         <TabsContent value="alerts">
           <Card className="shadow-card">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between">
               <CardTitle className="text-lg flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
                 Alertas de Estoque e Validade
               </CardTitle>
+              <Button variant="outline" size="sm" className="gap-1" onClick={() => printSection("Relatório de Estoque e Validade")}>
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
             </CardHeader>
             <CardContent>
               {stockAlerts.length > 0 ? (

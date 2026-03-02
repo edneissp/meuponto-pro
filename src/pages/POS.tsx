@@ -9,6 +9,7 @@ import { Search, Plus, Minus, ShoppingCart, Trash2, Banknote, CreditCard, Smartp
 import { toast } from "sonner";
 import FiadoPanel from "@/components/pos/FiadoPanel";
 import CustomerSelectDialog from "@/components/pos/CustomerSelectDialog";
+import ThermalReceipt from "@/components/pos/ThermalReceipt";
 
 interface Product {
   id: string;
@@ -46,6 +47,8 @@ const POS = () => {
   const [showFiados, setShowFiados] = useState(false);
   const [customerDialogOpen, setCustomerDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [receiptOpen, setReceiptOpen] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -148,6 +151,17 @@ const POS = () => {
       });
       if (fiadoError) { setLoading(false); return toast.error("Erro ao registrar fiado"); }
     }
+
+    // Prepare receipt data
+    setReceiptData({
+      saleId: sale.id,
+      items: cart.map(c => ({ name: c.product.name, quantity: c.quantity, unitPrice: Number(c.product.sale_price), total: Number(c.product.sale_price) * c.quantity })),
+      subtotal, discount, taxAmount, total,
+      paymentMethod: payment,
+      customerName: selectedCustomer?.name,
+      date: new Date(),
+    });
+    setReceiptOpen(true);
 
     toast.success(`Venda de R$ ${total.toFixed(2)} finalizada!${payment === "fiado" ? ` (Fiado: ${selectedCustomer?.name})` : ""}`);
     setCart([]);
@@ -296,6 +310,12 @@ const POS = () => {
           setSelectedCustomer(customer);
           setCustomerDialogOpen(false);
         }}
+      />
+
+      <ThermalReceipt
+        open={receiptOpen}
+        onClose={() => setReceiptOpen(false)}
+        data={receiptData}
       />
     </div>
   );
