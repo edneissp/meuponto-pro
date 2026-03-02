@@ -182,6 +182,7 @@ export type Database = {
           id: string
           notes: string | null
           paid: boolean
+          paid_amount: number
           paid_at: string | null
           sale_id: string | null
           tenant_id: string
@@ -193,6 +194,7 @@ export type Database = {
           id?: string
           notes?: string | null
           paid?: boolean
+          paid_amount?: number
           paid_at?: string | null
           sale_id?: string | null
           tenant_id: string
@@ -204,6 +206,7 @@ export type Database = {
           id?: string
           notes?: string | null
           paid?: boolean
+          paid_amount?: number
           paid_at?: string | null
           sale_id?: string | null
           tenant_id?: string
