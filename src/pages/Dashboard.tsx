@@ -1,21 +1,28 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
-import { DollarSign, ShoppingCart, Package, TrendingUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DollarSign, ShoppingCart, Package, TrendingUp, CalendarIcon } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 const COLORS = ["hsl(24, 95%, 53%)", "hsl(38, 95%, 55%)", "hsl(142, 76%, 36%)", "hsl(200, 80%, 50%)", "hsl(280, 60%, 50%)"];
 
 const Dashboard = () => {
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [stats, setStats] = useState({ totalSales: 0, totalRevenue: 0, totalProducts: 0, avgTicket: 0 });
   const [salesByDay, setSalesByDay] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
-      const today = new Date();
-      const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
-      const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString();
+      const d = selectedDate;
+      const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
+      const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
       const { data: sales } = await supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay);
       const { data: products } = await supabase.from("products").select("id");
 
@@ -28,7 +35,6 @@ const Dashboard = () => {
           avgTicket: sales.length > 0 ? revenue / sales.length : 0,
         });
 
-        // Group by day
         const byDay: Record<string, number> = {};
         const byMethod: Record<string, number> = {};
         sales.forEach(s => {
@@ -42,10 +48,12 @@ const Dashboard = () => {
       }
     };
     loadData();
-  }, []);
+  }, [selectedDate]);
+
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
 
   const statCards = [
-    { label: "Vendas Hoje", value: stats.totalSales, icon: ShoppingCart, fmt: (v: number) => v.toString() },
+    { label: `Vendas ${isToday ? "Hoje" : format(selectedDate, "dd/MM")}`, value: stats.totalSales, icon: ShoppingCart, fmt: (v: number) => v.toString() },
     { label: "Receita Total", value: stats.totalRevenue, icon: DollarSign, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
     { label: "Produtos Ativos", value: stats.totalProducts, icon: Package, fmt: (v: number) => v.toString() },
     { label: "Ticket Médio", value: stats.avgTicket, icon: TrendingUp, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
@@ -53,6 +61,38 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {/* Date Picker */}
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold text-foreground">
+          {isToday ? "Dashboard — Hoje" : `Dashboard — ${format(selectedDate, "dd 'de' MMMM", { locale: ptBR })}`}
+        </h2>
+        <div className="flex items-center gap-2">
+          {!isToday && (
+            <Button variant="outline" size="sm" onClick={() => setSelectedDate(new Date())}>
+              Hoje
+            </Button>
+          )}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className={cn("justify-start text-left font-normal", !isToday && "border-primary text-primary")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {format(selectedDate, "dd/MM/yyyy")}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={(d) => d && setSelectedDate(d)}
+                disabled={(date) => date > new Date()}
+                initialFocus
+                className="p-3 pointer-events-auto"
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((s, i) => (
@@ -87,7 +127,7 @@ const Dashboard = () => {
               </ResponsiveContainer>
             ) : (
               <div className="h-full flex items-center justify-center text-muted-foreground">
-                Nenhuma venda registrada ainda
+                Nenhuma venda registrada neste dia
               </div>
             )}
           </div>
