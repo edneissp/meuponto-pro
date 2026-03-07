@@ -72,7 +72,7 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento" }: S
           <div className="bg-muted/50 rounded-lg p-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">Plano Mensal</p>
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-bold">R$ 50</span>
+              <span className="text-4xl font-bold">R$ 100</span>
               <span className="text-muted-foreground">/mês</span>
             </div>
           </div>
