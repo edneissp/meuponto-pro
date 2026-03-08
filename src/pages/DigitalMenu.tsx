@@ -47,7 +47,7 @@ interface TenantInfo {
 }
 
 type OrderType = "table" | "pickup" | "delivery";
-type PaymentMethod = "on_delivery" | "pix";
+type PaymentMethod = "pix" | "debit" | "credit";
 
 const DigitalMenu = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
