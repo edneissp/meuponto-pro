@@ -71,11 +71,13 @@ const DigitalMenu = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productNotes, setProductNotes] = useState("");
   const [productQty, setProductQty] = useState(1);
-  const [checkoutStep, setCheckoutStep] = useState<"cart" | "info">("cart");
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "info" | "payment">("cart");
   const [customerLat, setCustomerLat] = useState<number | null>(null);
   const [customerLng, setCustomerLng] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("on_delivery");
+  const [pixCopied, setPixCopied] = useState(false);
 
   useEffect(() => {
     if (!tenantId) return;
