@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck, MessageCircle } from "lucide-react";
+import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck, MessageCircle, MapPin } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
@@ -25,6 +26,11 @@ const AppSettings = () => {
   const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState("0");
+  const [freeDeliveryRadius, setFreeDeliveryRadius] = useState("1");
+  const [deliveryFeePerKm, setDeliveryFeePerKm] = useState("2");
+  const [storeLat, setStoreLat] = useState<number | null>(null);
+  const [storeLng, setStoreLng] = useState<number | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
 
   useEffect(() => {
@@ -40,7 +46,7 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url, delivery_fee, whatsapp")
+        .select("name, primary_color, logo_url, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
@@ -48,6 +54,10 @@ const AppSettings = () => {
         setPrimaryColor(tenant.primary_color || "#F97316");
         setLogoUrl(tenant.logo_url);
         setDeliveryFee(String(tenant.delivery_fee || 0));
+        setFreeDeliveryRadius(String(tenant.free_delivery_radius_km || 1));
+        setDeliveryFeePerKm(String(tenant.delivery_fee_per_km || 2));
+        setStoreLat(tenant.store_lat);
+        setStoreLng(tenant.store_lng);
         setWhatsapp(tenant.whatsapp || "");
       }
       setLoading(false);
@@ -66,7 +76,17 @@ const AppSettings = () => {
     setSaving(true);
     const { error } = await supabase
       .from("tenants")
-      .update({ name, primary_color: primaryColor, logo_url: logoUrl, delivery_fee: Number(deliveryFee) || 0, whatsapp: whatsapp || null })
+      .update({
+        name,
+        primary_color: primaryColor,
+        logo_url: logoUrl,
+        delivery_fee: Number(deliveryFee) || 0,
+        free_delivery_radius_km: Number(freeDeliveryRadius) || 1,
+        delivery_fee_per_km: Number(deliveryFeePerKm) || 2,
+        store_lat: storeLat,
+        store_lng: storeLng,
+        whatsapp: whatsapp || null,
+      })
       .eq("id", tenantId);
     setSaving(false);
     if (error) {
@@ -218,22 +238,112 @@ const AppSettings = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
             <Truck className="h-5 w-5 text-primary" />
-            Taxa de Entrega
+            Taxa de Entrega por Distância
           </CardTitle>
-          <CardDescription>Defina o valor cobrado para entregas via delivery. Deixe 0 para não cobrar.</CardDescription>
+          <CardDescription>
+            Configure a taxa baseada na distância do cliente. Grátis até o raio definido, depois cobra por km adicional.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-medium text-muted-foreground">R$</span>
-            <Input
-              type="number"
-              min="0"
-              step="0.50"
-              value={deliveryFee}
-              onChange={(e) => setDeliveryFee(e.target.value)}
-              placeholder="0.00"
-              className="max-w-[150px]"
-            />
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Raio grátis (km)</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.5"
+                value={freeDeliveryRadius}
+                onChange={(e) => setFreeDeliveryRadius(e.target.value)}
+                placeholder="1"
+              />
+              <p className="text-xs text-muted-foreground">Entregas dentro desse raio são grátis</p>
+            </div>
+            <div className="space-y-2">
+              <Label>Taxa por km adicional (R$)</Label>
+              <Input
+                type="number"
+                min="0"
+                step="0.50"
+                value={deliveryFeePerKm}
+                onChange={(e) => setDeliveryFeePerKm(e.target.value)}
+                placeholder="2.00"
+              />
+              <p className="text-xs text-muted-foreground">Cobrado por km acima do raio grátis</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Localização da Loja</Label>
+            {storeLat && storeLng ? (
+              <div className="flex items-center gap-3">
+                <Badge variant="secondary" className="text-xs">
+                  📍 {storeLat.toFixed(5)}, {storeLng.toFixed(5)}
+                </Badge>
+                <Button variant="outline" size="sm" onClick={() => { setStoreLat(null); setStoreLng(null); }}>
+                  Remover
+                </Button>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">Nenhuma localização definida. A taxa fixa será usada.</p>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={gettingLocation}
+              onClick={() => {
+                if (!navigator.geolocation) {
+                  toast({ title: "Geolocalização não suportada", variant: "destructive" });
+                  return;
+                }
+                setGettingLocation(true);
+                navigator.geolocation.getCurrentPosition(
+                  (pos) => {
+                    setStoreLat(pos.coords.latitude);
+                    setStoreLng(pos.coords.longitude);
+                    setGettingLocation(false);
+                    toast({ title: "Localização capturada!" });
+                  },
+                  (err) => {
+                    setGettingLocation(false);
+                    toast({ title: "Erro ao obter localização", description: err.message, variant: "destructive" });
+                  },
+                  { enableHighAccuracy: true }
+                );
+              }}
+            >
+              <MapPin className="h-4 w-4 mr-1" />
+              {gettingLocation ? "Obtendo..." : "Usar minha localização atual"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Necessário para calcular a distância automaticamente. Sem localização, será usada a taxa fixa abaixo.
+            </p>
+          </div>
+
+          <div className="border-t pt-4 space-y-2">
+            <Label>Taxa fixa (fallback)</Label>
+            <div className="flex items-center gap-3">
+              <span className="text-sm font-medium text-muted-foreground">R$</span>
+              <Input
+                type="number"
+                min="0"
+                step="0.50"
+                value={deliveryFee}
+                onChange={(e) => setDeliveryFee(e.target.value)}
+                placeholder="0.00"
+                className="max-w-[150px]"
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">Usada quando não é possível calcular a distância</p>
+          </div>
+
+          <div className="bg-muted/50 rounded-lg p-3 text-sm space-y-1">
+            <p className="font-medium">📐 Exemplo de cálculo:</p>
+            <p className="text-muted-foreground">
+              Cliente a 3km → {Number(freeDeliveryRadius) >= 3
+                ? "Grátis (dentro do raio)"
+                : `${Math.max(0, 3 - Number(freeDeliveryRadius)).toFixed(1)}km extra × R$ ${Number(deliveryFeePerKm).toFixed(2)} = R$ ${(Math.max(0, 3 - Number(freeDeliveryRadius)) * Number(deliveryFeePerKm)).toFixed(2)}`
+              }
+            </p>
           </div>
         </CardContent>
       </Card>

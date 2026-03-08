@@ -38,6 +38,10 @@ interface TenantInfo {
   logo_url: string | null;
   primary_color: string | null;
   delivery_fee: number;
+  free_delivery_radius_km: number;
+  delivery_fee_per_km: number;
+  store_lat: number | null;
+  store_lng: number | null;
   whatsapp: string | null;
 }
 
@@ -66,12 +70,16 @@ const DigitalMenu = () => {
   const [productNotes, setProductNotes] = useState("");
   const [productQty, setProductQty] = useState(1);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "info">("cart");
+  const [customerLat, setCustomerLat] = useState<number | null>(null);
+  const [customerLng, setCustomerLng] = useState<number | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   useEffect(() => {
     if (!tenantId) return;
     const load = async () => {
       const [tenantRes, productsRes, categoriesRes] = await Promise.all([
-        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee, whatsapp").eq("id", tenantId).single(),
+        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng").eq("id", tenantId).single(),
         supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
       ]);
@@ -130,13 +138,61 @@ const DigitalMenu = () => {
   };
 
   const cartSubtotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
-  const deliveryFee = orderType === "delivery" ? Number(tenant?.delivery_fee || 0) : 0;
+  // Haversine distance calculation
+  const calcDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: number): number => {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLng = (lng2 - lng1) * Math.PI / 180;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  };
+
+  const calcDeliveryFee = (): number => {
+    if (orderType !== "delivery") return 0;
+    if (distanceKm !== null && tenant?.store_lat && tenant?.store_lng) {
+      const freeRadius = Number(tenant.free_delivery_radius_km || 1);
+      const perKm = Number(tenant.delivery_fee_per_km || 2);
+      if (distanceKm <= freeRadius) return 0;
+      return Math.round((distanceKm - freeRadius) * perKm * 100) / 100;
+    }
+    return Number(tenant?.delivery_fee || 0);
+  };
+
+  const deliveryFee = calcDeliveryFee();
   const cartTotal = cartSubtotal + deliveryFee;
   const cartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
+
+  const getCustomerLocation = () => {
+    if (!navigator.geolocation) {
+      toast.error("Geolocalização não suportada pelo navegador");
+      return;
+    }
+    setGettingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        setCustomerLat(lat);
+        setCustomerLng(lng);
+        if (tenant?.store_lat && tenant?.store_lng) {
+          const dist = calcDistanceKm(tenant.store_lat, tenant.store_lng, lat, lng);
+          setDistanceKm(Math.round(dist * 10) / 10);
+        }
+        setGettingLocation(false);
+      },
+      () => {
+        setGettingLocation(false);
+        toast.error("Não foi possível obter sua localização");
+      },
+      { enableHighAccuracy: true }
+    );
+  };
 
   const buildOrderNotes = () => {
     const parts: string[] = [];
     if (orderType === "delivery" && deliveryAddress) parts.push(`Entrega: ${deliveryAddress}`);
+    if (orderType === "delivery" && distanceKm !== null) parts.push(`Distância: ${distanceKm.toFixed(1)}km`);
+    if (orderType === "delivery" && deliveryFee > 0) parts.push(`Taxa: R$${deliveryFee.toFixed(2)}`);
     if (orderType === "pickup") parts.push("Retirada no balcão");
     if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
     return parts.join(" | ") || null;
@@ -586,14 +642,62 @@ const DigitalMenu = () => {
                   )}
 
                   {orderType === "delivery" && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Endereço de entrega *</p>
-                      <Textarea
-                        placeholder="Rua, número, bairro, complemento..."
-                        value={deliveryAddress}
-                        onChange={e => setDeliveryAddress(e.target.value)}
-                        rows={3}
-                      />
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Endereço de entrega *</p>
+                        <Textarea
+                          placeholder="Rua, número, bairro, complemento..."
+                          value={deliveryAddress}
+                          onChange={e => setDeliveryAddress(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Distance-based fee */}
+                      {tenant?.store_lat && tenant?.store_lng && (
+                        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                          <p className="text-xs font-medium">📍 Calcular taxa de entrega</p>
+                          {distanceKm !== null ? (
+                            <div className="space-y-1">
+                              <p className="text-sm">
+                                Distância: <span className="font-bold">{distanceKm.toFixed(1)} km</span>
+                              </p>
+                              <p className="text-sm">
+                                Taxa: <span className="font-bold" style={{ color: accentColor }}>
+                                  {deliveryFee === 0 ? "Grátis! 🎉" : `R$ ${deliveryFee.toFixed(2)}`}
+                                </span>
+                              </p>
+                              {deliveryFee === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  Grátis até {Number(tenant.free_delivery_radius_km || 1)} km
+                                </p>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs p-0 h-auto"
+                                onClick={() => { setDistanceKm(null); setCustomerLat(null); setCustomerLng(null); }}
+                              >
+                                Recalcular
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={gettingLocation}
+                              onClick={getCustomerLocation}
+                              className="w-full"
+                            >
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {gettingLocation ? "Obtendo localização..." : "Usar minha localização"}
+                            </Button>
+                          )}
+                          <p className="text-[10px] text-muted-foreground">
+                            Grátis até {Number(tenant.free_delivery_radius_km || 1)} km, depois R$ {Number(tenant.delivery_fee_per_km || 2).toFixed(2)}/km
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -606,10 +710,14 @@ const DigitalMenu = () => {
                         <span className="font-medium">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</span>
                       </div>
                     ))}
-                    {deliveryFee > 0 && (
+                    {orderType === "delivery" && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">🛵 Taxa de entrega</span>
-                        <span className="font-medium">R$ {deliveryFee.toFixed(2)}</span>
+                        <span className="text-muted-foreground">
+                          🛵 Taxa de entrega {distanceKm !== null ? `(${distanceKm.toFixed(1)}km)` : ""}
+                        </span>
+                        <span className="font-medium">
+                          {deliveryFee === 0 ? "Grátis" : `R$ ${deliveryFee.toFixed(2)}`}
+                        </span>
                       </div>
                     )}
                     <div className="border-t border-border pt-2 flex justify-between text-base font-bold">

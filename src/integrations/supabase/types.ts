@@ -883,10 +883,14 @@ export type Database = {
         Row: {
           created_at: string
           delivery_fee: number
+          delivery_fee_per_km: number
+          free_delivery_radius_km: number
           id: string
           logo_url: string | null
           name: string
           primary_color: string | null
+          store_lat: number | null
+          store_lng: number | null
           subscription_status: string
           updated_at: string
           whatsapp: string | null
@@ -894,10 +898,14 @@ export type Database = {
         Insert: {
           created_at?: string
           delivery_fee?: number
+          delivery_fee_per_km?: number
+          free_delivery_radius_km?: number
           id?: string
           logo_url?: string | null
           name: string
           primary_color?: string | null
+          store_lat?: number | null
+          store_lng?: number | null
           subscription_status?: string
           updated_at?: string
           whatsapp?: string | null
@@ -905,10 +913,14 @@ export type Database = {
         Update: {
           created_at?: string
           delivery_fee?: number
+          delivery_fee_per_km?: number
+          free_delivery_radius_km?: number
           id?: string
           logo_url?: string | null
           name?: string
           primary_color?: string | null
+          store_lat?: number | null
+          store_lng?: number | null
           subscription_status?: string
           updated_at?: string
           whatsapp?: string | null
