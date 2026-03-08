@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell } from "lucide-react";
+import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 
 interface OrderItem {
