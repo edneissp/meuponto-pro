@@ -48,6 +48,7 @@ const AppSettings = () => {
         setPrimaryColor(tenant.primary_color || "#F97316");
         setLogoUrl(tenant.logo_url);
         setDeliveryFee(String(tenant.delivery_fee || 0));
+        setWhatsapp(tenant.whatsapp || "");
       }
       setLoading(false);
     };
