@@ -199,11 +199,30 @@ const SupplierDeliveries = () => {
   };
 
   const resetForm = () => {
+    setEditingDelivery(null);
     setSelectedSupplier("");
     setPurchaseType("traditional");
     setDeliveryDate(new Date().toISOString().split("T")[0]);
     setNotes("");
     setItems([]);
+  };
+
+  const openEdit = (del: DeliveryRecord) => {
+    setEditingDelivery(del);
+    setSelectedSupplier(del.supplier_id);
+    setPurchaseType(del.purchase_type as "traditional" | "consigned");
+    setDeliveryDate(del.delivery_date);
+    setNotes(del.notes || "");
+    setItems(
+      (del.supplier_delivery_items || []).map((item: any) => ({
+        product_id: item.product_id,
+        product_name: item.products?.name || "",
+        quantity: item.quantity,
+        unit_price: Number(item.unit_price),
+        total: Number(item.total),
+      }))
+    );
+    setDialogOpen(true);
   };
 
   const getMarginInfo = (product: Product) => {
