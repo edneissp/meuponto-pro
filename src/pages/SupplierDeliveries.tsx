@@ -352,10 +352,14 @@ const SupplierDeliveries = () => {
                 <span className="text-sm text-muted-foreground">
                   {new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}
                 </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(del)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
-              </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(del)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(del)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               <div className="space-y-1 mb-2">
                 {del.supplier_delivery_items?.map((item: any) => (
                   <div key={item.id} className="flex justify-between text-sm">
