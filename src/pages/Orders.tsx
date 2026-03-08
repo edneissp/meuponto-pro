@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
+import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX, Printer } from "lucide-react";
 import { toast } from "sonner";
+import OrderReceipt from "@/components/pos/OrderReceipt";
 
 interface OrderItem {
   id: string;
@@ -51,6 +52,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const initialLoadDone = useRef(false);
 
@@ -281,32 +283,64 @@ const Orders = () => {
                 </div>
 
                 {/* Actions */}
-                {order.status !== "delivered" && order.status !== "cancelled" && (
-                  <div className="p-4 pt-0 flex gap-2">
-                    {canAdvance && nextStatus && (
+                <div className="p-4 pt-0 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPrintOrder(order)}
+                    title="Imprimir comanda"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  {order.status !== "delivered" && order.status !== "cancelled" && (
+                    <>
+                      {canAdvance && nextStatus && (
+                        <Button
+                          className="flex-1"
+                          size="sm"
+                          onClick={() => updateStatus(order.id, order.status)}
+                        >
+                          {statusConfig[nextStatus]?.label || "Avançar"}
+                        </Button>
+                      )}
                       <Button
-                        className="flex-1"
+                        variant="outline"
                         size="sm"
-                        onClick={() => updateStatus(order.id, order.status)}
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => cancelOrder(order.id)}
                       >
-                        {statusConfig[nextStatus]?.label || "Avançar"}
+                        Cancelar
                       </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => cancelOrder(order.id)}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </Card>
             );
           })}
         </div>
       )}
+
+      <OrderReceipt
+        open={!!printOrder}
+        onClose={() => setPrintOrder(null)}
+        data={printOrder ? {
+          order_number: printOrder.order_number,
+          source: printOrder.source,
+          customer_name: printOrder.customer_name,
+          customer_phone: printOrder.customer_phone,
+          table_number: printOrder.table_number,
+          total: printOrder.total,
+          notes: printOrder.notes,
+          created_at: printOrder.created_at,
+          items: printOrder.order_items.map(i => ({
+            product_name: i.product_name,
+            quantity: i.quantity,
+            unit_price: i.unit_price,
+            total: i.total,
+            notes: i.notes,
+          })),
+        } : null}
+      />
     </div>
   );
 };
