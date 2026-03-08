@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck } from "lucide-react";
+import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck, MessageCircle } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
@@ -25,6 +25,7 @@ const AppSettings = () => {
   const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState("0");
+  const [whatsapp, setWhatsapp] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -39,7 +40,7 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url, delivery_fee")
+        .select("name, primary_color, logo_url, delivery_fee, whatsapp")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
@@ -47,6 +48,7 @@ const AppSettings = () => {
         setPrimaryColor(tenant.primary_color || "#F97316");
         setLogoUrl(tenant.logo_url);
         setDeliveryFee(String(tenant.delivery_fee || 0));
+        setWhatsapp(tenant.whatsapp || "");
       }
       setLoading(false);
     };
@@ -64,7 +66,7 @@ const AppSettings = () => {
     setSaving(true);
     const { error } = await supabase
       .from("tenants")
-      .update({ name, primary_color: primaryColor, logo_url: logoUrl, delivery_fee: Number(deliveryFee) || 0 })
+      .update({ name, primary_color: primaryColor, logo_url: logoUrl, delivery_fee: Number(deliveryFee) || 0, whatsapp: whatsapp || null })
       .eq("id", tenantId);
     setSaving(false);
     if (error) {
@@ -117,6 +119,27 @@ const AppSettings = () => {
         </CardHeader>
         <CardContent>
           <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Lanchonete do João" />
+        </CardContent>
+      </Card>
+
+      {/* WhatsApp */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            WhatsApp
+          </CardTitle>
+          <CardDescription>Número do WhatsApp para receber confirmações de pedidos dos clientes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Input
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder="Ex: 5511999999999 (com DDD e código do país)"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Formato: código do país + DDD + número (ex: 5511999999999)
+          </p>
         </CardContent>
       </Card>
 

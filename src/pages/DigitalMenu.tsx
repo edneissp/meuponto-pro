@@ -38,6 +38,7 @@ interface TenantInfo {
   logo_url: string | null;
   primary_color: string | null;
   delivery_fee: number;
+  whatsapp: string | null;
 }
 
 type OrderType = "table" | "pickup" | "delivery";
@@ -60,6 +61,7 @@ const DigitalMenu = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [orderSent, setOrderSent] = useState(false);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const [orderTotal, setOrderTotal] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productNotes, setProductNotes] = useState("");
   const [productQty, setProductQty] = useState(1);
@@ -69,7 +71,7 @@ const DigitalMenu = () => {
     if (!tenantId) return;
     const load = async () => {
       const [tenantRes, productsRes, categoriesRes] = await Promise.all([
-        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee").eq("id", tenantId).single(),
+        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee, whatsapp").eq("id", tenantId).single(),
         supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
       ]);
@@ -191,6 +193,7 @@ const DigitalMenu = () => {
     }
 
     setOrderNumber(order.order_number);
+    setOrderTotal(cartTotal);
     setOrderSent(true);
     setCart([]);
     setCartOpen(false);
@@ -223,6 +226,22 @@ const DigitalMenu = () => {
   }
 
   if (orderSent) {
+    const buildWhatsAppMessage = () => {
+      let msg = `🛒 *Novo Pedido #${orderNumber}*\n`;
+      msg += `📍 ${tenant.name}\n\n`;
+      if (customerName) msg += `👤 ${customerName}\n`;
+      if (customerPhone) msg += `📱 ${customerPhone}\n`;
+      if (orderType === "table" && tableNumber) msg += `🪑 Mesa: ${tableNumber}\n`;
+      if (orderType === "pickup") msg += `📦 Retirada no balcão\n`;
+      if (orderType === "delivery" && deliveryAddress) msg += `🛵 Entrega: ${deliveryAddress}\n`;
+      msg += `\n💰 *Total: R$ ${orderTotal.toFixed(2)}*`;
+      return encodeURIComponent(msg);
+    };
+
+    const whatsappLink = tenant.whatsapp
+      ? `https://wa.me/${tenant.whatsapp.replace(/\D/g, "")}?text=${buildWhatsAppMessage()}`
+      : null;
+
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
         <Sonner />
@@ -245,6 +264,19 @@ const DigitalMenu = () => {
         {orderType === "table" && tableNumber && (
           <p className="text-sm text-muted-foreground mb-4">Mesa {tableNumber} — aguarde no local.</p>
         )}
+
+        {whatsappLink && (
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold bg-green-500 hover:bg-green-600 transition-colors mt-4"
+          >
+            <MessageSquare className="h-5 w-5" />
+            Confirmar via WhatsApp
+          </a>
+        )}
+
         <Button
           onClick={() => { setOrderSent(false); setOrderNumber(null); setCustomerName(""); setCustomerPhone(""); setDeliveryAddress(""); setTableNumber(""); }}
           style={{ backgroundColor: accentColor }}
