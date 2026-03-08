@@ -60,6 +60,7 @@ const AppSettings = () => {
         setStoreLat(tenant.store_lat);
         setStoreLng(tenant.store_lng);
         setWhatsapp(tenant.whatsapp || "");
+        setPixKey((tenant as any).pix_key || "");
       }
       setLoading(false);
     };
