@@ -755,7 +755,7 @@ const DigitalMenu = () => {
                     ]).map(opt => (
                       <button
                         key={opt.method}
-                        onClick={() => setPaymentMethod(opt.method)}
+                        onClick={() => { setPaymentMethod(opt.method); setPaymentConfirmed(false); }}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
                           paymentMethod === opt.method ? "border-transparent text-white" : "border-border"
                         }`}
