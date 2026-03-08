@@ -52,6 +52,7 @@ const Orders = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [printOrder, setPrintOrder] = useState<Order | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const initialLoadDone = useRef(false);
 
