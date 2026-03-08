@@ -847,7 +847,7 @@ const DigitalMenu = () => {
                   </Button>
                 </div>
               </>
-            )}
+            ) : null}
           </SheetContent>
         </Sheet>
       )}
