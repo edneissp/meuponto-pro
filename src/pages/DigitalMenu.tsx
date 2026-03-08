@@ -746,41 +746,28 @@ const DigitalMenu = () => {
                 <div className="flex-1 overflow-auto px-5 space-y-5 pb-4">
                   {/* Payment method selection */}
                   <div className="space-y-3">
-                    <button
-                      onClick={() => setPaymentMethod("on_delivery")}
-                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                        paymentMethod === "on_delivery" ? "border-transparent text-white" : "border-border"
-                      }`}
-                      style={paymentMethod === "on_delivery" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
-                    >
-                      <Banknote className="h-6 w-6 shrink-0" />
-                      <div>
-                        <p className="font-semibold text-sm">
-                          {orderType === "delivery" ? "Pagar na entrega" : orderType === "pickup" ? "Pagar na retirada" : "Pagar no local"}
-                        </p>
-                        <p className={`text-xs mt-0.5 ${paymentMethod === "on_delivery" ? "text-white/70" : "text-muted-foreground"}`}>
-                          Dinheiro, cartão ou PIX na hora
-                        </p>
-                      </div>
-                    </button>
-
-                    {tenant?.pix_key && (
+                    {([
+                      { method: "pix" as PaymentMethod, icon: QrCode, label: "PIX", desc: tenant?.pix_key ? "Pague agora com chave PIX" : "Pagamento via PIX na hora" },
+                      { method: "debit" as PaymentMethod, icon: CreditCard, label: "Cartão de Débito", desc: "Pagamento com cartão de débito" },
+                      { method: "credit" as PaymentMethod, icon: CreditCard, label: "Cartão de Crédito", desc: "Pagamento com cartão de crédito" },
+                    ]).map(opt => (
                       <button
-                        onClick={() => setPaymentMethod("pix")}
+                        key={opt.method}
+                        onClick={() => setPaymentMethod(opt.method)}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                          paymentMethod === "pix" ? "border-transparent text-white" : "border-border"
+                          paymentMethod === opt.method ? "border-transparent text-white" : "border-border"
                         }`}
-                        style={paymentMethod === "pix" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                        style={paymentMethod === opt.method ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
                       >
-                        <QrCode className="h-6 w-6 shrink-0" />
+                        <opt.icon className="h-6 w-6 shrink-0" />
                         <div>
-                          <p className="font-semibold text-sm">Pagar com PIX agora</p>
-                          <p className={`text-xs mt-0.5 ${paymentMethod === "pix" ? "text-white/70" : "text-muted-foreground"}`}>
-                            Pagamento antecipado via PIX
+                          <p className="font-semibold text-sm">{opt.label}</p>
+                          <p className={`text-xs mt-0.5 ${paymentMethod === opt.method ? "text-white/70" : "text-muted-foreground"}`}>
+                            {opt.desc}
                           </p>
                         </div>
                       </button>
-                    )}
+                    ))}
                   </div>
 
                   {/* PIX details */}
