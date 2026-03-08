@@ -39,12 +39,13 @@ const Dashboard = () => {
       const monthStartISO = monthStart.toISOString();
       const monthEndISO = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), monthEnd.getDate() + 1).toISOString();
 
-      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes] = await Promise.all([
+      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes, topItemsRes] = await Promise.all([
         supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay),
-        supabase.from("products").select("id, purchase_price, sale_price"),
+        supabase.from("products").select("id, purchase_price, sale_price, name"),
         supabase.from("sale_items").select("product_id, quantity, unit_price, total").gte("created_at", startOfDay).lt("created_at", endOfDay),
         supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", weekStartISO).lt("created_at", weekEndISO),
         supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
+        supabase.from("sale_items").select("product_id, quantity").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
       ]);
 
       const sales = salesRes.data;
