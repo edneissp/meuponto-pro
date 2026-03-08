@@ -131,13 +131,16 @@ const Orders = () => {
     if (currentIdx < 0 || currentIdx >= statusFlow.length - 1) return;
     const nextStatus = statusFlow[currentIdx + 1];
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .update({ status: nextStatus })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .select();
 
     if (error) {
-      toast.error("Erro ao atualizar status");
+      toast.error("Erro ao atualizar status: " + error.message);
+    } else if (!data || data.length === 0) {
+      toast.error("Não foi possível atualizar. Tente recarregar a página.");
     } else {
       toast.success(`Pedido movido para: ${statusConfig[nextStatus]?.label}`);
       loadOrders();
@@ -145,23 +148,28 @@ const Orders = () => {
   };
 
   const cancelOrder = async (orderId: string) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .update({ status: "cancelled" })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .select();
 
-    if (error) toast.error("Erro ao cancelar");
+    if (error) toast.error("Erro ao cancelar: " + error.message);
+    else if (!data || data.length === 0) toast.error("Não foi possível cancelar. Tente recarregar a página.");
     else { toast.success("Pedido cancelado"); loadOrders(); }
   };
 
   const jumpToStatus = async (orderId: string, targetStatus: string) => {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("orders")
       .update({ status: targetStatus })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .select();
 
     if (error) {
-      toast.error("Erro ao atualizar status");
+      toast.error("Erro ao atualizar status: " + error.message);
+    } else if (!data || data.length === 0) {
+      toast.error("Não foi possível atualizar. Tente recarregar a página.");
     } else {
       toast.success(`Pedido movido para: ${statusConfig[targetStatus]?.label}`);
       loadOrders();
