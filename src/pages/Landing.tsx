@@ -115,12 +115,15 @@ const Landing = () => {
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               Sua lanchonete no <span className="text-gradient">controle total</span>
             </h1>
-            <p className="text-base md:text-lg text-primary-foreground/70 mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              YouControl é um sistema inteligente de gestão para lanchonetes e restaurantes que ajuda você a controlar vendas, estoque, fornecedores e lucros em um só lugar.
+            <p className="text-base md:text-lg text-primary-foreground/70 mb-4 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
+              Experimente o YouControl por 30 dias grátis. Sistema completo para lanchonetes, restaurantes e açaiterias.
+            </p>
+            <p className="text-sm text-primary-foreground/50 mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              Sem exigir cartão de crédito no cadastro.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.25s" }}>
               <Button size="lg" className="text-base px-8 shadow-glow" asChild>
-                <Link to="/register">Testar 30 dias grátis</Link>
+                <Link to="/register">🚀 Teste grátis por 30 dias</Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
                 <a href="#features">Ver funcionalidades</a>
