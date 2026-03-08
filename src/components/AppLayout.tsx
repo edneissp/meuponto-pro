@@ -23,6 +23,7 @@ const AppLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tenantName, setTenantName] = useState("MeuPonto");
+  const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tenantStatus, setTenantStatus] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
@@ -43,12 +44,13 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name, subscription_status")
+          .select("name, subscription_status, logo_url")
           .eq("id", profile.tenant_id)
           .single();
         if (tenant) {
           setTenantName(tenant.name);
           setTenantStatus(tenant.subscription_status);
+          setTenantLogo(tenant.logo_url);
         }
       }
       // Check admin role
@@ -94,7 +96,11 @@ const AppLayout = () => {
       )}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg gradient-primary" />
+            {tenantLogo ? (
+              <img src={tenantLogo} alt={tenantName} className="h-8 w-8 rounded-lg object-cover" />
+            ) : (
+              <div className="h-8 w-8 rounded-lg bg-primary" />
+            )}
             <span className="font-bold text-sidebar-foreground truncate">{tenantName}</span>
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground" onClick={() => setSidebarOpen(false)}>
