@@ -360,6 +360,7 @@ const SupplierDeliveries = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
+              </div>
               <div className="space-y-1 mb-2">
                 {del.supplier_delivery_items?.map((item: any) => (
                   <div key={item.id} className="flex justify-between text-sm">
