@@ -640,14 +640,62 @@ const DigitalMenu = () => {
                   )}
 
                   {orderType === "delivery" && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium">Endereço de entrega *</p>
-                      <Textarea
-                        placeholder="Rua, número, bairro, complemento..."
-                        value={deliveryAddress}
-                        onChange={e => setDeliveryAddress(e.target.value)}
-                        rows={3}
-                      />
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <p className="text-sm font-medium">Endereço de entrega *</p>
+                        <Textarea
+                          placeholder="Rua, número, bairro, complemento..."
+                          value={deliveryAddress}
+                          onChange={e => setDeliveryAddress(e.target.value)}
+                          rows={3}
+                        />
+                      </div>
+
+                      {/* Distance-based fee */}
+                      {tenant?.store_lat && tenant?.store_lng && (
+                        <div className="bg-muted/50 rounded-lg p-3 space-y-2">
+                          <p className="text-xs font-medium">📍 Calcular taxa de entrega</p>
+                          {distanceKm !== null ? (
+                            <div className="space-y-1">
+                              <p className="text-sm">
+                                Distância: <span className="font-bold">{distanceKm.toFixed(1)} km</span>
+                              </p>
+                              <p className="text-sm">
+                                Taxa: <span className="font-bold" style={{ color: accentColor }}>
+                                  {deliveryFee === 0 ? "Grátis! 🎉" : `R$ ${deliveryFee.toFixed(2)}`}
+                                </span>
+                              </p>
+                              {deliveryFee === 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                  Grátis até {Number(tenant.free_delivery_radius_km || 1)} km
+                                </p>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs p-0 h-auto"
+                                onClick={() => { setDistanceKm(null); setCustomerLat(null); setCustomerLng(null); }}
+                              >
+                                Recalcular
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={gettingLocation}
+                              onClick={getCustomerLocation}
+                              className="w-full"
+                            >
+                              <MapPin className="h-4 w-4 mr-1" />
+                              {gettingLocation ? "Obtendo localização..." : "Usar minha localização"}
+                            </Button>
+                          )}
+                          <p className="text-[10px] text-muted-foreground">
+                            Grátis até {Number(tenant.free_delivery_radius_km || 1)} km, depois R$ {Number(tenant.delivery_fee_per_km || 2).toFixed(2)}/km
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
 
