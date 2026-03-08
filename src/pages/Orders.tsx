@@ -154,6 +154,20 @@ const Orders = () => {
     else { toast.success("Pedido cancelado"); loadOrders(); }
   };
 
+  const jumpToStatus = async (orderId: string, targetStatus: string) => {
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: targetStatus })
+      .eq("id", orderId);
+
+    if (error) {
+      toast.error("Erro ao atualizar status");
+    } else {
+      toast.success(`Pedido movido para: ${statusConfig[targetStatus]?.label}`);
+      loadOrders();
+    }
+  };
+
   const filtered = orders.filter(o => !filter || o.status === filter);
 
   const activeStatuses = ["received", "preparing", "ready"];
