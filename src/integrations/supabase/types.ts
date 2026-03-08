@@ -235,6 +235,33 @@ export type Database = {
           },
         ]
       }
+      leads: {
+        Row: {
+          business_name: string
+          created_at: string
+          email: string
+          id: string
+          name: string
+          whatsapp: string
+        }
+        Insert: {
+          business_name: string
+          created_at?: string
+          email: string
+          id?: string
+          name: string
+          whatsapp: string
+        }
+        Update: {
+          business_name?: string
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
