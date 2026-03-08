@@ -376,8 +376,8 @@ const SupplierDeliveries = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Truck className="h-5 w-5" /> Registrar Entrega
+             <DialogTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" /> {editingDelivery ? "Editar Entrega" : "Registrar Entrega"}
             </DialogTitle>
           </DialogHeader>
 
