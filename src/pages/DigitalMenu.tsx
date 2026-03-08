@@ -4,8 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { ShoppingCart, Plus, Minus, Trash2, Search, Send, Store, ChevronRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ShoppingCart, Plus, Minus, Trash2, Search, Send, Store, MapPin, UtensilsCrossed, Package, MessageSquare, ChevronLeft, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
@@ -37,6 +39,8 @@ interface TenantInfo {
   primary_color: string | null;
 }
 
+type OrderType = "table" | "pickup" | "delivery";
+
 const DigitalMenu = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
   const [tenant, setTenant] = useState<TenantInfo | null>(null);
@@ -50,9 +54,15 @@ const DigitalMenu = () => {
   const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
   const [tableNumber, setTableNumber] = useState("");
+  const [deliveryAddress, setDeliveryAddress] = useState("");
+  const [orderType, setOrderType] = useState<OrderType>("table");
   const [cartOpen, setCartOpen] = useState(false);
   const [orderSent, setOrderSent] = useState(false);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [productNotes, setProductNotes] = useState("");
+  const [productQty, setProductQty] = useState(1);
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "info">("cart");
 
   useEffect(() => {
     if (!tenantId) return;
@@ -70,15 +80,31 @@ const DigitalMenu = () => {
     load();
   }, [tenantId]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, qty: number = 1, notes: string = "") => {
     setCart(prev => {
       const existing = prev.find(c => c.product.id === product.id);
       if (existing) {
-        return prev.map(c => c.product.id === product.id ? { ...c, quantity: c.quantity + 1 } : c);
+        return prev.map(c =>
+          c.product.id === product.id
+            ? { ...c, quantity: c.quantity + qty, notes: notes || c.notes }
+            : c
+        );
       }
-      return [...prev, { product, quantity: 1, notes: "" }];
+      return [...prev, { product, quantity: qty, notes }];
     });
-    toast.success(`${product.name} adicionado`);
+    toast.success(`${product.name} adicionado ao carrinho`);
+  };
+
+  const openProductDetail = (product: Product) => {
+    setSelectedProduct(product);
+    setProductQty(1);
+    setProductNotes("");
+  };
+
+  const confirmAddProduct = () => {
+    if (!selectedProduct) return;
+    addToCart(selectedProduct, productQty, productNotes);
+    setSelectedProduct(null);
   };
 
   const updateQty = (productId: string, delta: number) => {
@@ -90,6 +116,12 @@ const DigitalMenu = () => {
     }));
   };
 
+  const updateItemNotes = (productId: string, notes: string) => {
+    setCart(prev => prev.map(c =>
+      c.product.id === productId ? { ...c, notes } : c
+    ));
+  };
+
   const removeFromCart = (productId: string) => {
     setCart(prev => prev.filter(c => c.product.id !== productId));
   };
@@ -97,16 +129,35 @@ const DigitalMenu = () => {
   const cartTotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
   const cartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
 
+  const buildOrderNotes = () => {
+    const parts: string[] = [];
+    if (orderType === "delivery" && deliveryAddress) parts.push(`Entrega: ${deliveryAddress}`);
+    if (orderType === "pickup") parts.push("Retirada no balcão");
+    if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
+    return parts.join(" | ") || null;
+  };
+
   const sendOrder = async () => {
     if (!tenantId || cart.length === 0) return;
+
+    if (orderType === "delivery" && !customerName) {
+      toast.error("Informe seu nome para delivery");
+      return;
+    }
+    if (orderType === "delivery" && !deliveryAddress) {
+      toast.error("Informe o endereço de entrega");
+      return;
+    }
+
     setSending(true);
 
     const { data: order, error: orderError } = await supabase.from("orders").insert({
       tenant_id: tenantId,
-      source: "digital_menu",
+      source: orderType === "delivery" ? "delivery" : "digital_menu",
       customer_name: customerName || null,
       customer_phone: customerPhone || null,
-      table_number: tableNumber || null,
+      table_number: orderType === "table" ? (tableNumber || null) : null,
+      notes: buildOrderNotes(),
       subtotal: cartTotal,
       total: cartTotal,
     }).select("id, order_number").single();
@@ -139,6 +190,7 @@ const DigitalMenu = () => {
     setOrderSent(true);
     setCart([]);
     setCartOpen(false);
+    setCheckoutStep("cart");
     setSending(false);
   };
 
@@ -170,17 +222,31 @@ const DigitalMenu = () => {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-6 text-center">
         <Sonner />
-        <div className="w-20 h-20 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: accentColor }}>
-          <Send className="h-10 w-10 text-white" />
+        <div className="w-24 h-24 rounded-full flex items-center justify-center mb-6 animate-bounce" style={{ backgroundColor: accentColor }}>
+          <CheckCircle2 className="h-12 w-12 text-white" />
         </div>
         <h1 className="text-2xl font-bold mb-2">Pedido Enviado!</h1>
         {orderNumber && (
-          <p className="text-4xl font-extrabold mb-4" style={{ color: accentColor }}>
+          <p className="text-5xl font-extrabold mb-2" style={{ color: accentColor }}>
             #{orderNumber}
           </p>
         )}
-        <p className="text-muted-foreground mb-6">Seu pedido foi recebido e está sendo preparado.</p>
-        <Button onClick={() => { setOrderSent(false); setOrderNumber(null); }} style={{ backgroundColor: accentColor }}>
+        <p className="text-muted-foreground mb-2">Seu pedido foi recebido e está sendo preparado.</p>
+        {orderType === "delivery" && (
+          <p className="text-sm text-muted-foreground mb-4">Entrega no endereço informado.</p>
+        )}
+        {orderType === "pickup" && (
+          <p className="text-sm text-muted-foreground mb-4">Retire no balcão quando estiver pronto.</p>
+        )}
+        {orderType === "table" && tableNumber && (
+          <p className="text-sm text-muted-foreground mb-4">Mesa {tableNumber} — aguarde no local.</p>
+        )}
+        <Button
+          onClick={() => { setOrderSent(false); setOrderNumber(null); setCustomerName(""); setCustomerPhone(""); setDeliveryAddress(""); setTableNumber(""); }}
+          style={{ backgroundColor: accentColor }}
+          className="text-white mt-4"
+          size="lg"
+        >
           Fazer novo pedido
         </Button>
       </div>
@@ -190,6 +256,7 @@ const DigitalMenu = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Sonner />
+
       {/* Header */}
       <header className="sticky top-0 z-40 bg-card border-b border-border px-4 py-3">
         <div className="flex items-center gap-3 max-w-lg mx-auto">
@@ -211,12 +278,7 @@ const DigitalMenu = () => {
         {/* Search */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar no cardápio..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Buscar no cardápio..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
         </div>
 
         {/* Categories */}
@@ -224,9 +286,7 @@ const DigitalMenu = () => {
           <div className="flex gap-2 overflow-x-auto pb-3 mb-4 no-scrollbar">
             <button
               onClick={() => setActiveCategory(null)}
-              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                !activeCategory ? "text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
+              className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${!activeCategory ? "text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
               style={!activeCategory ? { backgroundColor: accentColor } : {}}
             >
               Todos
@@ -235,9 +295,7 @@ const DigitalMenu = () => {
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                  activeCategory === cat.id ? "text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
-                }`}
+                className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${activeCategory === cat.id ? "text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"}`}
                 style={activeCategory === cat.id ? { backgroundColor: accentColor } : {}}
               >
                 {cat.name}
@@ -251,7 +309,7 @@ const DigitalMenu = () => {
           {filtered.map(p => (
             <button
               key={p.id}
-              onClick={() => addToCart(p)}
+              onClick={() => openProductDetail(p)}
               className="w-full flex items-center gap-3 p-3 rounded-xl border border-border bg-card hover:shadow-md transition-all text-left group"
             >
               {p.image_url ? (
@@ -283,12 +341,83 @@ const DigitalMenu = () => {
         </div>
       </div>
 
+      {/* Product Detail Modal */}
+      <Dialog open={!!selectedProduct} onOpenChange={(open) => { if (!open) setSelectedProduct(null); }}>
+        <DialogContent className="max-w-md mx-auto p-0 overflow-hidden rounded-2xl">
+          {selectedProduct && (
+            <>
+              {selectedProduct.image_url ? (
+                <img src={selectedProduct.image_url} alt={selectedProduct.name} className="w-full h-48 object-cover" />
+              ) : (
+                <div className="w-full h-32 bg-muted flex items-center justify-center">
+                  <Store className="h-12 w-12 text-muted-foreground/30" />
+                </div>
+              )}
+              <div className="p-5 space-y-4">
+                <DialogHeader>
+                  <DialogTitle className="text-xl">{selectedProduct.name}</DialogTitle>
+                </DialogHeader>
+                {selectedProduct.description && (
+                  <p className="text-sm text-muted-foreground">{selectedProduct.description}</p>
+                )}
+                <p className="text-2xl font-bold" style={{ color: accentColor }}>
+                  R$ {Number(selectedProduct.sale_price).toFixed(2)}
+                </p>
+
+                <div>
+                  <label className="text-sm font-medium flex items-center gap-1.5 mb-2">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                    Observações
+                  </label>
+                  <Textarea
+                    placeholder="Ex: sem cebola, bem passado..."
+                    value={productNotes}
+                    onChange={e => setProductNotes(e.target.value)}
+                    rows={2}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => setProductQty(q => Math.max(1, q - 1))}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="text-lg font-bold w-8 text-center">{productQty}</span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10"
+                      onClick={() => setProductQty(q => q + 1)}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Button
+                    onClick={confirmAddProduct}
+                    className="text-white px-6"
+                    style={{ backgroundColor: accentColor }}
+                    size="lg"
+                  >
+                    Adicionar R$ {(Number(selectedProduct.sale_price) * productQty).toFixed(2)}
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Floating cart button */}
       {cartCount > 0 && (
-        <Sheet open={cartOpen} onOpenChange={setCartOpen}>
+        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); }}>
           <SheetTrigger asChild>
             <button
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-semibold shadow-xl transition-transform active:scale-95"
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-semibold shadow-xl transition-transform active:scale-95 w-[90%] max-w-lg"
               style={{ backgroundColor: accentColor }}
             >
               <ShoppingCart className="h-5 w-5" />
@@ -297,59 +426,170 @@ const DigitalMenu = () => {
               <span className="ml-auto font-bold">R$ {cartTotal.toFixed(2)}</span>
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[85vh] rounded-t-3xl flex flex-col">
-            <SheetHeader>
-              <SheetTitle className="flex items-center gap-2">
-                <ShoppingCart className="h-5 w-5" style={{ color: accentColor }} />
-                Seu Pedido
-              </SheetTitle>
-            </SheetHeader>
+          <SheetContent side="bottom" className="h-[90vh] rounded-t-3xl flex flex-col p-0">
+            {checkoutStep === "cart" ? (
+              <>
+                <div className="px-5 pt-5 pb-3">
+                  <SheetHeader>
+                    <SheetTitle className="flex items-center gap-2">
+                      <ShoppingCart className="h-5 w-5" style={{ color: accentColor }} />
+                      Seu Pedido ({cartCount} {cartCount === 1 ? "item" : "itens"})
+                    </SheetTitle>
+                  </SheetHeader>
+                </div>
 
-            <div className="flex-1 overflow-auto space-y-3 py-4">
-              {cart.map(c => (
-                <div key={c.product.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm truncate">{c.product.name}</p>
-                    <p className="text-xs text-muted-foreground">R$ {Number(c.product.sale_price).toFixed(2)}</p>
+                <div className="flex-1 overflow-auto px-5 space-y-3 pb-4">
+                  {cart.map(c => (
+                    <div key={c.product.id} className="rounded-xl bg-muted/50 p-3 space-y-2">
+                      <div className="flex items-center gap-3">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">{c.product.name}</p>
+                          <p className="text-xs text-muted-foreground">R$ {Number(c.product.sale_price).toFixed(2)} cada</p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.product.id, -1)}>
+                            <Minus className="h-3 w-3" />
+                          </Button>
+                          <span className="w-8 text-center text-sm font-bold">{c.quantity}</span>
+                          <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.product.id, 1)}>
+                            <Plus className="h-3 w-3" />
+                          </Button>
+                        </div>
+                        <p className="text-sm font-bold w-20 text-right">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</p>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeFromCart(c.product.id)}>
+                          <Trash2 className="h-3 w-3 text-destructive" />
+                        </Button>
+                      </div>
+                      {c.notes ? (
+                        <p className="text-xs text-muted-foreground italic pl-1">📝 {c.notes}</p>
+                      ) : null}
+                      <Input
+                        placeholder="Adicionar observação..."
+                        value={c.notes}
+                        onChange={e => updateItemNotes(c.product.id, e.target.value)}
+                        className="text-xs h-8"
+                      />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="border-t border-border px-5 py-4 space-y-3">
+                  <div className="flex justify-between items-center text-lg font-bold">
+                    <span>Total</span>
+                    <span style={{ color: accentColor }}>R$ {cartTotal.toFixed(2)}</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.product.id, -1)}>
-                      <Minus className="h-3 w-3" />
-                    </Button>
-                    <span className="w-8 text-center text-sm font-bold">{c.quantity}</span>
-                    <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.product.id, 1)}>
-                      <Plus className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <p className="text-sm font-bold w-20 text-right">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</p>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeFromCart(c.product.id)}>
-                    <Trash2 className="h-3 w-3 text-destructive" />
+                  <Button
+                    className="w-full text-white"
+                    size="lg"
+                    style={{ backgroundColor: accentColor }}
+                    onClick={() => setCheckoutStep("info")}
+                  >
+                    Continuar
                   </Button>
                 </div>
-              ))}
-            </div>
+              </>
+            ) : (
+              <>
+                <div className="px-5 pt-5 pb-3">
+                  <button onClick={() => setCheckoutStep("cart")} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground transition-colors">
+                    <ChevronLeft className="h-4 w-4" /> Voltar ao carrinho
+                  </button>
+                  <SheetHeader>
+                    <SheetTitle>Finalizar Pedido</SheetTitle>
+                  </SheetHeader>
+                </div>
 
-            <div className="border-t border-border pt-4 space-y-3">
-              <Input placeholder="Seu nome (opcional)" value={customerName} onChange={e => setCustomerName(e.target.value)} />
-              <Input placeholder="Telefone (opcional)" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} />
-              <Input placeholder="Nº da mesa (opcional)" value={tableNumber} onChange={e => setTableNumber(e.target.value)} />
+                <div className="flex-1 overflow-auto px-5 space-y-5 pb-4">
+                  {/* Order type */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">Como deseja receber?</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([
+                        { type: "table" as OrderType, icon: UtensilsCrossed, label: "Na mesa" },
+                        { type: "pickup" as OrderType, icon: Package, label: "Retirada" },
+                        { type: "delivery" as OrderType, icon: MapPin, label: "Delivery" },
+                      ]).map(opt => (
+                        <button
+                          key={opt.type}
+                          onClick={() => setOrderType(opt.type)}
+                          className={`flex flex-col items-center gap-1.5 p-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                            orderType === opt.type ? "text-white border-transparent" : "border-border text-muted-foreground hover:border-muted-foreground/30"
+                          }`}
+                          style={orderType === opt.type ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                        >
+                          <opt.icon className="h-5 w-5" />
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-              <div className="flex justify-between items-center text-lg font-bold pt-2">
-                <span>Total</span>
-                <span style={{ color: accentColor }}>R$ {cartTotal.toFixed(2)}</span>
-              </div>
+                  {/* Customer info */}
+                  <div className="space-y-3">
+                    <p className="text-sm font-medium">Seus dados</p>
+                    <Input
+                      placeholder={orderType === "delivery" ? "Seu nome *" : "Seu nome (opcional)"}
+                      value={customerName}
+                      onChange={e => setCustomerName(e.target.value)}
+                    />
+                    <Input
+                      placeholder="Telefone / WhatsApp (opcional)"
+                      value={customerPhone}
+                      onChange={e => setCustomerPhone(e.target.value)}
+                    />
+                  </div>
 
-              <Button
-                className="w-full text-white"
-                size="lg"
-                style={{ backgroundColor: accentColor }}
-                onClick={sendOrder}
-                disabled={sending || cart.length === 0}
-              >
-                <Send className="h-4 w-4 mr-2" />
-                {sending ? "Enviando..." : "Enviar Pedido"}
-              </Button>
-            </div>
+                  {/* Conditional fields */}
+                  {orderType === "table" && (
+                    <Input
+                      placeholder="Número da mesa"
+                      value={tableNumber}
+                      onChange={e => setTableNumber(e.target.value)}
+                    />
+                  )}
+
+                  {orderType === "delivery" && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Endereço de entrega *</p>
+                      <Textarea
+                        placeholder="Rua, número, bairro, complemento..."
+                        value={deliveryAddress}
+                        onChange={e => setDeliveryAddress(e.target.value)}
+                        rows={3}
+                      />
+                    </div>
+                  )}
+
+                  {/* Summary */}
+                  <div className="bg-muted/50 rounded-xl p-4 space-y-2">
+                    <p className="text-sm font-medium">Resumo do pedido</p>
+                    {cart.map(c => (
+                      <div key={c.product.id} className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">{c.quantity}x {c.product.name}</span>
+                        <span className="font-medium">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                    <div className="border-t border-border pt-2 flex justify-between text-base font-bold">
+                      <span>Total</span>
+                      <span style={{ color: accentColor }}>R$ {cartTotal.toFixed(2)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="border-t border-border px-5 py-4">
+                  <Button
+                    className="w-full text-white"
+                    size="lg"
+                    style={{ backgroundColor: accentColor }}
+                    onClick={sendOrder}
+                    disabled={sending || cart.length === 0}
+                  >
+                    <Send className="h-4 w-4 mr-2" />
+                    {sending ? "Enviando..." : "Enviar Pedido"}
+                  </Button>
+                </div>
+              </>
+            )}
           </SheetContent>
         </Sheet>
       )}
