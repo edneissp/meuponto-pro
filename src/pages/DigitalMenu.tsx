@@ -169,8 +169,9 @@ const DigitalMenu = () => {
     }).select("id, order_number").single();
 
     if (orderError || !order) {
+      console.error("Order insert error:", orderError);
       setSending(false);
-      toast.error("Erro ao enviar pedido");
+      toast.error("Erro ao enviar pedido. Tente novamente.");
       return;
     }
 
