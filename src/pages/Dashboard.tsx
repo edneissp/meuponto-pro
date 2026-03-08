@@ -5,8 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { DollarSign, ShoppingCart, Package, TrendingUp, CalendarIcon, Percent } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { format } from "date-fns";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line, Legend } from "recharts";
+import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, eachWeekOfInterval, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
@@ -17,25 +17,41 @@ const Dashboard = () => {
   const [stats, setStats] = useState({ totalSales: 0, totalRevenue: 0, totalProducts: 0, avgTicket: 0, realMargin: 0 });
   const [salesByDay, setSalesByDay] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
+  const [weeklyData, setWeeklyData] = useState<any[]>([]);
+  const [monthlyData, setMonthlyData] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
       const d = selectedDate;
       const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
       const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-      const [salesRes, productsRes, saleItemsRes] = await Promise.all([
+
+      // Weekly range: current week
+      const weekStart = startOfWeek(d, { weekStartsOn: 1 });
+      const weekEnd = endOfWeek(d, { weekStartsOn: 1 });
+      const weekStartISO = weekStart.toISOString();
+      const weekEndISO = new Date(weekEnd.getFullYear(), weekEnd.getMonth(), weekEnd.getDate() + 1).toISOString();
+
+      // Monthly range: last 6 months
+      const monthStart = startOfMonth(subMonths(d, 5));
+      const monthEnd = endOfMonth(d);
+      const monthStartISO = monthStart.toISOString();
+      const monthEndISO = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), monthEnd.getDate() + 1).toISOString();
+
+      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes] = await Promise.all([
         supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay),
         supabase.from("products").select("id, purchase_price, sale_price"),
         supabase.from("sale_items").select("product_id, quantity, unit_price, total").gte("created_at", startOfDay).lt("created_at", endOfDay),
+        supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", weekStartISO).lt("created_at", weekEndISO),
+        supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
       ]);
+
       const sales = salesRes.data;
       const products = productsRes.data;
       const saleItems = saleItemsRes.data;
 
       if (sales) {
         const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
-
-        // Calculate real margin from sale items vs purchase prices
         let totalCost = 0;
         if (saleItems && products) {
           const productMap = new Map(products.map(p => [p.id, Number(p.purchase_price)]));
@@ -65,6 +81,45 @@ const Dashboard = () => {
         setSalesByDay(Object.entries(byDay).map(([name, value]) => ({ name, value })));
         setPaymentMethods(Object.entries(byMethod).map(([name, value]) => ({ name, value })));
       }
+
+      // Weekly chart: each day of the week
+      if (weeklySalesRes.data) {
+        const days = eachDayOfInterval({ start: weekStart, end: weekEnd });
+        const weekMap: Record<string, { vendas: number; receita: number }> = {};
+        days.forEach(day => {
+          const key = format(day, "EEE", { locale: ptBR });
+          weekMap[key] = { vendas: 0, receita: 0 };
+        });
+        weeklySalesRes.data.forEach(s => {
+          const key = format(new Date(s.created_at), "EEE", { locale: ptBR });
+          if (weekMap[key]) {
+            weekMap[key].vendas += 1;
+            weekMap[key].receita += Number(s.total);
+          }
+        });
+        setWeeklyData(days.map(day => {
+          const key = format(day, "EEE", { locale: ptBR });
+          return { name: key, ...weekMap[key] };
+        }));
+      }
+
+      // Monthly chart: last 6 months
+      if (monthlySalesRes.data) {
+        const monthMap: Record<string, { vendas: number; receita: number }> = {};
+        for (let i = 5; i >= 0; i--) {
+          const m = subMonths(d, i);
+          const key = format(m, "MMM/yy", { locale: ptBR });
+          monthMap[key] = { vendas: 0, receita: 0 };
+        }
+        monthlySalesRes.data.forEach(s => {
+          const key = format(new Date(s.created_at), "MMM/yy", { locale: ptBR });
+          if (monthMap[key]) {
+            monthMap[key].vendas += 1;
+            monthMap[key].receita += Number(s.total);
+          }
+        });
+        setMonthlyData(Object.entries(monthMap).map(([name, data]) => ({ name, ...data })));
+      }
     };
     loadData();
   }, [selectedDate]);
@@ -78,6 +133,8 @@ const Dashboard = () => {
     { label: "Ticket Médio", value: stats.avgTicket, icon: TrendingUp, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
     { label: "Margem Real", value: stats.realMargin, icon: Percent, fmt: (v: number) => `${v.toFixed(1)}%` },
   ];
+
+  const currencyFormatter = (value: number) => `R$ ${value.toFixed(0)}`;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -130,10 +187,10 @@ const Dashboard = () => {
         ))}
       </div>
 
-      {/* Charts */}
+      {/* Daily Charts */}
       <div className="grid lg:grid-cols-2 gap-6">
         <Card className="p-5 shadow-card">
-          <h3 className="font-semibold mb-4">Vendas por Dia</h3>
+          <h3 className="font-semibold mb-4">Vendas do Dia</h3>
           <div className="h-64">
             {salesByDay.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%">
@@ -141,8 +198,8 @@ const Dashboard = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
                   <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                  <Tooltip />
-                  <Bar dataKey="value" fill="hsl(24, 95%, 53%)" radius={[4, 4, 0, 0]} />
+                  <Tooltip formatter={currencyFormatter} />
+                  <Bar dataKey="value" name="Receita" fill="hsl(24, 95%, 53%)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -175,6 +232,56 @@ const Dashboard = () => {
           </div>
         </Card>
       </div>
+
+      {/* Weekly Chart */}
+      <Card className="p-5 shadow-card">
+        <h3 className="font-semibold mb-4">Vendas da Semana</h3>
+        <div className="h-72">
+          {weeklyData.some(d => d.vendas > 0) ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={weeklyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={currencyFormatter} />
+                <Tooltip formatter={(value: number, name: string) => name === "receita" ? `R$ ${value.toFixed(2)}` : value} />
+                <Legend formatter={(value) => value === "vendas" ? "Qtd. Vendas" : "Receita (R$)"} />
+                <Bar yAxisId="left" dataKey="vendas" name="vendas" fill="hsl(24, 95%, 53%)" radius={[4, 4, 0, 0]} />
+                <Bar yAxisId="right" dataKey="receita" name="receita" fill="hsl(38, 95%, 55%)" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              Nenhuma venda registrada esta semana
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Monthly Chart */}
+      <Card className="p-5 shadow-card">
+        <h3 className="font-semibold mb-4">Evolução Mensal (últimos 6 meses)</h3>
+        <div className="h-72">
+          {monthlyData.some(d => d.vendas > 0) ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis yAxisId="left" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis yAxisId="right" orientation="right" stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={currencyFormatter} />
+                <Tooltip formatter={(value: number, name: string) => name === "receita" ? `R$ ${value.toFixed(2)}` : value} />
+                <Legend formatter={(value) => value === "vendas" ? "Qtd. Vendas" : "Receita (R$)"} />
+                <Line yAxisId="left" type="monotone" dataKey="vendas" name="vendas" stroke="hsl(24, 95%, 53%)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+                <Line yAxisId="right" type="monotone" dataKey="receita" name="receita" stroke="hsl(142, 76%, 36%)" strokeWidth={2} dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              Nenhum dado disponível para o período
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };
