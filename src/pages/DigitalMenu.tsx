@@ -161,7 +161,8 @@ const DigitalMenu = () => {
       customer_phone: customerPhone || null,
       table_number: orderType === "table" ? (tableNumber || null) : null,
       notes: buildOrderNotes(),
-      subtotal: cartTotal,
+      subtotal: cartSubtotal,
+      discount: 0,
       total: cartTotal,
     }).select("id, order_number").single();
 
