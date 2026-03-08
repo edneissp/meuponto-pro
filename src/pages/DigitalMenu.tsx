@@ -714,8 +714,101 @@ const DigitalMenu = () => {
                       )}
                     </div>
                   )}
+                </div>
 
-                  {/* Summary */}
+                <div className="border-t border-border px-5 py-4">
+                  <Button
+                    className="w-full text-white"
+                    size="lg"
+                    style={{ backgroundColor: accentColor }}
+                    onClick={() => {
+                      if (orderType === "delivery" && !customerName) {
+                        toast.error("Informe seu nome para delivery");
+                        return;
+                      }
+                      if (orderType === "delivery" && !deliveryAddress) {
+                        toast.error("Informe o endereço de entrega");
+                        return;
+                      }
+                      setCheckoutStep("payment");
+                    }}
+                  >
+                    Escolher forma de pagamento
+                  </Button>
+                </div>
+              </>
+            ) : checkoutStep === "payment" ? (
+              <>
+                <div className="px-5 pt-5 pb-3">
+                  <button onClick={() => setCheckoutStep("info")} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground transition-colors">
+                    <ChevronLeft className="h-4 w-4" /> Voltar
+                  </button>
+                  <SheetHeader>
+                    <SheetTitle>Forma de Pagamento</SheetTitle>
+                  </SheetHeader>
+                </div>
+
+                <div className="flex-1 overflow-auto px-5 space-y-5 pb-4">
+                  {/* Payment method selection */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setPaymentMethod("on_delivery")}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                        paymentMethod === "on_delivery" ? "border-transparent text-white" : "border-border"
+                      }`}
+                      style={paymentMethod === "on_delivery" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                    >
+                      <Banknote className="h-6 w-6 shrink-0" />
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {orderType === "delivery" ? "Pagar na entrega" : orderType === "pickup" ? "Pagar na retirada" : "Pagar no local"}
+                        </p>
+                        <p className={`text-xs mt-0.5 ${paymentMethod === "on_delivery" ? "text-white/70" : "text-muted-foreground"}`}>
+                          Dinheiro, cartão ou PIX na hora
+                        </p>
+                      </div>
+                    </button>
+
+                    {tenant?.pix_key && (
+                      <button
+                        onClick={() => setPaymentMethod("pix")}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                          paymentMethod === "pix" ? "border-transparent text-white" : "border-border"
+                        }`}
+                        style={paymentMethod === "pix" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                      >
+                        <QrCode className="h-6 w-6 shrink-0" />
+                        <div>
+                          <p className="font-semibold text-sm">Pagar com PIX agora</p>
+                          <p className={`text-xs mt-0.5 ${paymentMethod === "pix" ? "text-white/70" : "text-muted-foreground"}`}>
+                            Pagamento antecipado via PIX
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* PIX details */}
+                  {paymentMethod === "pix" && tenant?.pix_key && (
+                    <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                      <p className="text-sm font-medium">💳 Dados para pagamento PIX</p>
+                      <div className="bg-background rounded-lg p-3 space-y-2">
+                        <p className="text-xs text-muted-foreground">Chave PIX</p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 text-sm font-mono bg-muted p-2 rounded break-all">{tenant.pix_key}</code>
+                          <Button variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={copyPixKey}>
+                            {pixCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Valor: <span className="font-bold">R$ {cartTotal.toFixed(2)}</span></p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        ⚠️ Faça o PIX e envie o pedido. O estabelecimento confirmará o pagamento.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Order summary */}
                   <div className="bg-muted/50 rounded-xl p-4 space-y-2">
                     <p className="text-sm font-medium">Resumo do pedido</p>
                     {cart.map(c => (
@@ -750,7 +843,7 @@ const DigitalMenu = () => {
                     disabled={sending || cart.length === 0}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Enviando..." : "Enviar Pedido"}
+                    {sending ? "Enviando..." : paymentMethod === "pix" ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
                   </Button>
                 </div>
               </>
