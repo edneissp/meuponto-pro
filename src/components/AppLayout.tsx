@@ -13,6 +13,7 @@ const navItems = [
   { icon: ShoppingCart, label: "PDV", path: "/app/pos" },
   { icon: ClipboardList, label: "Pedidos", path: "/app/orders" },
   { icon: Truck, label: "Delivery", path: "/app/delivery" },
+  { icon: PackageCheck, label: "Fornecedores", path: "/app/suppliers" },
   { icon: DollarSign, label: "Financeiro", path: "/app/finance" },
   { icon: BarChart3, label: "Relatórios", path: "/app/reports" },
   { icon: Settings, label: "Configurações", path: "/app/settings" },
