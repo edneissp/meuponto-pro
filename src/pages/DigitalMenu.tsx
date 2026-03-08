@@ -573,6 +573,12 @@ const DigitalMenu = () => {
                         <span className="font-medium">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</span>
                       </div>
                     ))}
+                    {deliveryFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">🛵 Taxa de entrega</span>
+                        <span className="font-medium">R$ {deliveryFee.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t border-border pt-2 flex justify-between text-base font-bold">
                       <span>Total</span>
                       <span style={{ color: accentColor }}>R$ {cartTotal.toFixed(2)}</span>
