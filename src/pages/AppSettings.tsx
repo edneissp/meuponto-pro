@@ -190,6 +190,31 @@ const AppSettings = () => {
         </CardContent>
       </Card>
 
+      {/* Delivery Fee */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Truck className="h-5 w-5 text-primary" />
+            Taxa de Entrega
+          </CardTitle>
+          <CardDescription>Defina o valor cobrado para entregas via delivery. Deixe 0 para não cobrar.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground">R$</span>
+            <Input
+              type="number"
+              min="0"
+              step="0.50"
+              value={deliveryFee}
+              onChange={(e) => setDeliveryFee(e.target.value)}
+              placeholder="0.00"
+              className="max-w-[150px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
       {/* QR Code Cardápio Digital */}
       {tenantId && (
         <Card>
