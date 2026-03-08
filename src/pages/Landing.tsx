@@ -13,12 +13,12 @@ import { toast } from "sonner";
 import heroImage from "@/assets/hero-dashboard.jpg";
 
 const features = [
-  { icon: ShoppingCart, title: "PDV Intuitivo", desc: "Venda rápido com combos, descontos e múltiplas formas de pagamento." },
-  { icon: Package, title: "Estoque Inteligente", desc: "Alertas automáticos de validade e estoque baixo. Nunca perca produto." },
-  { icon: BarChart3, title: "Dashboards", desc: "Relatórios de vendas, produtos mais vendidos e melhores horários." },
-  { icon: DollarSign, title: "Financeiro", desc: "Controle despesas, fornecedores e margem de lucro em tempo real." },
-  { icon: Shield, title: "Multi-tenant", desc: "Cada cliente com seu espaço, dados isolados e marca personalizada." },
-  { icon: Zap, title: "100% Web", desc: "Acesse de qualquer dispositivo. Sem instalação, sem complicação." },
+  { icon: ShoppingCart, title: "PDV Rápido e Fácil", desc: "Registre vendas em segundos com combos, descontos e múltiplas formas de pagamento." },
+  { icon: Package, title: "Estoque Inteligente", desc: "Alertas automáticos de validade e estoque baixo. Nunca perca produto por falta de controle." },
+  { icon: BarChart3, title: "Relatórios Automáticos", desc: "Acompanhe vendas, produtos mais vendidos, melhores horários e margem de lucro." },
+  { icon: DollarSign, title: "Financeiro Completo", desc: "Controle despesas, fornecedores e lucro real do seu comércio em tempo real." },
+  { icon: Shield, title: "Seguro e Personalizado", desc: "Seus dados isolados e protegidos. Personalize com a marca do seu negócio." },
+  { icon: Zap, title: "100% Online", desc: "Acesse de qualquer dispositivo — celular, tablet ou computador. Sem instalação." },
 ];
 
 const problems = [
@@ -30,27 +30,31 @@ const problems = [
 ];
 
 const benefitItems = [
-  { icon: DollarSign, text: "Saiba quanto lucra em cada produto" },
-  { icon: Clock, text: "Descubra os melhores horários de venda" },
-  { icon: Package, text: "Controle estoque automaticamente" },
-  { icon: Bell, text: "Receba alertas de vencimento" },
-  { icon: Eye, text: "Acompanhe vendas em tempo real" },
+  { icon: ShoppingCart, text: "PDV rápido e fácil de usar" },
+  { icon: Package, text: "Controle inteligente de estoque" },
+  { icon: BarChart3, text: "Relatórios de vendas automáticos" },
+  { icon: Printer, text: "Impressão térmica de pedidos" },
+  { icon: Clock, text: "Controle de produtos próximos do vencimento" },
+  { icon: Bell, text: "Alertas de estoque baixo" },
 ];
 
 const pricingFeatures = [
   "PDV completo",
   "Controle de estoque com alertas",
-  "Relatórios de vendas",
+  "Relatórios de vendas automáticos",
   "Gestão de fornecedores",
   "Dashboard inteligente",
-  "Impressão de pedidos",
+  "Impressão térmica de pedidos",
+  "Controle de validade de produtos",
+  "Alertas de estoque baixo",
 ];
 
 const faqs = [
-  { q: "Preciso instalar algo?", a: "Não. O sistema funciona direto no navegador." },
-  { q: "Funciona no celular?", a: "Sim. Celular, tablet ou computador." },
-  { q: "Preciso entender de tecnologia?", a: "Não. O sistema foi feito para ser simples." },
-  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade." },
+  { q: "Preciso instalar algo?", a: "Não. O sistema funciona direto no navegador, em qualquer dispositivo." },
+  { q: "Funciona no celular?", a: "Sim. Celular, tablet ou computador — acesse de onde quiser." },
+  { q: "Preciso entender de tecnologia?", a: "Não. O YouControl foi feito para ser simples e intuitivo." },
+  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem burocracia." },
+  { q: "Serve para qual tipo de comércio?", a: "Lanchonetes, restaurantes, açaiterias, padarias, mercadinhos e qualquer comércio que precise controlar vendas e estoque." },
 ];
 
 const Landing = () => {
@@ -79,7 +83,7 @@ const Landing = () => {
     }
   };
 
-  const whatsappMessage = encodeURIComponent("Olá! Quero conhecer o sistema YouControl para minha lanchonete.");
+  const whatsappMessage = encodeURIComponent("Olá! Quero conhecer o sistema YouControl para meu comércio.");
   const whatsappUrl = `https://wa.me/5571996219021?text=${whatsappMessage}`;
 
   return (
@@ -110,16 +114,16 @@ const Landing = () => {
           <div className="max-w-3xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6 animate-fade-in">
               <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Gestão simplificada para seu negócio</span>
+              <span className="text-sm font-medium text-primary">Gestão completa para seu comércio</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Sua lanchonete no <span className="text-gradient">controle total</span>
+              Controle total do seu comércio em um <span className="text-gradient">único sistema</span>
             </h1>
             <p className="text-base md:text-lg text-primary-foreground/70 mb-4 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              Experimente o YouControl por 30 dias grátis. Sistema completo para lanchonetes, restaurantes e açaiterias.
+              O YouControl é um sistema completo para gerenciar vendas, estoque, relatórios e pedidos de forma simples e rápida.
             </p>
             <p className="text-sm text-primary-foreground/50 mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              Sem exigir cartão de crédito no cadastro.
+              Experimente o YouControl gratuitamente por 30 dias e descubra como é fácil organizar seu comércio.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.25s" }}>
               <Button size="lg" className="text-base px-8 shadow-glow" asChild>
@@ -135,7 +139,7 @@ const Landing = () => {
           </div>
           <div className="max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <div className="rounded-xl overflow-hidden shadow-2xl border border-primary-foreground/10">
-              <img src={heroImage} alt="Dashboard YouControl" className="w-full" />
+              <img src={heroImage} alt="Dashboard YouControl — Sistema de gestão para comércio" className="w-full" />
             </div>
           </div>
         </div>
@@ -145,7 +149,7 @@ const Landing = () => {
       <section className="py-24 bg-muted/50">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Sua lanchonete enfrenta esses problemas?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Seu comércio enfrenta esses problemas?</h2>
           </div>
           <div className="max-w-2xl mx-auto space-y-4 mb-12">
             {problems.map((p, i) => (
@@ -167,7 +171,7 @@ const Landing = () => {
       <section className="py-24">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tenha controle total do seu negócio</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tudo que seu comércio precisa em um só lugar</h2>
           </div>
           <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-6">
             {benefitItems.map((b, i) => (
@@ -186,9 +190,9 @@ const Landing = () => {
       <section id="features" className="py-24 bg-muted/50">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tudo que você precisa</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Funcionalidades completas</h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Do caixa ao relatório, tudo integrado em um só lugar.
+              Do caixa ao relatório, tudo integrado para você focar no que importa: vender mais.
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -210,12 +214,12 @@ const Landing = () => {
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Preço simples e transparente</h2>
-            <p className="text-muted-foreground text-lg">Sem surpresas. Um plano completo para seu negócio.</p>
+            <p className="text-muted-foreground text-lg">Sistema completo para gerenciar seu comércio com mais organização e controle.</p>
           </div>
           <div className="max-w-md mx-auto">
             <div className="rounded-2xl border-2 border-primary bg-card p-8 shadow-glow">
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold mb-1">Plano Profissional</h3>
+                <h3 className="text-xl font-bold mb-1">YouControl Profissional</h3>
                 <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
                   Teste grátis por 30 dias
                 </div>
@@ -235,10 +239,10 @@ const Landing = () => {
                 ))}
               </ul>
               <Button className="w-full" size="lg" asChild>
-                <Link to="/register">Testar 30 dias grátis</Link>
+                <Link to="/register">Teste grátis por 30 dias</Link>
               </Button>
               <p className="text-center text-xs text-muted-foreground mt-3">
-                Sem fidelidade • Cancele quando quiser
+                Sem fidelidade • Sem cartão de crédito • Cancele quando quiser
               </p>
             </div>
           </div>
@@ -274,7 +278,7 @@ const Landing = () => {
                 maxLength={20}
               />
               <Input
-                placeholder="Nome da lanchonete"
+                placeholder="Nome do seu comércio"
                 value={leadForm.business_name}
                 onChange={e => setLeadForm(p => ({ ...p, business_name: e.target.value }))}
                 maxLength={100}
@@ -310,12 +314,12 @@ const Landing = () => {
       {/* Final CTA */}
       <section className="py-24 gradient-hero">
         <div className="container text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Comece agora</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Comece agora — é grátis por 30 dias</h2>
           <p className="text-primary-foreground/70 text-lg max-w-xl mx-auto mb-8">
-            Teste o YouControl gratuitamente por 30 dias e veja como é fácil controlar seu negócio.
+            Experimente o YouControl gratuitamente e descubra como é fácil organizar seu comércio.
           </p>
           <Button size="lg" className="text-base px-10 shadow-glow" asChild>
-            <Link to="/register">Criar conta grátis</Link>
+            <Link to="/register">🚀 Criar conta grátis</Link>
           </Button>
         </div>
       </section>
