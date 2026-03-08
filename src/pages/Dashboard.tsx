@@ -122,6 +122,19 @@ const Dashboard = () => {
         });
         setMonthlyData(Object.entries(monthMap).map(([name, data]) => ({ name, ...data })));
       }
+
+      // Top products
+      if (topItemsRes.data && products) {
+        const nameMap = new Map(products.map(p => [p.id, p.name]));
+        const prodQty: Record<string, { name: string; qty: number }> = {};
+        topItemsRes.data.forEach(item => {
+          const name = nameMap.get(item.product_id) || "Desconhecido";
+          if (!prodQty[item.product_id]) prodQty[item.product_id] = { name, qty: 0 };
+          prodQty[item.product_id].qty += item.quantity;
+        });
+        const sorted = Object.values(prodQty).sort((a, b) => b.qty - a.qty).slice(0, 10);
+        setTopProducts(sorted.map(p => ({ name: p.name.length > 20 ? p.name.slice(0, 20) + "…" : p.name, quantidade: p.qty })));
+      }
     };
     loadData();
   }, [selectedDate]);
