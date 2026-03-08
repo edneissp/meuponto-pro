@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DollarSign, ShoppingCart, Package, TrendingUp, CalendarIcon } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, TrendingUp, CalendarIcon, Percent } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
