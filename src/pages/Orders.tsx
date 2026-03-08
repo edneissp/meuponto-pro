@@ -50,6 +50,35 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const initialLoadDone = useRef(false);
+
+  const playNotificationSound = useCallback(() => {
+    if (!soundEnabled) return;
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      const ctx = audioContextRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      // Pleasant two-tone chime
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {
+      console.log("Audio not available");
+    }
+  }, [soundEnabled]);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -65,22 +94,35 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    loadOrders();
+    loadOrders().then(() => {
+      initialLoadDone.current = true;
+    });
 
-    // Realtime subscription
     const channel = supabase
       .channel("orders-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => {
+        { event: "INSERT", schema: "public", table: "orders" },
+        (payload) => {
+          if (initialLoadDone.current) {
+            playNotificationSound();
+            const orderNum = (payload.new as any)?.order_number;
+            toast.success(`🔔 Novo pedido recebido!${orderNum ? ` #${orderNum}` : ""}`, {
+              duration: 8000,
+            });
+          }
           loadOrders();
         }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        () => { loadOrders(); }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [playNotificationSound]);
 
   const updateStatus = async (orderId: string, currentStatus: string) => {
     const currentIdx = statusFlow.indexOf(currentStatus);
