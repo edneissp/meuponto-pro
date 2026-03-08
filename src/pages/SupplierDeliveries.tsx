@@ -488,7 +488,7 @@ const SupplierDeliveries = () => {
 
             <div className="flex gap-2 pt-2">
               <Button onClick={handleSave} disabled={saving} className="flex-1">
-                {saving ? "Salvando..." : "Registrar Entrega"}
+                {saving ? "Salvando..." : editingDelivery ? "Atualizar Entrega" : "Registrar Entrega"}
               </Button>
               <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Cancelar
