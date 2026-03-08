@@ -114,7 +114,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((s, i) => (
           <Card key={i} className="p-5 shadow-card">
             <div className="flex items-center justify-between">
