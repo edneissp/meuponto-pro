@@ -180,10 +180,22 @@ const SupplierDeliveries = () => {
 
         // Update stock + record movements + update purchase_price + record price history
         for (const item of items) {
-          await supabase.from("products").update({
-            stock_quantity: (products.find(p => p.id === item.product_id)?.stock_quantity || 0) + item.quantity,
+          // Fetch current stock from DB to avoid stale state
+          const { data: currentProduct } = await supabase
+            .from("products")
+            .select("stock_quantity")
+            .eq("id", item.product_id)
+            .single();
+          
+          const currentStock = currentProduct?.stock_quantity ?? 0;
+          const { error: updateErr } = await supabase.from("products").update({
+            stock_quantity: currentStock + item.quantity,
             purchase_price: item.unit_price,
           }).eq("id", item.product_id);
+          
+          if (updateErr) {
+            console.error("Erro ao atualizar estoque:", updateErr);
+          }
 
           await supabase.from("stock_movements").insert({
             tenant_id: tenantId,
