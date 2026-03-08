@@ -88,6 +88,7 @@ const AppSettings = () => {
         store_lat: storeLat,
         store_lng: storeLng,
         whatsapp: whatsapp || null,
+        pix_key: pixKey || null,
       })
       .eq("id", tenantId);
     setSaving(false);
