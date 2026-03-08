@@ -78,6 +78,7 @@ const DigitalMenu = () => {
   const [gettingLocation, setGettingLocation] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [pixCopied, setPixCopied] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   useEffect(() => {
     if (!tenantId) return;
