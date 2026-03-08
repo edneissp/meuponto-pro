@@ -46,6 +46,7 @@ const AppSettings = () => {
         setName(tenant.name);
         setPrimaryColor(tenant.primary_color || "#F97316");
         setLogoUrl(tenant.logo_url);
+        setDeliveryFee(String(tenant.delivery_fee || 0));
       }
       setLoading(false);
     };
