@@ -23,6 +23,7 @@ const AppLayout = () => {
   const location = useLocation();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tenantName, setTenantName] = useState("MeuPonto");
+  const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tenantStatus, setTenantStatus] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
