@@ -32,6 +32,7 @@ const AppSettings = () => {
   const [storeLng, setStoreLng] = useState<number | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
+  const [pixKey, setPixKey] = useState("");
 
   useEffect(() => {
     const load = async () => {
@@ -46,7 +47,7 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng")
+        .select("name, primary_color, logo_url, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng, pix_key")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
@@ -59,6 +60,7 @@ const AppSettings = () => {
         setStoreLat(tenant.store_lat);
         setStoreLng(tenant.store_lng);
         setWhatsapp(tenant.whatsapp || "");
+        setPixKey((tenant as any).pix_key || "");
       }
       setLoading(false);
     };
@@ -86,6 +88,7 @@ const AppSettings = () => {
         store_lat: storeLat,
         store_lng: storeLng,
         whatsapp: whatsapp || null,
+        pix_key: pixKey || null,
       })
       .eq("id", tenantId);
     setSaving(false);
@@ -163,7 +166,28 @@ const AppSettings = () => {
         </CardContent>
       </Card>
 
-      {/* Logo */}
+      {/* Chave PIX */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <QrCode className="h-5 w-5 text-primary" />
+            Chave PIX
+          </CardTitle>
+          <CardDescription>Chave PIX para receber pagamentos antecipados pelo cardápio digital.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Input
+            value={pixKey}
+            onChange={(e) => setPixKey(e.target.value)}
+            placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Se preenchido, os clientes poderão pagar via PIX antes de enviar o pedido.
+          </p>
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">

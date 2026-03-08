@@ -888,6 +888,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          pix_key: string | null
           primary_color: string | null
           store_lat: number | null
           store_lng: number | null
@@ -903,6 +904,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          pix_key?: string | null
           primary_color?: string | null
           store_lat?: number | null
           store_lng?: number | null
@@ -918,6 +920,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          pix_key?: string | null
           primary_color?: string | null
           store_lat?: number | null
           store_lng?: number | null

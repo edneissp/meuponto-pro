@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ShoppingCart, Plus, Minus, Trash2, Search, Send, Store, MapPin, UtensilsCrossed, Package, MessageSquare, ChevronLeft, CheckCircle2 } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Trash2, Search, Send, Store, MapPin, UtensilsCrossed, Package, MessageSquare, ChevronLeft, CheckCircle2, CreditCard, Banknote, QrCode, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
@@ -43,9 +43,11 @@ interface TenantInfo {
   store_lat: number | null;
   store_lng: number | null;
   whatsapp: string | null;
+  pix_key: string | null;
 }
 
 type OrderType = "table" | "pickup" | "delivery";
+type PaymentMethod = "on_delivery" | "pix";
 
 const DigitalMenu = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
@@ -69,21 +71,23 @@ const DigitalMenu = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productNotes, setProductNotes] = useState("");
   const [productQty, setProductQty] = useState(1);
-  const [checkoutStep, setCheckoutStep] = useState<"cart" | "info">("cart");
+  const [checkoutStep, setCheckoutStep] = useState<"cart" | "info" | "payment">("cart");
   const [customerLat, setCustomerLat] = useState<number | null>(null);
   const [customerLng, setCustomerLng] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("on_delivery");
+  const [pixCopied, setPixCopied] = useState(false);
 
   useEffect(() => {
     if (!tenantId) return;
     const load = async () => {
       const [tenantRes, productsRes, categoriesRes] = await Promise.all([
-        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng").eq("id", tenantId).single(),
+        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng, pix_key").eq("id", tenantId).single(),
         supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
       ]);
-      if (tenantRes.data) setTenant(tenantRes.data as TenantInfo);
+      if (tenantRes.data) setTenant(tenantRes.data as unknown as TenantInfo);
       if (productsRes.data) setProducts(productsRes.data as Product[]);
       if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
       setLoading(false);
@@ -195,21 +199,21 @@ const DigitalMenu = () => {
     if (orderType === "delivery" && deliveryFee > 0) parts.push(`Taxa: R$${deliveryFee.toFixed(2)}`);
     if (orderType === "pickup") parts.push("Retirada no balcão");
     if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
+    parts.push(`Pagamento: ${paymentMethod === "pix" ? "PIX" : "Na entrega/retirada"}`);
     return parts.join(" | ") || null;
+  };
+
+  const copyPixKey = () => {
+    if (tenant?.pix_key) {
+      navigator.clipboard.writeText(tenant.pix_key);
+      setPixCopied(true);
+      toast.success("Chave PIX copiada!");
+      setTimeout(() => setPixCopied(false), 3000);
+    }
   };
 
   const sendOrder = async () => {
     if (!tenantId || cart.length === 0) return;
-
-    if (orderType === "delivery" && !customerName) {
-      toast.error("Informe seu nome para delivery");
-      return;
-    }
-    if (orderType === "delivery" && !deliveryAddress) {
-      toast.error("Informe o endereço de entrega");
-      return;
-    }
-
     setSending(true);
 
     const { data: order, error: orderError } = await supabase.from("orders").insert({
@@ -291,6 +295,7 @@ const DigitalMenu = () => {
       if (orderType === "table" && tableNumber) msg += `🪑 Mesa: ${tableNumber}\n`;
       if (orderType === "pickup") msg += `📦 Retirada no balcão\n`;
       if (orderType === "delivery" && deliveryAddress) msg += `🛵 Entrega: ${deliveryAddress}\n`;
+      msg += `\n💳 *Pagamento: ${paymentMethod === "pix" ? "PIX (antecipado)" : "Na hora"}*`;
       msg += `\n💰 *Total: R$ ${orderTotal.toFixed(2)}*`;
       return encodeURIComponent(msg);
     };
@@ -319,8 +324,11 @@ const DigitalMenu = () => {
           <p className="text-sm text-muted-foreground mb-4">Retire no balcão quando estiver pronto.</p>
         )}
         {orderType === "table" && tableNumber && (
-          <p className="text-sm text-muted-foreground mb-4">Mesa {tableNumber} — aguarde no local.</p>
+          <p className="text-sm text-muted-foreground mb-2">Mesa {tableNumber} — aguarde no local.</p>
         )}
+        <Badge className="mb-4" variant="outline">
+          {paymentMethod === "pix" ? "💳 Pago via PIX" : "💵 Pagamento na hora"}
+        </Badge>
 
         {whatsappLink && (
           <a
@@ -507,7 +515,7 @@ const DigitalMenu = () => {
 
       {/* Floating cart button */}
       {cartCount > 0 && (
-        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); }}>
+        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); setPixCopied(false); }}>
           <SheetTrigger asChild>
             <button
               className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-semibold shadow-xl transition-transform active:scale-95 w-[90%] max-w-lg"
@@ -581,7 +589,7 @@ const DigitalMenu = () => {
                   </Button>
                 </div>
               </>
-            ) : (
+            ) : checkoutStep === "info" ? (
               <>
                 <div className="px-5 pt-5 pb-3">
                   <button onClick={() => setCheckoutStep("cart")} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground transition-colors">
@@ -700,8 +708,101 @@ const DigitalMenu = () => {
                       )}
                     </div>
                   )}
+                </div>
 
-                  {/* Summary */}
+                <div className="border-t border-border px-5 py-4">
+                  <Button
+                    className="w-full text-white"
+                    size="lg"
+                    style={{ backgroundColor: accentColor }}
+                    onClick={() => {
+                      if (orderType === "delivery" && !customerName) {
+                        toast.error("Informe seu nome para delivery");
+                        return;
+                      }
+                      if (orderType === "delivery" && !deliveryAddress) {
+                        toast.error("Informe o endereço de entrega");
+                        return;
+                      }
+                      setCheckoutStep("payment");
+                    }}
+                  >
+                    Escolher forma de pagamento
+                  </Button>
+                </div>
+              </>
+            ) : checkoutStep === "payment" ? (
+              <>
+                <div className="px-5 pt-5 pb-3">
+                  <button onClick={() => setCheckoutStep("info")} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground transition-colors">
+                    <ChevronLeft className="h-4 w-4" /> Voltar
+                  </button>
+                  <SheetHeader>
+                    <SheetTitle>Forma de Pagamento</SheetTitle>
+                  </SheetHeader>
+                </div>
+
+                <div className="flex-1 overflow-auto px-5 space-y-5 pb-4">
+                  {/* Payment method selection */}
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => setPaymentMethod("on_delivery")}
+                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                        paymentMethod === "on_delivery" ? "border-transparent text-white" : "border-border"
+                      }`}
+                      style={paymentMethod === "on_delivery" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                    >
+                      <Banknote className="h-6 w-6 shrink-0" />
+                      <div>
+                        <p className="font-semibold text-sm">
+                          {orderType === "delivery" ? "Pagar na entrega" : orderType === "pickup" ? "Pagar na retirada" : "Pagar no local"}
+                        </p>
+                        <p className={`text-xs mt-0.5 ${paymentMethod === "on_delivery" ? "text-white/70" : "text-muted-foreground"}`}>
+                          Dinheiro, cartão ou PIX na hora
+                        </p>
+                      </div>
+                    </button>
+
+                    {tenant?.pix_key && (
+                      <button
+                        onClick={() => setPaymentMethod("pix")}
+                        className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
+                          paymentMethod === "pix" ? "border-transparent text-white" : "border-border"
+                        }`}
+                        style={paymentMethod === "pix" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                      >
+                        <QrCode className="h-6 w-6 shrink-0" />
+                        <div>
+                          <p className="font-semibold text-sm">Pagar com PIX agora</p>
+                          <p className={`text-xs mt-0.5 ${paymentMethod === "pix" ? "text-white/70" : "text-muted-foreground"}`}>
+                            Pagamento antecipado via PIX
+                          </p>
+                        </div>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* PIX details */}
+                  {paymentMethod === "pix" && tenant?.pix_key && (
+                    <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                      <p className="text-sm font-medium">💳 Dados para pagamento PIX</p>
+                      <div className="bg-background rounded-lg p-3 space-y-2">
+                        <p className="text-xs text-muted-foreground">Chave PIX</p>
+                        <div className="flex items-center gap-2">
+                          <code className="flex-1 text-sm font-mono bg-muted p-2 rounded break-all">{tenant.pix_key}</code>
+                          <Button variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={copyPixKey}>
+                            {pixCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">Valor: <span className="font-bold">R$ {cartTotal.toFixed(2)}</span></p>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        ⚠️ Faça o PIX e envie o pedido. O estabelecimento confirmará o pagamento.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Order summary */}
                   <div className="bg-muted/50 rounded-xl p-4 space-y-2">
                     <p className="text-sm font-medium">Resumo do pedido</p>
                     {cart.map(c => (
@@ -736,11 +837,11 @@ const DigitalMenu = () => {
                     disabled={sending || cart.length === 0}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Enviando..." : "Enviar Pedido"}
+                    {sending ? "Enviando..." : paymentMethod === "pix" ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
                   </Button>
                 </div>
               </>
-            )}
+            ) : null}
           </SheetContent>
         </Sheet>
       )}
