@@ -47,7 +47,7 @@ interface TenantInfo {
 }
 
 type OrderType = "table" | "pickup" | "delivery";
-type PaymentMethod = "on_delivery" | "pix";
+type PaymentMethod = "pix" | "debit" | "credit";
 
 const DigitalMenu = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
@@ -76,7 +76,7 @@ const DigitalMenu = () => {
   const [customerLng, setCustomerLng] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("on_delivery");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [pixCopied, setPixCopied] = useState(false);
 
   useEffect(() => {
@@ -199,7 +199,8 @@ const DigitalMenu = () => {
     if (orderType === "delivery" && deliveryFee > 0) parts.push(`Taxa: R$${deliveryFee.toFixed(2)}`);
     if (orderType === "pickup") parts.push("Retirada no balcão");
     if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
-    parts.push(`Pagamento: ${paymentMethod === "pix" ? "PIX" : "Na entrega/retirada"}`);
+    const payLabels: Record<PaymentMethod, string> = { pix: "PIX", debit: "Débito", credit: "Crédito" };
+    parts.push(`Pagamento: ${payLabels[paymentMethod]}`);
     return parts.join(" | ") || null;
   };
 
@@ -295,7 +296,8 @@ const DigitalMenu = () => {
       if (orderType === "table" && tableNumber) msg += `🪑 Mesa: ${tableNumber}\n`;
       if (orderType === "pickup") msg += `📦 Retirada no balcão\n`;
       if (orderType === "delivery" && deliveryAddress) msg += `🛵 Entrega: ${deliveryAddress}\n`;
-      msg += `\n💳 *Pagamento: ${paymentMethod === "pix" ? "PIX (antecipado)" : "Na hora"}*`;
+      const payLabels: Record<string, string> = { pix: "PIX", debit: "Débito", credit: "Crédito" };
+      msg += `\n💳 *Pagamento: ${payLabels[paymentMethod] || paymentMethod}*`;
       msg += `\n💰 *Total: R$ ${orderTotal.toFixed(2)}*`;
       return encodeURIComponent(msg);
     };
@@ -327,7 +329,7 @@ const DigitalMenu = () => {
           <p className="text-sm text-muted-foreground mb-2">Mesa {tableNumber} — aguarde no local.</p>
         )}
         <Badge className="mb-4" variant="outline">
-          {paymentMethod === "pix" ? "💳 Pago via PIX" : "💵 Pagamento na hora"}
+          {paymentMethod === "pix" ? "💳 PIX" : paymentMethod === "debit" ? "💳 Débito" : "💳 Crédito"}
         </Badge>
 
         {whatsappLink && (
@@ -745,41 +747,28 @@ const DigitalMenu = () => {
                 <div className="flex-1 overflow-auto px-5 space-y-5 pb-4">
                   {/* Payment method selection */}
                   <div className="space-y-3">
-                    <button
-                      onClick={() => setPaymentMethod("on_delivery")}
-                      className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                        paymentMethod === "on_delivery" ? "border-transparent text-white" : "border-border"
-                      }`}
-                      style={paymentMethod === "on_delivery" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
-                    >
-                      <Banknote className="h-6 w-6 shrink-0" />
-                      <div>
-                        <p className="font-semibold text-sm">
-                          {orderType === "delivery" ? "Pagar na entrega" : orderType === "pickup" ? "Pagar na retirada" : "Pagar no local"}
-                        </p>
-                        <p className={`text-xs mt-0.5 ${paymentMethod === "on_delivery" ? "text-white/70" : "text-muted-foreground"}`}>
-                          Dinheiro, cartão ou PIX na hora
-                        </p>
-                      </div>
-                    </button>
-
-                    {tenant?.pix_key && (
+                    {([
+                      { method: "pix" as PaymentMethod, icon: QrCode, label: "PIX", desc: tenant?.pix_key ? "Pague agora com chave PIX" : "Pagamento via PIX na hora" },
+                      { method: "debit" as PaymentMethod, icon: CreditCard, label: "Cartão de Débito", desc: "Pagamento com cartão de débito" },
+                      { method: "credit" as PaymentMethod, icon: CreditCard, label: "Cartão de Crédito", desc: "Pagamento com cartão de crédito" },
+                    ]).map(opt => (
                       <button
-                        onClick={() => setPaymentMethod("pix")}
+                        key={opt.method}
+                        onClick={() => setPaymentMethod(opt.method)}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
-                          paymentMethod === "pix" ? "border-transparent text-white" : "border-border"
+                          paymentMethod === opt.method ? "border-transparent text-white" : "border-border"
                         }`}
-                        style={paymentMethod === "pix" ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
+                        style={paymentMethod === opt.method ? { backgroundColor: accentColor, borderColor: accentColor } : {}}
                       >
-                        <QrCode className="h-6 w-6 shrink-0" />
+                        <opt.icon className="h-6 w-6 shrink-0" />
                         <div>
-                          <p className="font-semibold text-sm">Pagar com PIX agora</p>
-                          <p className={`text-xs mt-0.5 ${paymentMethod === "pix" ? "text-white/70" : "text-muted-foreground"}`}>
-                            Pagamento antecipado via PIX
+                          <p className="font-semibold text-sm">{opt.label}</p>
+                          <p className={`text-xs mt-0.5 ${paymentMethod === opt.method ? "text-white/70" : "text-muted-foreground"}`}>
+                            {opt.desc}
                           </p>
                         </div>
                       </button>
-                    )}
+                    ))}
                   </div>
 
                   {/* PIX details */}
@@ -837,7 +826,7 @@ const DigitalMenu = () => {
                     disabled={sending || cart.length === 0}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Enviando..." : paymentMethod === "pix" ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
+                    {sending ? "Enviando..." : paymentMethod === "pix" && tenant?.pix_key ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
                   </Button>
                 </div>
               </>
