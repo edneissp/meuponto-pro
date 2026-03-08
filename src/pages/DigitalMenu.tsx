@@ -70,6 +70,10 @@ const DigitalMenu = () => {
   const [productNotes, setProductNotes] = useState("");
   const [productQty, setProductQty] = useState(1);
   const [checkoutStep, setCheckoutStep] = useState<"cart" | "info">("cart");
+  const [customerLat, setCustomerLat] = useState<number | null>(null);
+  const [customerLng, setCustomerLng] = useState<number | null>(null);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
 
   useEffect(() => {
     if (!tenantId) return;
