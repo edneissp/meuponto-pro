@@ -122,6 +122,27 @@ const AppSettings = () => {
         </CardContent>
       </Card>
 
+      {/* WhatsApp */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            WhatsApp
+          </CardTitle>
+          <CardDescription>Número do WhatsApp para receber confirmações de pedidos dos clientes.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Input
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder="Ex: 5511999999999 (com DDD e código do país)"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Formato: código do país + DDD + número (ex: 5511999999999)
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Logo */}
       <Card>
         <CardHeader>
