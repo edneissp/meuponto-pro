@@ -1,6 +1,15 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Check, BarChart3, ShoppingCart, Package, DollarSign, Shield, Zap } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Check, BarChart3, ShoppingCart, Package, DollarSign, Shield, Zap,
+  AlertTriangle, TrendingUp, Clock, Bell, Eye, Printer, MessageCircle,
+  Send, X
+} from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 import heroImage from "@/assets/hero-dashboard.jpg";
 
 const features = [
@@ -12,16 +21,67 @@ const features = [
   { icon: Zap, title: "100% Web", desc: "Acesse de qualquer dispositivo. Sem instalação, sem complicação." },
 ];
 
-const benefits = [
-  "Cadastro ilimitado de produtos",
+const problems = [
+  "Não sabe quanto realmente lucrou no dia",
+  "Perde produtos por vencimento",
+  "Não controla estoque corretamente",
+  "Não sabe quais produtos vendem mais",
+  "Não controla quanto deve pagar aos fornecedores",
+];
+
+const benefitItems = [
+  { icon: DollarSign, text: "Saiba quanto lucra em cada produto" },
+  { icon: Clock, text: "Descubra os melhores horários de venda" },
+  { icon: Package, text: "Controle estoque automaticamente" },
+  { icon: Bell, text: "Receba alertas de vencimento" },
+  { icon: Eye, text: "Acompanhe vendas em tempo real" },
+];
+
+const pricingFeatures = [
+  "PDV completo",
   "Controle de estoque com alertas",
-  "PDV com suporte a combos e descontos",
-  "Relatórios financeiros completos",
-  "Dashboard personalizado",
-  "Suporte por email",
+  "Relatórios de vendas",
+  "Gestão de fornecedores",
+  "Dashboard inteligente",
+  "Impressão de pedidos",
+];
+
+const faqs = [
+  { q: "Preciso instalar algo?", a: "Não. O sistema funciona direto no navegador." },
+  { q: "Funciona no celular?", a: "Sim. Celular, tablet ou computador." },
+  { q: "Preciso entender de tecnologia?", a: "Não. O sistema foi feito para ser simples." },
+  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade." },
 ];
 
 const Landing = () => {
+  const [leadForm, setLeadForm] = useState({ name: "", email: "", whatsapp: "", business_name: "" });
+  const [loading, setLoading] = useState(false);
+
+  const handleLeadSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!leadForm.name || !leadForm.email || !leadForm.whatsapp || !leadForm.business_name) {
+      toast.error("Preencha todos os campos.");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.from("leads").insert({
+      name: leadForm.name.trim(),
+      email: leadForm.email.trim(),
+      whatsapp: leadForm.whatsapp.trim(),
+      business_name: leadForm.business_name.trim(),
+    });
+    setLoading(false);
+    if (error) {
+      toast.error("Erro ao enviar. Tente novamente.");
+    } else {
+      toast.success("Dados enviados com sucesso! Entraremos em contato.");
+      setLeadForm({ name: "", email: "", whatsapp: "", business_name: "" });
+    }
+  };
+
+  const whatsappMessage = encodeURIComponent("Olá! Quero conhecer o sistema YouControl para minha lanchonete.");
+  const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
@@ -29,15 +89,17 @@ const Landing = () => {
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-lg gradient-primary" />
-            <span className="text-xl font-bold">MeuPonto</span>
+            <span className="text-xl font-bold">YouControl</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Funcionalidades</a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</a>
+            <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
+            <a href="#contato" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contato</a>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild><Link to="/login">Entrar</Link></Button>
-            <Button asChild><Link to="/register">Começar Grátis</Link></Button>
+            <Button asChild><Link to="/register">Testar Grátis</Link></Button>
           </div>
         </div>
       </nav>
@@ -50,31 +112,75 @@ const Landing = () => {
               <Zap className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">Gestão simplificada para seu negócio</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
               Sua lanchonete no <span className="text-gradient">controle total</span>
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/70 mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              Gerencie vendas, estoque, financeiro e muito mais em uma plataforma completa. Simples, rápida e feita para quem vende comida.
+            <p className="text-base md:text-lg text-primary-foreground/70 mb-8 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
+              YouControl é um sistema inteligente de gestão para lanchonetes e restaurantes que ajuda você a controlar vendas, estoque, fornecedores e lucros em um só lugar.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.3s" }}>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.25s" }}>
               <Button size="lg" className="text-base px-8 shadow-glow" asChild>
-                <Link to="/register">Experimente Agora</Link>
+                <Link to="/register">Testar 30 dias grátis</Link>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-                <a href="#features">Ver Funcionalidades</a>
+                <a href="#features">Ver funcionalidades</a>
               </Button>
             </div>
+            <p className="text-sm text-primary-foreground/50 mt-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
+              Sem cartão de crédito • Cancele quando quiser
+            </p>
           </div>
           <div className="max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <div className="rounded-xl overflow-hidden shadow-2xl border border-primary-foreground/10">
-              <img src={heroImage} alt="Dashboard MeuPonto" className="w-full" />
+              <img src={heroImage} alt="Dashboard YouControl" className="w-full" />
             </div>
           </div>
         </div>
       </section>
 
+      {/* Problems */}
+      <section className="py-24 bg-muted/50">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Sua lanchonete enfrenta esses problemas?</h2>
+          </div>
+          <div className="max-w-2xl mx-auto space-y-4 mb-12">
+            {problems.map((p, i) => (
+              <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-destructive/20 bg-destructive/5">
+                <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
+                  <X className="h-4 w-4 text-destructive" />
+                </div>
+                <span className="text-foreground font-medium">{p}</span>
+              </div>
+            ))}
+          </div>
+          <p className="text-center text-xl md:text-2xl font-bold text-gradient">
+            O YouControl resolve tudo isso automaticamente.
+          </p>
+        </div>
+      </section>
+
+      {/* Benefits */}
+      <section className="py-24">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tenha controle total do seu negócio</h2>
+          </div>
+          <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-6">
+            {benefitItems.map((b, i) => (
+              <div key={i} className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card shadow-card">
+                <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
+                  <b.icon className="h-5 w-5 text-primary-foreground" />
+                </div>
+                <span className="font-medium">{b.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Features */}
-      <section id="features" className="py-24">
+      <section id="features" className="py-24 bg-muted/50">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Tudo que você precisa</h2>
@@ -97,7 +203,7 @@ const Landing = () => {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24 bg-muted/50">
+      <section id="pricing" className="py-24">
         <div className="container">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Preço simples e transparente</h2>
@@ -106,15 +212,17 @@ const Landing = () => {
           <div className="max-w-md mx-auto">
             <div className="rounded-2xl border-2 border-primary bg-card p-8 shadow-glow">
               <div className="text-center mb-8">
-                <h3 className="text-xl font-bold mb-2">Plano Profissional</h3>
+                <h3 className="text-xl font-bold mb-1">Plano Profissional</h3>
+                <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+                  Teste grátis por 30 dias
+                </div>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-extrabold text-gradient">R$50</span>
+                  <span className="text-5xl font-extrabold text-gradient">R$99,90</span>
                   <span className="text-muted-foreground">/mês</span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">Tudo incluso, sem limites</p>
               </div>
               <ul className="space-y-3 mb-8">
-                {benefits.map((b, i) => (
+                {pricingFeatures.map((b, i) => (
                   <li key={i} className="flex items-center gap-3">
                     <div className="h-5 w-5 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
                       <Check className="h-3 w-3 text-primary-foreground" />
@@ -124,10 +232,88 @@ const Landing = () => {
                 ))}
               </ul>
               <Button className="w-full" size="lg" asChild>
-                <Link to="/register">Assinar Agora</Link>
+                <Link to="/register">Testar 30 dias grátis</Link>
               </Button>
+              <p className="text-center text-xs text-muted-foreground mt-3">
+                Sem fidelidade • Cancele quando quiser
+              </p>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* Lead Form */}
+      <section id="contato" className="py-24 bg-muted/50">
+        <div className="container">
+          <div className="max-w-lg mx-auto">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Quer saber mais?</h2>
+              <p className="text-muted-foreground">Preencha seus dados e entraremos em contato.</p>
+            </div>
+            <form onSubmit={handleLeadSubmit} className="space-y-4 p-8 rounded-2xl border border-border bg-card shadow-card">
+              <Input
+                placeholder="Seu nome"
+                value={leadForm.name}
+                onChange={e => setLeadForm(p => ({ ...p, name: e.target.value }))}
+                maxLength={100}
+              />
+              <Input
+                type="email"
+                placeholder="Seu email"
+                value={leadForm.email}
+                onChange={e => setLeadForm(p => ({ ...p, email: e.target.value }))}
+                maxLength={255}
+              />
+              <Input
+                placeholder="WhatsApp (ex: 11999999999)"
+                value={leadForm.whatsapp}
+                onChange={e => setLeadForm(p => ({ ...p, whatsapp: e.target.value }))}
+                maxLength={20}
+              />
+              <Input
+                placeholder="Nome da lanchonete"
+                value={leadForm.business_name}
+                onChange={e => setLeadForm(p => ({ ...p, business_name: e.target.value }))}
+                maxLength={100}
+              />
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? "Enviando..." : "Enviar"}
+                {!loading && <Send className="ml-2 h-4 w-4" />}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section id="faq" className="py-24">
+        <div className="container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Perguntas Frequentes</h2>
+          </div>
+          <div className="max-w-2xl mx-auto">
+            <Accordion type="single" collapsible className="w-full">
+              {faqs.map((faq, i) => (
+                <AccordionItem key={i} value={`faq-${i}`}>
+                  <AccordionTrigger className="text-left">{faq.q}</AccordionTrigger>
+                  <AccordionContent>{faq.a}</AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
+          </div>
+        </div>
+      </section>
+
+      {/* Final CTA */}
+      <section className="py-24 gradient-hero">
+        <div className="container text-center">
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Comece agora</h2>
+          <p className="text-primary-foreground/70 text-lg max-w-xl mx-auto mb-8">
+            Teste o YouControl gratuitamente por 30 dias e veja como é fácil controlar seu negócio.
+          </p>
+          <Button size="lg" className="text-base px-10 shadow-glow" asChild>
+            <Link to="/register">Criar conta grátis</Link>
+          </Button>
         </div>
       </section>
 
@@ -136,11 +322,22 @@ const Landing = () => {
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="h-6 w-6 rounded-md gradient-primary" />
-            <span className="font-bold">MeuPonto</span>
+            <span className="font-bold">YouControl</span>
           </div>
-          <p className="text-sm text-muted-foreground">© 2026 MeuPonto. Todos os direitos reservados.</p>
+          <p className="text-sm text-muted-foreground">© 2026 YouControl. Todos os direitos reservados.</p>
         </div>
       </footer>
+
+      {/* WhatsApp Floating Button */}
+      <a
+        href={whatsappUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
+        aria-label="Contato via WhatsApp"
+      >
+        <MessageCircle className="h-7 w-7 text-white" />
+      </a>
     </div>
   );
 };
