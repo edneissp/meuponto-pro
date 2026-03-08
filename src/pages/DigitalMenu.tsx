@@ -193,6 +193,7 @@ const DigitalMenu = () => {
     }
 
     setOrderNumber(order.order_number);
+    setOrderTotal(cartTotal);
     setOrderSent(true);
     setCart([]);
     setCartOpen(false);
