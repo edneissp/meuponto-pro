@@ -25,6 +25,11 @@ const AppSettings = () => {
   const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState("0");
+  const [freeDeliveryRadius, setFreeDeliveryRadius] = useState("1");
+  const [deliveryFeePerKm, setDeliveryFeePerKm] = useState("2");
+  const [storeLat, setStoreLat] = useState<number | null>(null);
+  const [storeLng, setStoreLng] = useState<number | null>(null);
+  const [gettingLocation, setGettingLocation] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
 
   useEffect(() => {
