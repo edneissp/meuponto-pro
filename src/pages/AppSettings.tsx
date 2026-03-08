@@ -64,7 +64,7 @@ const AppSettings = () => {
     setSaving(true);
     const { error } = await supabase
       .from("tenants")
-      .update({ name, primary_color: primaryColor, logo_url: logoUrl })
+      .update({ name, primary_color: primaryColor, logo_url: logoUrl, delivery_fee: Number(deliveryFee) || 0 })
       .eq("id", tenantId);
     setSaving(false);
     if (error) {
