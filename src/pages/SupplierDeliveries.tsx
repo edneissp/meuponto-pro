@@ -264,6 +264,62 @@ const SupplierDeliveries = () => {
     setDialogOpen(true);
   };
 
+  const handleDelete = async (del: DeliveryRecord) => {
+    if (!confirm(`Excluir entrega de ${(del.suppliers as any)?.name || "Fornecedor"} em ${new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}?`)) return;
+
+    try {
+      // Revert stock for each item
+      for (const item of del.supplier_delivery_items || []) {
+        const { data: currentProduct } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", item.product_id)
+          .single();
+        
+        if (currentProduct) {
+          await supabase.from("products").update({
+            stock_quantity: Math.max(0, (currentProduct.stock_quantity ?? 0) - item.quantity),
+          }).eq("id", item.product_id);
+        }
+
+        await supabase.from("stock_movements").insert({
+          tenant_id: del.supplier_id, // will get tenant from profile below
+          product_id: item.product_id,
+          type: "adjustment",
+          quantity: -item.quantity,
+          notes: `Exclusão de entrega do fornecedor: ${(del.suppliers as any)?.name || ""}`,
+        }).then(() => {}); // ignore if fails
+      }
+
+      // Get tenant_id for stock_movements
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
+        if (profile) {
+          for (const item of del.supplier_delivery_items || []) {
+            await supabase.from("stock_movements").insert({
+              tenant_id: profile.tenant_id,
+              product_id: item.product_id,
+              type: "adjustment",
+              quantity: -item.quantity,
+              notes: `Exclusão entrega fornecedor: ${(del.suppliers as any)?.name || ""}`,
+            });
+          }
+        }
+      }
+
+      // Delete items then delivery
+      await supabase.from("supplier_delivery_items").delete().eq("delivery_id", del.id);
+      const { error } = await supabase.from("supplier_deliveries").delete().eq("id", del.id);
+      if (error) throw error;
+
+      toast.success("Entrega excluída com sucesso!");
+      fetchData();
+    } catch (err: any) {
+      toast.error("Erro ao excluir: " + err.message);
+    }
+  };
+
   const getMarginInfo = (product: Product) => {
     const cost = Number(product.purchase_price);
     const sale = Number(product.sale_price);
