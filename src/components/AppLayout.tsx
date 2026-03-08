@@ -44,12 +44,13 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name, subscription_status")
+          .select("name, subscription_status, logo_url")
           .eq("id", profile.tenant_id)
           .single();
         if (tenant) {
           setTenantName(tenant.name);
           setTenantStatus(tenant.subscription_status);
+          setTenantLogo(tenant.logo_url);
         }
       }
       // Check admin role
