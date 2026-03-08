@@ -825,7 +825,7 @@ const DigitalMenu = () => {
                     disabled={sending || cart.length === 0}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Enviando..." : paymentMethod === "pix" ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
+                    {sending ? "Enviando..." : paymentMethod === "pix" && tenant?.pix_key ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
                   </Button>
                 </div>
               </>
