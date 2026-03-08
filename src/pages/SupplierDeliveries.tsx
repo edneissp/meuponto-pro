@@ -296,6 +296,9 @@ const SupplierDeliveries = () => {
                 <span className="text-sm text-muted-foreground">
                   {new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}
                 </span>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(del)}>
+                  <Edit className="h-4 w-4" />
+                </Button>
               </div>
               <div className="space-y-1 mb-2">
                 {del.supplier_delivery_items?.map((item: any) => (
