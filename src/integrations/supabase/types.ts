@@ -889,6 +889,7 @@ export type Database = {
           primary_color: string | null
           subscription_status: string
           updated_at: string
+          whatsapp: string | null
         }
         Insert: {
           created_at?: string
@@ -899,6 +900,7 @@ export type Database = {
           primary_color?: string | null
           subscription_status?: string
           updated_at?: string
+          whatsapp?: string | null
         }
         Update: {
           created_at?: string
@@ -909,6 +911,7 @@ export type Database = {
           primary_color?: string | null
           subscription_status?: string
           updated_at?: string
+          whatsapp?: string | null
         }
         Relationships: []
       }
