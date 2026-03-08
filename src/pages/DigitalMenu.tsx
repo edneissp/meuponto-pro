@@ -328,7 +328,7 @@ const DigitalMenu = () => {
           <p className="text-sm text-muted-foreground mb-2">Mesa {tableNumber} — aguarde no local.</p>
         )}
         <Badge className="mb-4" variant="outline">
-          {paymentMethod === "pix" ? "💳 Pago via PIX" : "💵 Pagamento na hora"}
+          {paymentMethod === "pix" ? "💳 PIX" : paymentMethod === "debit" ? "💳 Débito" : "💳 Crédito"}
         </Badge>
 
         {whatsappLink && (
