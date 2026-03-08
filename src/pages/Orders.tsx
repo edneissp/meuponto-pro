@@ -3,8 +3,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
+import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX, Printer } from "lucide-react";
 import { toast } from "sonner";
+import OrderReceipt from "@/components/pos/OrderReceipt";
 
 interface OrderItem {
   id: string;
