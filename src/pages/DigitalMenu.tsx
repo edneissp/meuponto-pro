@@ -127,7 +127,9 @@ const DigitalMenu = () => {
     setCart(prev => prev.filter(c => c.product.id !== productId));
   };
 
-  const cartTotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
+  const deliveryFee = orderType === "delivery" ? Number(tenant?.delivery_fee || 0) : 0;
+  const cartTotal = cartSubtotal + deliveryFee;
   const cartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
 
   const buildOrderNotes = () => {
