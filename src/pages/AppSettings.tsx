@@ -45,7 +45,7 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url, delivery_fee, whatsapp")
+        .select("name, primary_color, logo_url, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
@@ -53,6 +53,10 @@ const AppSettings = () => {
         setPrimaryColor(tenant.primary_color || "#F97316");
         setLogoUrl(tenant.logo_url);
         setDeliveryFee(String(tenant.delivery_fee || 0));
+        setFreeDeliveryRadius(String(tenant.free_delivery_radius_km || 1));
+        setDeliveryFeePerKm(String(tenant.delivery_fee_per_km || 2));
+        setStoreLat(tenant.store_lat);
+        setStoreLng(tenant.store_lng);
         setWhatsapp(tenant.whatsapp || "");
       }
       setLoading(false);
