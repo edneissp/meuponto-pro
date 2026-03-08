@@ -283,7 +283,7 @@ const Orders = () => {
                 </div>
 
                 {/* Actions */}
-                <div className="p-4 pt-0 flex gap-2">
+                <div className="p-4 pt-0 flex gap-2 flex-wrap">
                   <Button
                     variant="outline"
                     size="sm"
@@ -294,13 +294,44 @@ const Orders = () => {
                   </Button>
                   {order.status !== "delivered" && order.status !== "cancelled" && (
                     <>
-                      {canAdvance && nextStatus && (
+                      {order.status === "received" && (
+                        <>
+                          <Button
+                            className="flex-1"
+                            size="sm"
+                            onClick={() => updateStatus(order.id, order.status)}
+                          >
+                            <ChefHat className="h-4 w-4 mr-1" />
+                            Preparando
+                          </Button>
+                          <Button
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            size="sm"
+                            onClick={() => jumpToStatus(order.id, "ready")}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Pronto
+                          </Button>
+                        </>
+                      )}
+                      {order.status === "preparing" && (
+                        <Button
+                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          size="sm"
+                          onClick={() => jumpToStatus(order.id, "ready")}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Pronto
+                        </Button>
+                      )}
+                      {order.status === "ready" && (
                         <Button
                           className="flex-1"
                           size="sm"
                           onClick={() => updateStatus(order.id, order.status)}
                         >
-                          {statusConfig[nextStatus]?.label || "Avançar"}
+                          <Truck className="h-4 w-4 mr-1" />
+                          Entregue
                         </Button>
                       )}
                       <Button
