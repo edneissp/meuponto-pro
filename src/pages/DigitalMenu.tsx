@@ -853,10 +853,10 @@ const DigitalMenu = () => {
                     size="lg"
                     style={{ backgroundColor: accentColor }}
                     onClick={sendOrder}
-                    disabled={sending || cart.length === 0}
+                    disabled={sending || cart.length === 0 || !paymentConfirmed}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Enviando..." : paymentMethod === "pix" && tenant?.pix_key ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
+                    {sending ? "Enviando..." : !paymentConfirmed ? "Confirme o pagamento acima" : "Enviar Pedido"}
                   </Button>
                 </div>
               </>
