@@ -39,7 +39,7 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url")
+        .select("name, primary_color, logo_url, delivery_fee")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
