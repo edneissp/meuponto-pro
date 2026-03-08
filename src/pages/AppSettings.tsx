@@ -25,6 +25,7 @@ const AppSettings = () => {
   const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [deliveryFee, setDeliveryFee] = useState("0");
+  const [whatsapp, setWhatsapp] = useState("");
 
   useEffect(() => {
     const load = async () => {
