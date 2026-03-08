@@ -595,7 +595,7 @@ const DigitalMenu = () => {
                   </Button>
                 </div>
               </>
-            ) : (
+            ) : checkoutStep === "info" ? (
               <>
                 <div className="px-5 pt-5 pb-3">
                   <button onClick={() => setCheckoutStep("cart")} className="flex items-center gap-1 text-sm text-muted-foreground mb-3 hover:text-foreground transition-colors">
