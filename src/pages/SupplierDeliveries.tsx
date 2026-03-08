@@ -264,6 +264,50 @@ const SupplierDeliveries = () => {
     setDialogOpen(true);
   };
 
+  const handleDelete = async (del: DeliveryRecord) => {
+    if (!confirm(`Excluir entrega de ${(del.suppliers as any)?.name || "Fornecedor"} em ${new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}?`)) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); return; }
+      const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
+      if (!profile) { toast.error("Perfil não encontrado"); return; }
+
+      // Revert stock for each item
+      for (const item of del.supplier_delivery_items || []) {
+        const { data: currentProduct } = await supabase
+          .from("products")
+          .select("stock_quantity")
+          .eq("id", item.product_id)
+          .single();
+
+        if (currentProduct) {
+          await supabase.from("products").update({
+            stock_quantity: Math.max(0, (currentProduct.stock_quantity ?? 0) - item.quantity),
+          }).eq("id", item.product_id);
+        }
+
+        await supabase.from("stock_movements").insert({
+          tenant_id: profile.tenant_id,
+          product_id: item.product_id,
+          type: "adjustment",
+          quantity: -item.quantity,
+          notes: `Exclusão entrega fornecedor: ${(del.suppliers as any)?.name || ""}`,
+        });
+      }
+
+      // Delete items then delivery
+      await supabase.from("supplier_delivery_items").delete().eq("delivery_id", del.id);
+      const { error } = await supabase.from("supplier_deliveries").delete().eq("id", del.id);
+      if (error) throw error;
+
+      toast.success("Entrega excluída com sucesso!");
+      loadData();
+    } catch (err: any) {
+      toast.error("Erro ao excluir: " + err.message);
+    }
+  };
+
   const getMarginInfo = (product: Product) => {
     const cost = Number(product.purchase_price);
     const sale = Number(product.sale_price);
@@ -308,9 +352,14 @@ const SupplierDeliveries = () => {
                 <span className="text-sm text-muted-foreground">
                   {new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}
                 </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(del)}>
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(del)}>
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(del)}>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
               <div className="space-y-1 mb-2">
                 {del.supplier_delivery_items?.map((item: any) => (
