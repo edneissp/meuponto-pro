@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield, CreditCard, ClipboardList, Truck } from "lucide-react";
+import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield, CreditCard, ClipboardList, Truck, PackageCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
@@ -13,6 +13,7 @@ const navItems = [
   { icon: ShoppingCart, label: "PDV", path: "/app/pos" },
   { icon: ClipboardList, label: "Pedidos", path: "/app/orders" },
   { icon: Truck, label: "Delivery", path: "/app/delivery" },
+  { icon: PackageCheck, label: "Fornecedores", path: "/app/suppliers" },
   { icon: DollarSign, label: "Financeiro", path: "/app/finance" },
   { icon: BarChart3, label: "Relatórios", path: "/app/reports" },
   { icon: Settings, label: "Configurações", path: "/app/settings" },

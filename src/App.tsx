@@ -19,6 +19,7 @@ import AppSettings from "./pages/AppSettings";
 import Orders from "./pages/Orders";
 import Delivery from "./pages/Delivery";
 import DigitalMenu from "./pages/DigitalMenu";
+import SupplierDeliveries from "./pages/SupplierDeliveries";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,7 @@ const App = () => (
             <Route path="pos" element={<POS />} />
             <Route path="orders" element={<Orders />} />
             <Route path="delivery" element={<Delivery />} />
+            <Route path="suppliers" element={<SupplierDeliveries />} />
             <Route path="finance" element={<Finance />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<AppSettings />} />

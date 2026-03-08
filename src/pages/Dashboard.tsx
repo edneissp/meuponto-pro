@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DollarSign, ShoppingCart, Package, TrendingUp, CalendarIcon } from "lucide-react";
+import { DollarSign, ShoppingCart, Package, TrendingUp, CalendarIcon, Percent } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -14,7 +14,7 @@ const COLORS = ["hsl(24, 95%, 53%)", "hsl(38, 95%, 55%)", "hsl(142, 76%, 36%)", 
 
 const Dashboard = () => {
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [stats, setStats] = useState({ totalSales: 0, totalRevenue: 0, totalProducts: 0, avgTicket: 0 });
+  const [stats, setStats] = useState({ totalSales: 0, totalRevenue: 0, totalProducts: 0, avgTicket: 0, realMargin: 0 });
   const [salesByDay, setSalesByDay] = useState<any[]>([]);
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
 
@@ -23,16 +23,35 @@ const Dashboard = () => {
       const d = selectedDate;
       const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
       const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-      const { data: sales } = await supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay);
-      const { data: products } = await supabase.from("products").select("id");
+      const [salesRes, productsRes, saleItemsRes] = await Promise.all([
+        supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay),
+        supabase.from("products").select("id, purchase_price, sale_price"),
+        supabase.from("sale_items").select("product_id, quantity, unit_price, total").gte("created_at", startOfDay).lt("created_at", endOfDay),
+      ]);
+      const sales = salesRes.data;
+      const products = productsRes.data;
+      const saleItems = saleItemsRes.data;
 
       if (sales) {
         const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+
+        // Calculate real margin from sale items vs purchase prices
+        let totalCost = 0;
+        if (saleItems && products) {
+          const productMap = new Map(products.map(p => [p.id, Number(p.purchase_price)]));
+          saleItems.forEach(item => {
+            const cost = productMap.get(item.product_id) || 0;
+            totalCost += cost * item.quantity;
+          });
+        }
+        const realMargin = revenue > 0 ? ((revenue - totalCost) / revenue) * 100 : 0;
+
         setStats({
           totalSales: sales.length,
           totalRevenue: revenue,
           totalProducts: products?.length || 0,
           avgTicket: sales.length > 0 ? revenue / sales.length : 0,
+          realMargin,
         });
 
         const byDay: Record<string, number> = {};
@@ -57,6 +76,7 @@ const Dashboard = () => {
     { label: "Receita Total", value: stats.totalRevenue, icon: DollarSign, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
     { label: "Produtos Ativos", value: stats.totalProducts, icon: Package, fmt: (v: number) => v.toString() },
     { label: "Ticket Médio", value: stats.avgTicket, icon: TrendingUp, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
+    { label: "Margem Real", value: stats.realMargin, icon: Percent, fmt: (v: number) => `${v.toFixed(1)}%` },
   ];
 
   return (
@@ -94,7 +114,7 @@ const Dashboard = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {statCards.map((s, i) => (
           <Card key={i} className="p-5 shadow-card">
             <div className="flex items-center justify-between">

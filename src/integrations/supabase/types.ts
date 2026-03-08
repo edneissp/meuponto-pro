@@ -662,6 +662,158 @@ export type Database = {
           },
         ]
       }
+      supplier_deliveries: {
+        Row: {
+          created_at: string
+          delivery_date: string
+          id: string
+          notes: string | null
+          purchase_type: string
+          supplier_id: string
+          tenant_id: string
+          total_amount: number
+        }
+        Insert: {
+          created_at?: string
+          delivery_date?: string
+          id?: string
+          notes?: string | null
+          purchase_type?: string
+          supplier_id: string
+          tenant_id: string
+          total_amount?: number
+        }
+        Update: {
+          created_at?: string
+          delivery_date?: string
+          id?: string
+          notes?: string | null
+          purchase_type?: string
+          supplier_id?: string
+          tenant_id?: string
+          total_amount?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_deliveries_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_deliveries_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_delivery_items: {
+        Row: {
+          created_at: string
+          delivery_id: string
+          id: string
+          product_id: string
+          quantity: number
+          tenant_id: string
+          total: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          delivery_id: string
+          id?: string
+          product_id: string
+          quantity?: number
+          tenant_id: string
+          total?: number
+          unit_price?: number
+        }
+        Update: {
+          created_at?: string
+          delivery_id?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          tenant_id?: string
+          total?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_delivery_items_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "supplier_deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_delivery_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_delivery_items_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      supplier_price_history: {
+        Row: {
+          id: string
+          product_id: string
+          recorded_at: string
+          supplier_id: string
+          tenant_id: string
+          unit_price: number
+        }
+        Insert: {
+          id?: string
+          product_id: string
+          recorded_at?: string
+          supplier_id: string
+          tenant_id: string
+          unit_price: number
+        }
+        Update: {
+          id?: string
+          product_id?: string
+          recorded_at?: string
+          supplier_id?: string
+          tenant_id?: string
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplier_price_history_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "supplier_price_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       suppliers: {
         Row: {
           created_at: string
