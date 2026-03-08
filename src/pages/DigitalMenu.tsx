@@ -775,18 +775,36 @@ const DigitalMenu = () => {
 
                   {/* PIX details */}
                   {paymentMethod === "pix" && tenant?.pix_key && (
-                    <div className="bg-muted/50 rounded-xl p-4 space-y-3">
-                      <p className="text-sm font-medium">💳 Dados para pagamento PIX</p>
+                    <div className="bg-muted/50 rounded-xl p-4 space-y-4">
+                      <p className="text-sm font-medium">💳 Pague via PIX</p>
+                      
+                      {/* QR Code */}
+                      <div className="flex flex-col items-center gap-2 bg-background rounded-lg p-4">
+                        <p className="text-xs text-muted-foreground font-medium">Escaneie o QR Code</p>
+                        <div className="bg-white p-3 rounded-lg">
+                          <QRCodeSVG
+                            value={tenant.pix_key}
+                            size={180}
+                            level="M"
+                            includeMargin={false}
+                          />
+                        </div>
+                        <p className="text-lg font-bold" style={{ color: accentColor }}>
+                          R$ {cartTotal.toFixed(2)}
+                        </p>
+                      </div>
+
+                      {/* Chave copia e cola */}
                       <div className="bg-background rounded-lg p-3 space-y-2">
-                        <p className="text-xs text-muted-foreground">Chave PIX</p>
+                        <p className="text-xs text-muted-foreground">Ou copie a chave PIX</p>
                         <div className="flex items-center gap-2">
                           <code className="flex-1 text-sm font-mono bg-muted p-2 rounded break-all">{tenant.pix_key}</code>
                           <Button variant="outline" size="icon" className="shrink-0 h-9 w-9" onClick={copyPixKey}>
                             {pixCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                           </Button>
                         </div>
-                        <p className="text-xs text-muted-foreground">Valor: <span className="font-bold">R$ {cartTotal.toFixed(2)}</span></p>
                       </div>
+
                       <label className="flex items-center gap-2 cursor-pointer">
                         <input
                           type="checkbox"
