@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
 const PRESET_COLORS = [
   "#F97316", "#EF4444", "#8B5CF6", "#3B82F6",
@@ -15,6 +16,7 @@ const PRESET_COLORS = [
 
 const AppSettings = () => {
   const { toast } = useToast();
+  const { applyColor } = useTenantTheme();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -49,6 +51,12 @@ const AppSettings = () => {
     load();
   }, []);
 
+  // Apply color in real-time when selecting
+  const handleColorChange = (color: string) => {
+    setPrimaryColor(color);
+    applyColor(color);
+  };
+
   const handleSave = async () => {
     if (!tenantId) return;
     setSaving(true);
@@ -60,6 +68,8 @@ const AppSettings = () => {
     if (error) {
       toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
     } else {
+      // Apply theme after save to ensure persistence
+      applyColor(primaryColor);
       toast({ title: "Configurações salvas!" });
     }
   };
@@ -147,14 +157,14 @@ const AppSettings = () => {
             <Palette className="h-5 w-5 text-primary" />
             Cor Principal
           </CardTitle>
-          <CardDescription>Escolha a cor que representa sua marca.</CardDescription>
+          <CardDescription>Escolha a cor que representa sua marca. A mudança é aplicada em tempo real.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-3">
             {PRESET_COLORS.map((c) => (
               <button
                 key={c}
-                onClick={() => setPrimaryColor(c)}
+                onClick={() => handleColorChange(c)}
                 className="h-10 w-10 rounded-full border-2 transition-transform hover:scale-110"
                 style={{
                   backgroundColor: c,
@@ -166,7 +176,7 @@ const AppSettings = () => {
           </div>
           <div className="flex items-center gap-3">
             <Label>Personalizada:</Label>
-            <input type="color" value={primaryColor} onChange={(e) => setPrimaryColor(e.target.value)} className="h-10 w-10 rounded cursor-pointer border-0" />
+            <input type="color" value={primaryColor} onChange={(e) => handleColorChange(e.target.value)} className="h-10 w-10 rounded cursor-pointer border-0" />
             <span className="text-sm text-muted-foreground font-mono">{primaryColor}</span>
           </div>
           <div className="flex items-center gap-3">
