@@ -199,7 +199,8 @@ const DigitalMenu = () => {
     if (orderType === "delivery" && deliveryFee > 0) parts.push(`Taxa: R$${deliveryFee.toFixed(2)}`);
     if (orderType === "pickup") parts.push("Retirada no balcão");
     if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
-    parts.push(`Pagamento: ${paymentMethod === "pix" ? "PIX" : "Na entrega/retirada"}`);
+    const payLabels: Record<PaymentMethod, string> = { pix: "PIX", debit: "Débito", credit: "Crédito" };
+    parts.push(`Pagamento: ${payLabels[paymentMethod]}`);
     return parts.join(" | ") || null;
   };
 
