@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
