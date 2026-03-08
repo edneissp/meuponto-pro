@@ -5,6 +5,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { CheckCircle, Zap } from "lucide-react";
+
+const trialBenefits = [
+  "30 dias grátis — sem cartão de crédito",
+  "PDV completo e controle de estoque",
+  "Relatórios e dashboard de vendas",
+  "Impressão térmica de pedidos",
+];
 
 const Register = () => {
   const [fullName, setFullName] = useState("");
@@ -44,20 +52,34 @@ const Register = () => {
         <div className="max-w-md">
           <div className="flex items-center gap-2 mb-8">
             <div className="h-10 w-10 rounded-lg gradient-primary" />
-            <span className="text-2xl font-bold text-primary-foreground">MeuPonto</span>
+            <span className="text-2xl font-bold text-primary-foreground">YouControl</span>
           </div>
-          <h2 className="text-3xl font-bold text-primary-foreground mb-4">Comece a gerenciar hoje</h2>
-          <p className="text-primary-foreground/70">Crie sua conta em segundos e tenha acesso completo à plataforma.</p>
+          <h2 className="text-3xl font-bold text-primary-foreground mb-4">Teste grátis por 30 dias</h2>
+          <p className="text-primary-foreground/70 mb-8">
+            Experimente o YouControl por 30 dias grátis. Sistema completo para lanchonetes, restaurantes e açaiterias.
+          </p>
+          <ul className="space-y-3">
+            {trialBenefits.map((b) => (
+              <li key={b} className="flex items-center gap-3 text-primary-foreground/80">
+                <CheckCircle className="h-5 w-5 text-primary shrink-0" />
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
         </div>
       </div>
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2 mb-8">
+          <div className="lg:hidden flex items-center gap-2 mb-4">
             <div className="h-8 w-8 rounded-lg gradient-primary" />
-            <span className="text-xl font-bold">MeuPonto</span>
+            <span className="text-xl font-bold">YouControl</span>
           </div>
-          <h1 className="text-2xl font-bold mb-2">Criar conta</h1>
-          <p className="text-muted-foreground mb-8">Preencha os dados do seu negócio</p>
+          <div className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
+            <Zap className="h-3 w-3" />
+            30 dias grátis
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Criar conta grátis</h1>
+          <p className="text-muted-foreground mb-8">Comece seu teste grátis de 30 dias — sem cartão de crédito</p>
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <Label htmlFor="fullName">Seu nome</Label>
@@ -75,11 +97,14 @@ const Register = () => {
               <Label htmlFor="password">Senha</Label>
               <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Mínimo 6 caracteres" required />
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Criando..." : "Criar Conta"}
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
+              {loading ? "Criando..." : "Começar teste grátis"}
             </Button>
           </form>
-          <p className="text-sm text-center mt-6 text-muted-foreground">
+          <p className="text-xs text-center mt-4 text-muted-foreground">
+            Sem cartão de crédito • Cancele quando quiser
+          </p>
+          <p className="text-sm text-center mt-4 text-muted-foreground">
             Já tem conta? <Link to="/login" className="text-primary font-medium hover:underline">Entrar</Link>
           </p>
           <p className="text-sm text-center mt-2">

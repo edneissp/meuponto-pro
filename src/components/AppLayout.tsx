@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 import Subscription from "@/pages/Subscription";
+import TrialBanner from "@/components/TrialBanner";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
@@ -27,6 +28,8 @@ const AppLayout = () => {
   const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [tenantStatus, setTenantStatus] = useState<string | null>(null);
+  const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
+  const [tenantPlano, setTenantPlano] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
 
   useEffect(() => {
@@ -36,7 +39,7 @@ const AppLayout = () => {
         navigate("/login");
         return;
       }
-      // Get tenant name
+      // Get tenant info
       const { data: profile } = await supabase
         .from("profiles")
         .select("tenant_id")
@@ -45,13 +48,39 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name, subscription_status, logo_url")
+          .select("name, subscription_status, logo_url, trial_end, plano, ativo")
           .eq("id", profile.tenant_id)
           .single();
         if (tenant) {
           setTenantName(tenant.name);
-          setTenantStatus(tenant.subscription_status);
           setTenantLogo(tenant.logo_url);
+          setTenantPlano((tenant as any).plano || null);
+
+          // Check trial expiration
+          const plano = (tenant as any).plano as string;
+          const trialEnd = (tenant as any).trial_end as string | null;
+
+          if (plano === "trial" && trialEnd) {
+            const endDate = new Date(trialEnd);
+            const now = new Date();
+            const diffMs = endDate.getTime() - now.getTime();
+            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+            setTrialDaysLeft(diffDays);
+
+            if (diffDays < 0) {
+              // Trial expired - update tenant
+              await supabase
+                .from("tenants")
+                .update({ plano: "expirado", subscription_status: "suspended" })
+                .eq("id", profile.tenant_id);
+              setTenantStatus("suspended");
+              setTenantPlano("expirado");
+            } else {
+              setTenantStatus(tenant.subscription_status);
+            }
+          } else {
+            setTenantStatus(tenant.subscription_status);
+          }
         }
       }
       // Check admin role
@@ -75,12 +104,13 @@ const AppLayout = () => {
     navigate("/");
   };
 
-  // Block access for pending/suspended tenants (allow payment-status page and admins)
-  const isBlocked = tenantStatus && !["active", "free"].includes(tenantStatus) && !isAdmin;
+  // Block access for pending/suspended/expired tenants (allow payment-status page and admins)
+  const isBlocked = tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
   const isPaymentPage = location.pathname.includes("payment-status");
+  const isTrialExpired = tenantPlano === "expirado";
 
-  if (isBlocked && !isPaymentPage) {
-    return <Subscription blocked tenantName={tenantName} />;
+  if ((isBlocked || isTrialExpired) && !isPaymentPage && !isAdmin) {
+    return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} />;
   }
 
   return (
@@ -165,6 +195,10 @@ const AppLayout = () => {
             {navItems.find(n => n.path === location.pathname)?.label || "MeuPonto"}
           </h1>
         </header>
+        {/* Trial banner */}
+        {tenantPlano === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7 && trialDaysLeft >= 0 && (
+          <TrialBanner daysLeft={trialDaysLeft} />
+        )}
         <main className="flex-1 overflow-auto p-4 lg:p-6 bg-background">
           <Outlet />
         </main>
