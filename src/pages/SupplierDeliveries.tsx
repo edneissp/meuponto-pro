@@ -59,6 +59,7 @@ const SupplierDeliveries = () => {
 
   // Form state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingDelivery, setEditingDelivery] = useState<DeliveryRecord | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState("");
   const [purchaseType, setPurchaseType] = useState<"traditional" | "consigned">("traditional");
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split("T")[0]);
