@@ -4,14 +4,25 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock, Clock, ShoppingCart, Package, BarChart3, Printer, LayoutDashboard, Bell, TrendingDown } from "lucide-react";
 
 type SubscriptionPageProps = {
   blocked?: boolean;
   tenantName?: string;
+  trialExpired?: boolean;
 };
 
-const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento" }: SubscriptionPageProps) => {
+const benefits = [
+  { icon: ShoppingCart, text: "PDV completo" },
+  { icon: Package, text: "Controle de estoque" },
+  { icon: BarChart3, text: "Relatórios automáticos" },
+  { icon: Printer, text: "Impressão térmica de pedidos" },
+  { icon: LayoutDashboard, text: "Dashboard de vendas" },
+  { icon: Clock, text: "Controle de validade de produtos" },
+  { icon: TrendingDown, text: "Relatório de estoque baixo" },
+];
+
+const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", trialExpired = false }: SubscriptionPageProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
 
@@ -43,11 +54,23 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento" }: S
     }
   };
 
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="max-w-lg w-full">
         <CardHeader className="text-center">
-          {blocked ? (
+          {trialExpired ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="h-16 w-16 rounded-full bg-destructive/10 flex items-center justify-center">
+                <Clock className="h-8 w-8 text-destructive" />
+              </div>
+              <CardTitle className="text-2xl">Seu período de teste terminou</CardTitle>
+            </div>
+          ) : blocked ? (
             <div className="flex flex-col items-center gap-3">
               <Lock className="h-12 w-12 text-destructive" />
               <CardTitle className="text-2xl">Acesso Bloqueado</CardTitle>
@@ -55,12 +78,21 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento" }: S
           ) : (
             <div className="flex flex-col items-center gap-3">
               <CreditCard className="h-12 w-12 text-primary" />
-              <CardTitle className="text-2xl">Assinatura MeuPonto Pro</CardTitle>
+              <CardTitle className="text-2xl">Continue usando o YouControl</CardTitle>
             </div>
           )}
         </CardHeader>
         <CardContent className="space-y-6">
-          {blocked && (
+          {trialExpired && (
+            <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
+              <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+              <p className="text-sm text-destructive">
+                Seu teste grátis de 30 dias chegou ao fim. Assine o plano para continuar gerenciando seu negócio com o YouControl.
+              </p>
+            </div>
+          )}
+
+          {blocked && !trialExpired && (
             <div className="flex items-start gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/20">
               <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
               <p className="text-sm text-destructive">
@@ -69,25 +101,25 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento" }: S
             </div>
           )}
 
+          <p className="text-center text-muted-foreground text-sm">
+            Gerencie sua lanchonete, restaurante ou açaiteria com um sistema completo de vendas, estoque e relatórios.
+          </p>
+
           <div className="bg-muted/50 rounded-lg p-6 text-center space-y-2">
-            <p className="text-sm text-muted-foreground">Plano Mensal</p>
+            <p className="text-sm font-medium text-primary">YouControl Profissional</p>
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-bold">R$ 100</span>
+              <span className="text-4xl font-bold">R$ 99,90</span>
               <span className="text-muted-foreground">/mês</span>
             </div>
           </div>
 
           <ul className="space-y-3">
-            {[
-              "PDV completo e controle de estoque",
-              "Relatórios financeiros detalhados",
-              "Gestão de fornecedores e despesas",
-              "Personalização da marca",
-              "Suporte prioritário",
-            ].map((item) => (
-              <li key={item} className="flex items-center gap-2 text-sm">
-                <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                {item}
+            {benefits.map((item) => (
+              <li key={item.text} className="flex items-center gap-3 text-sm">
+                <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <item.icon className="h-3.5 w-3.5 text-primary" />
+                </div>
+                {item.text}
               </li>
             ))}
           </ul>
@@ -101,14 +133,20 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento" }: S
             ) : (
               <>
                 <CreditCard className="h-4 w-4" />
-                Pagar com Mercado Pago
+                Assinar agora
               </>
             )}
           </Button>
 
-          {!blocked && (
+          {!blocked && !trialExpired && (
             <Button variant="ghost" className="w-full" onClick={() => navigate("/app")}>
               Voltar ao Dashboard
+            </Button>
+          )}
+
+          {(blocked || trialExpired) && (
+            <Button variant="ghost" className="w-full" onClick={handleLogout}>
+              Sair da conta
             </Button>
           )}
         </CardContent>

@@ -881,6 +881,7 @@ export type Database = {
       }
       tenants: {
         Row: {
+          ativo: boolean
           created_at: string
           delivery_fee: number
           delivery_fee_per_km: number
@@ -889,14 +890,18 @@ export type Database = {
           logo_url: string | null
           name: string
           pix_key: string | null
+          plano: string
           primary_color: string | null
           store_lat: number | null
           store_lng: number | null
           subscription_status: string
+          trial_end: string | null
+          trial_start: string | null
           updated_at: string
           whatsapp: string | null
         }
         Insert: {
+          ativo?: boolean
           created_at?: string
           delivery_fee?: number
           delivery_fee_per_km?: number
@@ -905,14 +910,18 @@ export type Database = {
           logo_url?: string | null
           name: string
           pix_key?: string | null
+          plano?: string
           primary_color?: string | null
           store_lat?: number | null
           store_lng?: number | null
           subscription_status?: string
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
         Update: {
+          ativo?: boolean
           created_at?: string
           delivery_fee?: number
           delivery_fee_per_km?: number
@@ -921,10 +930,13 @@ export type Database = {
           logo_url?: string | null
           name?: string
           pix_key?: string | null
+          plano?: string
           primary_color?: string | null
           store_lat?: number | null
           store_lng?: number | null
           subscription_status?: string
+          trial_end?: string | null
+          trial_start?: string | null
           updated_at?: string
           whatsapp?: string | null
         }
