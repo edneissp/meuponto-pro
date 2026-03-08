@@ -16,6 +16,8 @@ import POS from "./pages/POS";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import AppSettings from "./pages/AppSettings";
+import Orders from "./pages/Orders";
+import DigitalMenu from "./pages/DigitalMenu";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
