@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink } from "lucide-react";
+import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
