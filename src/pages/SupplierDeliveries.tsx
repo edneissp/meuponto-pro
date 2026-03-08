@@ -314,7 +314,7 @@ const SupplierDeliveries = () => {
       if (error) throw error;
 
       toast.success("Entrega excluída com sucesso!");
-      fetchData();
+      loadData();
     } catch (err: any) {
       toast.error("Erro ao excluir: " + err.message);
     }
