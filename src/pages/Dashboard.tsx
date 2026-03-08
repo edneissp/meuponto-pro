@@ -23,16 +23,35 @@ const Dashboard = () => {
       const d = selectedDate;
       const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
       const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1).toISOString();
-      const { data: sales } = await supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay);
-      const { data: products } = await supabase.from("products").select("id");
+      const [salesRes, productsRes, saleItemsRes] = await Promise.all([
+        supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay),
+        supabase.from("products").select("id, purchase_price, sale_price"),
+        supabase.from("sale_items").select("product_id, quantity, unit_price, total").gte("created_at", startOfDay).lt("created_at", endOfDay),
+      ]);
+      const sales = salesRes.data;
+      const products = productsRes.data;
+      const saleItems = saleItemsRes.data;
 
       if (sales) {
         const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+
+        // Calculate real margin from sale items vs purchase prices
+        let totalCost = 0;
+        if (saleItems && products) {
+          const productMap = new Map(products.map(p => [p.id, Number(p.purchase_price)]));
+          saleItems.forEach(item => {
+            const cost = productMap.get(item.product_id) || 0;
+            totalCost += cost * item.quantity;
+          });
+        }
+        const realMargin = revenue > 0 ? ((revenue - totalCost) / revenue) * 100 : 0;
+
         setStats({
           totalSales: sales.length,
           totalRevenue: revenue,
           totalProducts: products?.length || 0,
           avgTicket: sales.length > 0 ? revenue / sales.length : 0,
+          realMargin,
         });
 
         const byDay: Record<string, number> = {};
