@@ -19,6 +19,7 @@ const Dashboard = () => {
   const [paymentMethods, setPaymentMethods] = useState<any[]>([]);
   const [weeklyData, setWeeklyData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
+  const [topProducts, setTopProducts] = useState<any[]>([]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -38,12 +39,13 @@ const Dashboard = () => {
       const monthStartISO = monthStart.toISOString();
       const monthEndISO = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), monthEnd.getDate() + 1).toISOString();
 
-      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes] = await Promise.all([
+      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes, topItemsRes] = await Promise.all([
         supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay),
-        supabase.from("products").select("id, purchase_price, sale_price"),
+        supabase.from("products").select("id, purchase_price, sale_price, name"),
         supabase.from("sale_items").select("product_id, quantity, unit_price, total").gte("created_at", startOfDay).lt("created_at", endOfDay),
         supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", weekStartISO).lt("created_at", weekEndISO),
         supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
+        supabase.from("sale_items").select("product_id, quantity").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
       ]);
 
       const sales = salesRes.data;
@@ -119,6 +121,19 @@ const Dashboard = () => {
           }
         });
         setMonthlyData(Object.entries(monthMap).map(([name, data]) => ({ name, ...data })));
+      }
+
+      // Top products
+      if (topItemsRes.data && products) {
+        const nameMap = new Map(products.map(p => [p.id, p.name]));
+        const prodQty: Record<string, { name: string; qty: number }> = {};
+        topItemsRes.data.forEach(item => {
+          const name = nameMap.get(item.product_id) || "Desconhecido";
+          if (!prodQty[item.product_id]) prodQty[item.product_id] = { name, qty: 0 };
+          prodQty[item.product_id].qty += item.quantity;
+        });
+        const sorted = Object.values(prodQty).sort((a, b) => b.qty - a.qty).slice(0, 10);
+        setTopProducts(sorted.map(p => ({ name: p.name.length > 20 ? p.name.slice(0, 20) + "…" : p.name, quantidade: p.qty })));
       }
     };
     loadData();
@@ -278,6 +293,28 @@ const Dashboard = () => {
           ) : (
             <div className="h-full flex items-center justify-center text-muted-foreground">
               Nenhum dado disponível para o período
+            </div>
+          )}
+        </div>
+      </Card>
+
+      {/* Top Products */}
+      <Card className="p-5 shadow-card">
+        <h3 className="font-semibold mb-4">Produtos Mais Vendidos (últimos 6 meses)</h3>
+        <div className="h-80">
+          {topProducts.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topProducts} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} width={120} />
+                <Tooltip />
+                <Bar dataKey="quantidade" name="Quantidade" fill="hsl(24, 95%, 53%)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              Nenhum dado disponível
             </div>
           )}
         </div>
