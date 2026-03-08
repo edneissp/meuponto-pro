@@ -191,6 +191,8 @@ const DigitalMenu = () => {
   const buildOrderNotes = () => {
     const parts: string[] = [];
     if (orderType === "delivery" && deliveryAddress) parts.push(`Entrega: ${deliveryAddress}`);
+    if (orderType === "delivery" && distanceKm !== null) parts.push(`Distância: ${distanceKm.toFixed(1)}km`);
+    if (orderType === "delivery" && deliveryFee > 0) parts.push(`Taxa: R$${deliveryFee.toFixed(2)}`);
     if (orderType === "pickup") parts.push("Retirada no balcão");
     if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
     return parts.join(" | ") || null;
