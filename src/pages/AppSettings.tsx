@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Palette, Store } from "lucide-react";
+import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 const PRESET_COLORS = [
   "#F97316", "#EF4444", "#8B5CF6", "#3B82F6",
