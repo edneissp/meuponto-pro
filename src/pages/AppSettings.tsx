@@ -24,6 +24,7 @@ const AppSettings = () => {
   const [name, setName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState("0");
 
   useEffect(() => {
     const load = async () => {
