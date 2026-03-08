@@ -297,6 +297,28 @@ const Dashboard = () => {
           )}
         </div>
       </Card>
+
+      {/* Top Products */}
+      <Card className="p-5 shadow-card">
+        <h3 className="font-semibold mb-4">Produtos Mais Vendidos (últimos 6 meses)</h3>
+        <div className="h-80">
+          {topProducts.length > 0 ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={topProducts} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis type="category" dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={11} width={120} />
+                <Tooltip />
+                <Bar dataKey="quantidade" name="Quantidade" fill="hsl(24, 95%, 53%)" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              Nenhum dado disponível
+            </div>
+          )}
+        </div>
+      </Card>
     </div>
   );
 };
