@@ -199,9 +199,22 @@ const Orders = () => {
             </button>
           );
         })}
-        <Button variant="outline" size="sm" className="ml-auto" onClick={loadOrders}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSoundEnabled(!soundEnabled);
+              toast.info(soundEnabled ? "Notificação sonora desativada" : "Notificação sonora ativada");
+            }}
+            title={soundEnabled ? "Desativar som" : "Ativar som"}
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadOrders}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Orders Grid */}
