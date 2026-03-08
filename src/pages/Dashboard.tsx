@@ -76,6 +76,7 @@ const Dashboard = () => {
     { label: "Receita Total", value: stats.totalRevenue, icon: DollarSign, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
     { label: "Produtos Ativos", value: stats.totalProducts, icon: Package, fmt: (v: number) => v.toString() },
     { label: "Ticket Médio", value: stats.avgTicket, icon: TrendingUp, fmt: (v: number) => `R$ ${v.toFixed(2)}` },
+    { label: "Margem Real", value: stats.realMargin, icon: Percent, fmt: (v: number) => `${v.toFixed(1)}%` },
   ];
 
   return (
