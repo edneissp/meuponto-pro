@@ -234,7 +234,7 @@ const DigitalMenu = () => {
       if (orderType === "table" && tableNumber) msg += `🪑 Mesa: ${tableNumber}\n`;
       if (orderType === "pickup") msg += `📦 Retirada no balcão\n`;
       if (orderType === "delivery" && deliveryAddress) msg += `🛵 Entrega: ${deliveryAddress}\n`;
-      msg += `\n💰 *Total: R$ ${cartTotal.toFixed(2)}*`;
+      msg += `\n💰 *Total: R$ ${orderTotal.toFixed(2)}*`;
       return encodeURIComponent(msg);
     };
 
