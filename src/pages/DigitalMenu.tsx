@@ -37,6 +37,7 @@ interface TenantInfo {
   name: string;
   logo_url: string | null;
   primary_color: string | null;
+  delivery_fee: number;
 }
 
 type OrderType = "table" | "pickup" | "delivery";
@@ -68,7 +69,7 @@ const DigitalMenu = () => {
     if (!tenantId) return;
     const load = async () => {
       const [tenantRes, productsRes, categoriesRes] = await Promise.all([
-        supabase.from("tenants").select("id, name, logo_url, primary_color").eq("id", tenantId).single(),
+        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee").eq("id", tenantId).single(),
         supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
       ]);
@@ -126,7 +127,9 @@ const DigitalMenu = () => {
     setCart(prev => prev.filter(c => c.product.id !== productId));
   };
 
-  const cartTotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
+  const cartSubtotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
+  const deliveryFee = orderType === "delivery" ? Number(tenant?.delivery_fee || 0) : 0;
+  const cartTotal = cartSubtotal + deliveryFee;
   const cartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
 
   const buildOrderNotes = () => {
@@ -158,7 +161,8 @@ const DigitalMenu = () => {
       customer_phone: customerPhone || null,
       table_number: orderType === "table" ? (tableNumber || null) : null,
       notes: buildOrderNotes(),
-      subtotal: cartTotal,
+      subtotal: cartSubtotal,
+      discount: 0,
       total: cartTotal,
     }).select("id, order_number").single();
 
@@ -569,6 +573,12 @@ const DigitalMenu = () => {
                         <span className="font-medium">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</span>
                       </div>
                     ))}
+                    {deliveryFee > 0 && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">🛵 Taxa de entrega</span>
+                        <span className="font-medium">R$ {deliveryFee.toFixed(2)}</span>
+                      </div>
+                    )}
                     <div className="border-t border-border pt-2 flex justify-between text-base font-bold">
                       <span>Total</span>
                       <span style={{ color: accentColor }}>R$ {cartTotal.toFixed(2)}</span>

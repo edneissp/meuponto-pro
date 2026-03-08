@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink } from "lucide-react";
+import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 
@@ -24,6 +24,7 @@ const AppSettings = () => {
   const [name, setName] = useState("");
   const [primaryColor, setPrimaryColor] = useState("#F97316");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [deliveryFee, setDeliveryFee] = useState("0");
 
   useEffect(() => {
     const load = async () => {
@@ -38,13 +39,14 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url")
+        .select("name, primary_color, logo_url, delivery_fee")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
         setName(tenant.name);
         setPrimaryColor(tenant.primary_color || "#F97316");
         setLogoUrl(tenant.logo_url);
+        setDeliveryFee(String(tenant.delivery_fee || 0));
       }
       setLoading(false);
     };
@@ -62,7 +64,7 @@ const AppSettings = () => {
     setSaving(true);
     const { error } = await supabase
       .from("tenants")
-      .update({ name, primary_color: primaryColor, logo_url: logoUrl })
+      .update({ name, primary_color: primaryColor, logo_url: logoUrl, delivery_fee: Number(deliveryFee) || 0 })
       .eq("id", tenantId);
     setSaving(false);
     if (error) {
@@ -184,6 +186,31 @@ const AppSettings = () => {
             <div className="h-10 px-6 rounded-lg flex items-center text-sm font-medium text-white" style={{ backgroundColor: primaryColor }}>
               Botão de exemplo
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delivery Fee */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Truck className="h-5 w-5 text-primary" />
+            Taxa de Entrega
+          </CardTitle>
+          <CardDescription>Defina o valor cobrado para entregas via delivery. Deixe 0 para não cobrar.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-muted-foreground">R$</span>
+            <Input
+              type="number"
+              min="0"
+              step="0.50"
+              value={deliveryFee}
+              onChange={(e) => setDeliveryFee(e.target.value)}
+              placeholder="0.00"
+              className="max-w-[150px]"
+            />
           </div>
         </CardContent>
       </Card>

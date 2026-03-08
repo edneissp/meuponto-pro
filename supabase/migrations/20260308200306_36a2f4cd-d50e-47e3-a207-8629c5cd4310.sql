@@ -1,0 +1,1 @@
+ALTER TABLE public.tenants ADD COLUMN delivery_fee numeric NOT NULL DEFAULT 0;
