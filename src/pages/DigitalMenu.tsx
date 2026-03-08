@@ -38,6 +38,10 @@ interface TenantInfo {
   logo_url: string | null;
   primary_color: string | null;
   delivery_fee: number;
+  free_delivery_radius_km: number;
+  delivery_fee_per_km: number;
+  store_lat: number | null;
+  store_lng: number | null;
   whatsapp: string | null;
 }
 
