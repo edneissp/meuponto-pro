@@ -78,6 +78,7 @@ const DigitalMenu = () => {
   const [gettingLocation, setGettingLocation] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [pixCopied, setPixCopied] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
 
   useEffect(() => {
     if (!tenantId) return;
@@ -517,7 +518,7 @@ const DigitalMenu = () => {
 
       {/* Floating cart button */}
       {cartCount > 0 && (
-        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); setPixCopied(false); }}>
+        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); setPixCopied(false); setPaymentConfirmed(false); }}>
           <SheetTrigger asChild>
             <button
               className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-semibold shadow-xl transition-transform active:scale-95 w-[90%] max-w-lg"
@@ -754,7 +755,7 @@ const DigitalMenu = () => {
                     ]).map(opt => (
                       <button
                         key={opt.method}
-                        onClick={() => setPaymentMethod(opt.method)}
+                        onClick={() => { setPaymentMethod(opt.method); setPaymentConfirmed(false); }}
                         className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all text-left ${
                           paymentMethod === opt.method ? "border-transparent text-white" : "border-border"
                         }`}
@@ -785,9 +786,38 @@ const DigitalMenu = () => {
                         </div>
                         <p className="text-xs text-muted-foreground">Valor: <span className="font-bold">R$ {cartTotal.toFixed(2)}</span></p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        ⚠️ Faça o PIX e envie o pedido. O estabelecimento confirmará o pagamento.
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfirmed}
+                          onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="text-xs text-muted-foreground">✅ Já realizei o pagamento via PIX</span>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Card payment confirmation */}
+                  {(paymentMethod === "debit" || paymentMethod === "credit") && (
+                    <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                      <p className="text-sm font-medium">
+                        💳 Pagamento com {paymentMethod === "debit" ? "Débito" : "Crédito"}
                       </p>
+                      <p className="text-xs text-muted-foreground">
+                        O pagamento será realizado na maquininha do estabelecimento no momento da entrega/retirada.
+                      </p>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfirmed}
+                          onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ✅ Confirmo que pagarei no {paymentMethod === "debit" ? "débito" : "crédito"} na entrega
+                        </span>
+                      </label>
                     </div>
                   )}
 
@@ -823,10 +853,10 @@ const DigitalMenu = () => {
                     size="lg"
                     style={{ backgroundColor: accentColor }}
                     onClick={sendOrder}
-                    disabled={sending || cart.length === 0}
+                    disabled={sending || cart.length === 0 || !paymentConfirmed}
                   >
                     <Send className="h-4 w-4 mr-2" />
-                    {sending ? "Enviando..." : paymentMethod === "pix" && tenant?.pix_key ? "Já paguei — Enviar Pedido" : "Enviar Pedido"}
+                    {sending ? "Enviando..." : !paymentConfirmed ? "Confirme o pagamento acima" : "Enviar Pedido"}
                   </Button>
                 </div>
               </>
