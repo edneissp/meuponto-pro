@@ -283,27 +283,37 @@ const Orders = () => {
                 </div>
 
                 {/* Actions */}
-                {order.status !== "delivered" && order.status !== "cancelled" && (
-                  <div className="p-4 pt-0 flex gap-2">
-                    {canAdvance && nextStatus && (
+                <div className="p-4 pt-0 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPrintOrder(order)}
+                    title="Imprimir comanda"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  {order.status !== "delivered" && order.status !== "cancelled" && (
+                    <>
+                      {canAdvance && nextStatus && (
+                        <Button
+                          className="flex-1"
+                          size="sm"
+                          onClick={() => updateStatus(order.id, order.status)}
+                        >
+                          {statusConfig[nextStatus]?.label || "Avançar"}
+                        </Button>
+                      )}
                       <Button
-                        className="flex-1"
+                        variant="outline"
                         size="sm"
-                        onClick={() => updateStatus(order.id, order.status)}
+                        className="text-destructive hover:text-destructive"
+                        onClick={() => cancelOrder(order.id)}
                       >
-                        {statusConfig[nextStatus]?.label || "Avançar"}
+                        Cancelar
                       </Button>
-                    )}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => cancelOrder(order.id)}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                )}
+                    </>
+                  )}
+                </div>
               </Card>
             );
           })}
