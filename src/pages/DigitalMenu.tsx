@@ -76,7 +76,7 @@ const DigitalMenu = () => {
   const [customerLng, setCustomerLng] = useState<number | null>(null);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [gettingLocation, setGettingLocation] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("on_delivery");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("pix");
   const [pixCopied, setPixCopied] = useState(false);
 
   useEffect(() => {
