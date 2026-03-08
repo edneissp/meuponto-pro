@@ -296,7 +296,8 @@ const DigitalMenu = () => {
       if (orderType === "table" && tableNumber) msg += `🪑 Mesa: ${tableNumber}\n`;
       if (orderType === "pickup") msg += `📦 Retirada no balcão\n`;
       if (orderType === "delivery" && deliveryAddress) msg += `🛵 Entrega: ${deliveryAddress}\n`;
-      msg += `\n💳 *Pagamento: ${paymentMethod === "pix" ? "PIX (antecipado)" : "Na hora"}*`;
+      const payLabels: Record<string, string> = { pix: "PIX", debit: "Débito", credit: "Crédito" };
+      msg += `\n💳 *Pagamento: ${payLabels[paymentMethod] || paymentMethod}*`;
       msg += `\n💰 *Total: R$ ${orderTotal.toFixed(2)}*`;
       return encodeURIComponent(msg);
     };
