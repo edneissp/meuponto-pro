@@ -121,79 +121,106 @@ const SupplierDeliveries = () => {
     setSaving(true);
 
     try {
-      // Get tenant_id
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { toast.error("Sessão expirada"); setSaving(false); return; }
       const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
       if (!profile) { toast.error("Perfil não encontrado"); setSaving(false); return; }
       const tenantId = profile.tenant_id;
 
-      // 1. Create delivery
-      const { data: delivery, error: delErr } = await supabase.from("supplier_deliveries").insert({
-        tenant_id: tenantId,
-        supplier_id: selectedSupplier,
-        delivery_date: deliveryDate,
-        total_amount: totalAmount,
-        purchase_type: purchaseType,
-        notes: notes || null,
-      }).select("id").single();
+      if (editingDelivery) {
+        // UPDATE mode
+        // 1. Update delivery header
+        const { error: delErr } = await supabase.from("supplier_deliveries").update({
+          supplier_id: selectedSupplier,
+          delivery_date: deliveryDate,
+          total_amount: totalAmount,
+          purchase_type: purchaseType,
+          notes: notes || null,
+        }).eq("id", editingDelivery.id);
+        if (delErr) throw new Error("Erro ao atualizar entrega");
 
-      if (delErr || !delivery) throw new Error("Erro ao criar entrega");
+        // 2. Delete old items and insert new ones
+        await supabase.from("supplier_delivery_items").delete().eq("delivery_id", editingDelivery.id);
 
-      // 2. Insert delivery items
-      const deliveryItems = items.map(item => ({
-        delivery_id: delivery.id,
-        tenant_id: tenantId,
-        product_id: item.product_id,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        total: item.total,
-      }));
-      const { error: itemsErr } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
-      if (itemsErr) throw new Error("Erro ao salvar itens");
-
-      // 3. Update stock + record movements + update purchase_price + record price history
-      for (const item of items) {
-        await supabase.from("products").update({
-          stock_quantity: (products.find(p => p.id === item.product_id)?.stock_quantity || 0) + item.quantity,
-          purchase_price: item.unit_price,
-        }).eq("id", item.product_id);
-
-        await supabase.from("stock_movements").insert({
+        const deliveryItems = items.map(item => ({
+          delivery_id: editingDelivery.id,
           tenant_id: tenantId,
           product_id: item.product_id,
-          type: "entry",
           quantity: item.quantity,
-          notes: `Entrega fornecedor: ${suppliers.find(s => s.id === selectedSupplier)?.name || ""}`,
-        });
-
-        await supabase.from("supplier_price_history").insert({
-          tenant_id: tenantId,
-          supplier_id: selectedSupplier,
-          product_id: item.product_id,
           unit_price: item.unit_price,
-        });
-      }
+          total: item.total,
+        }));
+        const { error: itemsErr } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
+        if (itemsErr) throw new Error("Erro ao salvar itens");
 
-      // 4. Create expense (only for traditional, not consigned)
-      if (purchaseType === "traditional") {
-        await supabase.from("expenses").insert({
+        toast.success("Entrega atualizada com sucesso!");
+      } else {
+        // CREATE mode
+        const { data: delivery, error: delErr } = await supabase.from("supplier_deliveries").insert({
           tenant_id: tenantId,
-          description: `Entrega - ${suppliers.find(s => s.id === selectedSupplier)?.name || "Fornecedor"} (${deliveryDate})`,
-          amount: totalAmount,
-          category: "Compra de Mercadorias",
           supplier_id: selectedSupplier,
-          paid: false,
-          due_date: deliveryDate,
-        });
+          delivery_date: deliveryDate,
+          total_amount: totalAmount,
+          purchase_type: purchaseType,
+          notes: notes || null,
+        }).select("id").single();
+
+        if (delErr || !delivery) throw new Error("Erro ao criar entrega");
+
+        const deliveryItems = items.map(item => ({
+          delivery_id: delivery.id,
+          tenant_id: tenantId,
+          product_id: item.product_id,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          total: item.total,
+        }));
+        const { error: itemsErr } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
+        if (itemsErr) throw new Error("Erro ao salvar itens");
+
+        // Update stock + record movements + update purchase_price + record price history
+        for (const item of items) {
+          await supabase.from("products").update({
+            stock_quantity: (products.find(p => p.id === item.product_id)?.stock_quantity || 0) + item.quantity,
+            purchase_price: item.unit_price,
+          }).eq("id", item.product_id);
+
+          await supabase.from("stock_movements").insert({
+            tenant_id: tenantId,
+            product_id: item.product_id,
+            type: "entry",
+            quantity: item.quantity,
+            notes: `Entrega fornecedor: ${suppliers.find(s => s.id === selectedSupplier)?.name || ""}`,
+          });
+
+          await supabase.from("supplier_price_history").insert({
+            tenant_id: tenantId,
+            supplier_id: selectedSupplier,
+            product_id: item.product_id,
+            unit_price: item.unit_price,
+          });
+        }
+
+        if (purchaseType === "traditional") {
+          await supabase.from("expenses").insert({
+            tenant_id: tenantId,
+            description: `Entrega - ${suppliers.find(s => s.id === selectedSupplier)?.name || "Fornecedor"} (${deliveryDate})`,
+            amount: totalAmount,
+            category: "Compra de Mercadorias",
+            supplier_id: selectedSupplier,
+            paid: false,
+            due_date: deliveryDate,
+          });
+        }
+
+        toast.success("Entrega registrada com sucesso!");
       }
 
-      toast.success("Entrega registrada com sucesso!");
       setDialogOpen(false);
       resetForm();
       loadData();
     } catch (err: any) {
-      toast.error(err.message || "Erro ao registrar entrega");
+      toast.error(err.message || "Erro ao salvar entrega");
     }
     setSaving(false);
   };
