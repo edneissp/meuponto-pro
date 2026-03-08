@@ -69,7 +69,7 @@ const DigitalMenu = () => {
     if (!tenantId) return;
     const load = async () => {
       const [tenantRes, productsRes, categoriesRes] = await Promise.all([
-        supabase.from("tenants").select("id, name, logo_url, primary_color").eq("id", tenantId).single(),
+        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee").eq("id", tenantId).single(),
         supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
       ]);
