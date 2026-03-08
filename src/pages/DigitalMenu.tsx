@@ -214,16 +214,6 @@ const DigitalMenu = () => {
 
   const sendOrder = async () => {
     if (!tenantId || cart.length === 0) return;
-
-    if (orderType === "delivery" && !customerName) {
-      toast.error("Informe seu nome para delivery");
-      return;
-    }
-    if (orderType === "delivery" && !deliveryAddress) {
-      toast.error("Informe o endereço de entrega");
-      return;
-    }
-
     setSending(true);
 
     const { data: order, error: orderError } = await supabase.from("orders").insert({
