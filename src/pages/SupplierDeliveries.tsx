@@ -268,6 +268,11 @@ const SupplierDeliveries = () => {
     if (!confirm(`Excluir entrega de ${(del.suppliers as any)?.name || "Fornecedor"} em ${new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}?`)) return;
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { toast.error("Sessão expirada"); return; }
+      const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
+      if (!profile) { toast.error("Perfil não encontrado"); return; }
+
       // Revert stock for each item
       for (const item of del.supplier_delivery_items || []) {
         const { data: currentProduct } = await supabase
@@ -275,7 +280,7 @@ const SupplierDeliveries = () => {
           .select("stock_quantity")
           .eq("id", item.product_id)
           .single();
-        
+
         if (currentProduct) {
           await supabase.from("products").update({
             stock_quantity: Math.max(0, (currentProduct.stock_quantity ?? 0) - item.quantity),
@@ -283,29 +288,12 @@ const SupplierDeliveries = () => {
         }
 
         await supabase.from("stock_movements").insert({
-          tenant_id: del.supplier_id, // will get tenant from profile below
+          tenant_id: profile.tenant_id,
           product_id: item.product_id,
           type: "adjustment",
           quantity: -item.quantity,
-          notes: `Exclusão de entrega do fornecedor: ${(del.suppliers as any)?.name || ""}`,
-        }).then(() => {}); // ignore if fails
-      }
-
-      // Get tenant_id for stock_movements
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
-        if (profile) {
-          for (const item of del.supplier_delivery_items || []) {
-            await supabase.from("stock_movements").insert({
-              tenant_id: profile.tenant_id,
-              product_id: item.product_id,
-              type: "adjustment",
-              quantity: -item.quantity,
-              notes: `Exclusão entrega fornecedor: ${(del.suppliers as any)?.name || ""}`,
-            });
-          }
-        }
+          notes: `Exclusão entrega fornecedor: ${(del.suppliers as any)?.name || ""}`,
+        });
       }
 
       // Delete items then delivery
