@@ -61,6 +61,7 @@ const DigitalMenu = () => {
   const [cartOpen, setCartOpen] = useState(false);
   const [orderSent, setOrderSent] = useState(false);
   const [orderNumber, setOrderNumber] = useState<number | null>(null);
+  const [orderTotal, setOrderTotal] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [productNotes, setProductNotes] = useState("");
   const [productQty, setProductQty] = useState(1);
