@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ShoppingCart, Plus, Minus, Trash2, Search, Send, Store, MapPin, UtensilsCrossed, Package, MessageSquare, ChevronLeft, CheckCircle2, CreditCard, Banknote, QrCode, Copy, Check } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { toast } from "sonner";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
