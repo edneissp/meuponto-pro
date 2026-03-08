@@ -87,7 +87,7 @@ const DigitalMenu = () => {
         supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
         supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
       ]);
-      if (tenantRes.data) setTenant(tenantRes.data as TenantInfo);
+      if (tenantRes.data) setTenant(tenantRes.data as unknown as TenantInfo);
       if (productsRes.data) setProducts(productsRes.data as Product[]);
       if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
       setLoading(false);
