@@ -199,7 +199,17 @@ const DigitalMenu = () => {
     if (orderType === "delivery" && deliveryFee > 0) parts.push(`Taxa: R$${deliveryFee.toFixed(2)}`);
     if (orderType === "pickup") parts.push("Retirada no balcão");
     if (orderType === "table" && tableNumber) parts.push(`Mesa: ${tableNumber}`);
+    parts.push(`Pagamento: ${paymentMethod === "pix" ? "PIX" : "Na entrega/retirada"}`);
     return parts.join(" | ") || null;
+  };
+
+  const copyPixKey = () => {
+    if (tenant?.pix_key) {
+      navigator.clipboard.writeText(tenant.pix_key);
+      setPixCopied(true);
+      toast.success("Chave PIX copiada!");
+      setTimeout(() => setPixCopied(false), 3000);
+    }
   };
 
   const sendOrder = async () => {
