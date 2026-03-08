@@ -96,7 +96,11 @@ const AppLayout = () => {
       )}>
         <div className="flex items-center justify-between h-16 px-4 border-b border-sidebar-border">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg gradient-primary" />
+            {tenantLogo ? (
+              <img src={tenantLogo} alt={tenantName} className="h-8 w-8 rounded-lg object-cover" />
+            ) : (
+              <div className="h-8 w-8 rounded-lg bg-primary" />
+            )}
             <span className="font-bold text-sidebar-foreground truncate">{tenantName}</span>
           </div>
           <Button variant="ghost" size="icon" className="lg:hidden text-sidebar-foreground" onClick={() => setSidebarOpen(false)}>
