@@ -1,0 +1,1 @@
+ALTER TABLE public.tenants ADD COLUMN pix_key text DEFAULT NULL;
