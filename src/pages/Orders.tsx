@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell } from "lucide-react";
+import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 
 interface OrderItem {
@@ -50,6 +50,35 @@ const Orders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const audioContextRef = useRef<AudioContext | null>(null);
+  const initialLoadDone = useRef(false);
+
+  const playNotificationSound = useCallback(() => {
+    if (!soundEnabled) return;
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new AudioContext();
+      }
+      const ctx = audioContextRef.current;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      // Pleasant two-tone chime
+      osc.type = "sine";
+      osc.frequency.setValueAtTime(880, ctx.currentTime);
+      osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.3, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+      
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.4);
+    } catch (e) {
+      console.log("Audio not available");
+    }
+  }, [soundEnabled]);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -65,22 +94,35 @@ const Orders = () => {
   };
 
   useEffect(() => {
-    loadOrders();
+    loadOrders().then(() => {
+      initialLoadDone.current = true;
+    });
 
-    // Realtime subscription
     const channel = supabase
       .channel("orders-realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => {
+        { event: "INSERT", schema: "public", table: "orders" },
+        (payload) => {
+          if (initialLoadDone.current) {
+            playNotificationSound();
+            const orderNum = (payload.new as any)?.order_number;
+            toast.success(`🔔 Novo pedido recebido!${orderNum ? ` #${orderNum}` : ""}`, {
+              duration: 8000,
+            });
+          }
           loadOrders();
         }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        () => { loadOrders(); }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [playNotificationSound]);
 
   const updateStatus = async (orderId: string, currentStatus: string) => {
     const currentIdx = statusFlow.indexOf(currentStatus);
@@ -157,9 +199,22 @@ const Orders = () => {
             </button>
           );
         })}
-        <Button variant="outline" size="sm" className="ml-auto" onClick={loadOrders}>
-          <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
-        </Button>
+        <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setSoundEnabled(!soundEnabled);
+              toast.info(soundEnabled ? "Notificação sonora desativada" : "Notificação sonora ativada");
+            }}
+            title={soundEnabled ? "Desativar som" : "Ativar som"}
+          >
+            {soundEnabled ? <Volume2 className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+          </Button>
+          <Button variant="outline" size="sm" onClick={loadOrders}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+          </Button>
+        </div>
       </div>
 
       {/* Orders Grid */}
