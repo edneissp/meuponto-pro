@@ -38,6 +38,7 @@ interface TenantInfo {
   logo_url: string | null;
   primary_color: string | null;
   delivery_fee: number;
+  whatsapp: string | null;
 }
 
 type OrderType = "table" | "pickup" | "delivery";
