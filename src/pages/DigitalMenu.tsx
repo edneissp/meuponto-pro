@@ -518,7 +518,7 @@ const DigitalMenu = () => {
 
       {/* Floating cart button */}
       {cartCount > 0 && (
-        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); setPixCopied(false); }}>
+        <Sheet open={cartOpen} onOpenChange={(open) => { setCartOpen(open); if (!open) setCheckoutStep("cart"); setPixCopied(false); setPaymentConfirmed(false); }}>
           <SheetTrigger asChild>
             <button
               className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 px-6 py-4 rounded-2xl text-white font-semibold shadow-xl transition-transform active:scale-95 w-[90%] max-w-lg"
