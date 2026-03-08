@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, Search, Edit, Trash2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Upload, ImageIcon, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Product {
@@ -20,6 +20,7 @@ interface Product {
   expiry_date: string | null;
   is_active: boolean;
   category_id: string | null;
+  image_url: string | null;
 }
 
 const Products = () => {
@@ -30,6 +31,10 @@ const Products = () => {
   const [form, setForm] = useState({
     name: "", barcode: "", purchase_price: "", sale_price: "", stock_quantity: "", min_stock: "5", expiry_date: "",
   });
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const loadProducts = async () => {
     const { data } = await supabase.from("products").select("*").order("name");
@@ -45,10 +50,62 @@ const Products = () => {
     return profile?.tenant_id || null;
   };
 
+  const uploadImage = async (file: File, tenantId: string): Promise<string | null> => {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `${tenantId}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("product-images").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+    if (error) {
+      console.error("Upload error:", error);
+      return null;
+    }
+    const { data: { publicUrl } } = supabase.storage.from("product-images").getPublicUrl(path);
+    return publicUrl;
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande (máx 5MB)");
+      return;
+    }
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleSave = async () => {
     const tenantId = await getTenantId();
     if (!tenantId) return toast.error("Sessão inválida");
     if (!form.name.trim()) return toast.error("Nome obrigatório");
+
+    setUploading(true);
+    let imageUrl: string | null = editingProduct?.image_url || null;
+
+    if (imageFile) {
+      const url = await uploadImage(imageFile, tenantId);
+      if (url) {
+        imageUrl = url;
+      } else {
+        setUploading(false);
+        return toast.error("Erro ao enviar imagem");
+      }
+    }
+
+    // If user removed the image preview and there's no new file
+    if (!imagePreview && !imageFile) {
+      imageUrl = null;
+    }
 
     const payload = {
       name: form.name.trim(),
@@ -58,15 +115,18 @@ const Products = () => {
       stock_quantity: parseInt(form.stock_quantity) || 0,
       min_stock: parseInt(form.min_stock) || 5,
       expiry_date: form.expiry_date || null,
+      image_url: imageUrl,
       tenant_id: tenantId,
     };
 
     if (editingProduct) {
       const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
+      setUploading(false);
       if (error) return toast.error("Erro ao atualizar");
       toast.success("Produto atualizado!");
     } else {
       const { error } = await supabase.from("products").insert(payload);
+      setUploading(false);
       if (error) return toast.error("Erro ao criar produto");
       toast.success("Produto criado!");
     }
@@ -93,12 +153,16 @@ const Products = () => {
       min_stock: p.min_stock.toString(),
       expiry_date: p.expiry_date || "",
     });
+    setImagePreview(p.image_url || null);
+    setImageFile(null);
     setDialogOpen(true);
   };
 
   const resetForm = () => {
     setEditingProduct(null);
     setForm({ name: "", barcode: "", purchase_price: "", sale_price: "", stock_quantity: "", min_stock: "5", expiry_date: "" });
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -115,11 +179,54 @@ const Products = () => {
           <DialogTrigger asChild>
             <Button><Plus className="h-4 w-4 mr-2" />Novo Produto</Button>
           </DialogTrigger>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>{editingProduct ? "Editar Produto" : "Novo Produto"}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              {/* Image upload */}
+              <div>
+                <Label>Foto do produto</Label>
+                <div className="mt-2 flex items-center gap-4">
+                  {imagePreview ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="h-20 w-20 rounded-lg object-cover border border-border"
+                      />
+                      <button
+                        type="button"
+                        onClick={removeImage}
+                        className="absolute -top-2 -right-2 h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-20 w-20 rounded-lg border-2 border-dashed border-muted-foreground/30 flex flex-col items-center justify-center cursor-pointer hover:border-primary/50 transition-colors"
+                    >
+                      <ImageIcon className="h-6 w-6 text-muted-foreground/50" />
+                      <span className="text-[10px] text-muted-foreground mt-1">Adicionar</span>
+                    </div>
+                  )}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageSelect}
+                  />
+                  {imagePreview && (
+                    <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()}>
+                      <Upload className="h-4 w-4 mr-1" /> Trocar
+                    </Button>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label>Nome *</Label>
@@ -154,7 +261,9 @@ const Products = () => {
                   <Input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} />
                 </div>
               </div>
-              <Button onClick={handleSave}>{editingProduct ? "Atualizar" : "Criar"}</Button>
+              <Button onClick={handleSave} disabled={uploading}>
+                {uploading ? "Enviando..." : editingProduct ? "Atualizar" : "Criar"}
+              </Button>
             </div>
           </DialogContent>
         </Dialog>
@@ -164,6 +273,7 @@ const Products = () => {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-14">Foto</TableHead>
               <TableHead>Produto</TableHead>
               <TableHead className="hidden sm:table-cell">Compra</TableHead>
               <TableHead>Venda</TableHead>
@@ -176,12 +286,21 @@ const Products = () => {
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center py-12 text-muted-foreground">
+                <TableCell colSpan={8} className="text-center py-12 text-muted-foreground">
                   {products.length === 0 ? "Nenhum produto cadastrado" : "Nenhum produto encontrado"}
                 </TableCell>
               </TableRow>
             ) : filtered.map(p => (
               <TableRow key={p.id}>
+                <TableCell>
+                  {p.image_url ? (
+                    <img src={p.image_url} alt={p.name} className="h-10 w-10 rounded-md object-cover" />
+                  ) : (
+                    <div className="h-10 w-10 rounded-md bg-muted flex items-center justify-center">
+                      <ImageIcon className="h-4 w-4 text-muted-foreground/40" />
+                    </div>
+                  )}
+                </TableCell>
                 <TableCell className="font-medium">{p.name}</TableCell>
                 <TableCell className="hidden sm:table-cell">R$ {Number(p.purchase_price).toFixed(2)}</TableCell>
                 <TableCell>R$ {Number(p.sale_price).toFixed(2)}</TableCell>
