@@ -319,6 +319,28 @@ const Orders = () => {
           })}
         </div>
       )}
+
+      <OrderReceipt
+        open={!!printOrder}
+        onClose={() => setPrintOrder(null)}
+        data={printOrder ? {
+          order_number: printOrder.order_number,
+          source: printOrder.source,
+          customer_name: printOrder.customer_name,
+          customer_phone: printOrder.customer_phone,
+          table_number: printOrder.table_number,
+          total: printOrder.total,
+          notes: printOrder.notes,
+          created_at: printOrder.created_at,
+          items: printOrder.order_items.map(i => ({
+            product_name: i.product_name,
+            quantity: i.quantity,
+            unit_price: i.unit_price,
+            total: i.total,
+            notes: i.notes,
+          })),
+        } : null}
+      />
     </div>
   );
 };
