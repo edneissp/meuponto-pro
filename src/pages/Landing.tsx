@@ -80,7 +80,7 @@ const Landing = () => {
   };
 
   const whatsappMessage = encodeURIComponent("Olá! Quero conhecer o sistema YouControl para minha lanchonete.");
-  const whatsappUrl = `https://wa.me/?text=${whatsappMessage}`;
+  const whatsappUrl = `https://wa.me/5571996219021?text=${whatsappMessage}`;
 
   return (
     <div className="min-h-screen bg-background">
