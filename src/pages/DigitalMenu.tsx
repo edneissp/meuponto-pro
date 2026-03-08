@@ -786,9 +786,38 @@ const DigitalMenu = () => {
                         </div>
                         <p className="text-xs text-muted-foreground">Valor: <span className="font-bold">R$ {cartTotal.toFixed(2)}</span></p>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        ⚠️ Faça o PIX e envie o pedido. O estabelecimento confirmará o pagamento.
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfirmed}
+                          onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="text-xs text-muted-foreground">✅ Já realizei o pagamento via PIX</span>
+                      </label>
+                    </div>
+                  )}
+
+                  {/* Card payment confirmation */}
+                  {(paymentMethod === "debit" || paymentMethod === "credit") && (
+                    <div className="bg-muted/50 rounded-xl p-4 space-y-3">
+                      <p className="text-sm font-medium">
+                        💳 Pagamento com {paymentMethod === "debit" ? "Débito" : "Crédito"}
                       </p>
+                      <p className="text-xs text-muted-foreground">
+                        O pagamento será realizado na maquininha do estabelecimento no momento da entrega/retirada.
+                      </p>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={paymentConfirmed}
+                          onChange={(e) => setPaymentConfirmed(e.target.checked)}
+                          className="rounded border-border"
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          ✅ Confirmo que pagarei no {paymentMethod === "debit" ? "débito" : "crédito"} na entrega
+                        </span>
+                      </label>
                     </div>
                   )}
 
