@@ -43,9 +43,11 @@ interface TenantInfo {
   store_lat: number | null;
   store_lng: number | null;
   whatsapp: string | null;
+  pix_key: string | null;
 }
 
 type OrderType = "table" | "pickup" | "delivery";
+type PaymentMethod = "on_delivery" | "pix";
 
 const DigitalMenu = () => {
   const { tenantId } = useParams<{ tenantId: string }>();
