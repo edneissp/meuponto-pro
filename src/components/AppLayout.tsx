@@ -11,6 +11,7 @@ const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
   { icon: Package, label: "Produtos", path: "/app/products" },
   { icon: ShoppingCart, label: "PDV", path: "/app/pos" },
+  { icon: ClipboardList, label: "Pedidos", path: "/app/orders" },
   { icon: DollarSign, label: "Financeiro", path: "/app/finance" },
   { icon: BarChart3, label: "Relatórios", path: "/app/reports" },
   { icon: Settings, label: "Configurações", path: "/app/settings" },
