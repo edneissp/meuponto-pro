@@ -166,7 +166,28 @@ const AppSettings = () => {
         </CardContent>
       </Card>
 
-      {/* Logo */}
+      {/* Chave PIX */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <QrCode className="h-5 w-5 text-primary" />
+            Chave PIX
+          </CardTitle>
+          <CardDescription>Chave PIX para receber pagamentos antecipados pelo cardápio digital.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Input
+            value={pixKey}
+            onChange={(e) => setPixKey(e.target.value)}
+            placeholder="CPF, CNPJ, e-mail, telefone ou chave aleatória"
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Se preenchido, os clientes poderão pagar via PIX antes de enviar o pedido.
+          </p>
+        </CardContent>
+      </Card>
+
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-lg">
