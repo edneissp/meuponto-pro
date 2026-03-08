@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Upload, Palette, Store } from "lucide-react";
+import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 
 const PRESET_COLORS = [
   "#F97316", "#EF4444", "#8B5CF6", "#3B82F6",
@@ -176,6 +177,58 @@ const AppSettings = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* QR Code Cardápio Digital */}
+      {tenantId && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <QrCode className="h-5 w-5 text-primary" />
+              Cardápio Digital
+            </CardTitle>
+            <CardDescription>Compartilhe o QR Code para seus clientes acessarem o cardápio online.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row items-center gap-6">
+              <div className="bg-white p-4 rounded-xl">
+                <QRCodeSVG
+                  value={`${window.location.origin}/menu/${tenantId}`}
+                  size={180}
+                  fgColor="#000"
+                  level="H"
+                />
+              </div>
+              <div className="space-y-3 text-center sm:text-left">
+                <p className="text-sm text-muted-foreground">
+                  Link do cardápio:
+                </p>
+                <code className="block text-xs bg-muted p-2 rounded break-all">
+                  {window.location.origin}/menu/{tenantId}
+                </code>
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/menu/${tenantId}`);
+                      toast({ title: "Link copiado!" });
+                    }}
+                  >
+                    <Copy className="h-4 w-4 mr-1" /> Copiar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => window.open(`/menu/${tenantId}`, "_blank")}
+                  >
+                    <ExternalLink className="h-4 w-4 mr-1" /> Abrir
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Button onClick={handleSave} disabled={saving} className="w-full" size="lg">
         <Save className="h-4 w-4" />

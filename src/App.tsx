@@ -16,6 +16,8 @@ import POS from "./pages/POS";
 import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import AppSettings from "./pages/AppSettings";
+import Orders from "./pages/Orders";
+import DigitalMenu from "./pages/DigitalMenu";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,10 +34,12 @@ const App = () => (
           <Route path="/register" element={<Register />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/subscription" element={<Subscription />} />
+          <Route path="/menu/:tenantId" element={<DigitalMenu />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
             <Route path="products" element={<Products />} />
             <Route path="pos" element={<POS />} />
+            <Route path="orders" element={<Orders />} />
             <Route path="finance" element={<Finance />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<AppSettings />} />
