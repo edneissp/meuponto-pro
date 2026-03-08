@@ -882,6 +882,7 @@ export type Database = {
       tenants: {
         Row: {
           created_at: string
+          delivery_fee: number
           id: string
           logo_url: string | null
           name: string
@@ -891,6 +892,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          delivery_fee?: number
           id?: string
           logo_url?: string | null
           name: string
@@ -900,6 +902,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          delivery_fee?: number
           id?: string
           logo_url?: string | null
           name?: string
