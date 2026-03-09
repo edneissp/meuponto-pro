@@ -297,6 +297,29 @@ const Products = () => {
                   <Input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} />
                 </div>
               </div>
+              {/* Optional groups */}
+              {allGroups.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Grupos de Opcionais</Label>
+                  <div className="space-y-2 max-h-32 overflow-auto border border-border rounded-lg p-3">
+                    {allGroups.map(g => (
+                      <label key={g.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={selectedGroupIds.has(g.id)}
+                          onCheckedChange={() => {
+                            setSelectedGroupIds(prev => {
+                              const next = new Set(prev);
+                              next.has(g.id) ? next.delete(g.id) : next.add(g.id);
+                              return next;
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{g.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Button onClick={handleSave} disabled={uploading}>
                 {uploading ? "Enviando..." : editingProduct ? "Atualizar" : "Criar"}
               </Button>
