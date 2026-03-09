@@ -23,6 +23,11 @@ interface Product {
   image_url: string | null;
 }
 
+interface OptionalGroup {
+  id: string;
+  name: string;
+}
+
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
