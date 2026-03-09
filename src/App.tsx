@@ -20,6 +20,7 @@ import Orders from "./pages/Orders";
 import Delivery from "./pages/Delivery";
 import DigitalMenu from "./pages/DigitalMenu";
 import SupplierDeliveries from "./pages/SupplierDeliveries";
+import Optionals from "./pages/Optionals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
