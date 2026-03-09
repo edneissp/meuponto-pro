@@ -11,6 +11,7 @@ import TrialBanner from "@/components/TrialBanner";
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
   { icon: Package, label: "Produtos", path: "/app/products" },
+  { icon: ListChecks, label: "Opcionais", path: "/app/optionals" },
   { icon: ShoppingCart, label: "PDV", path: "/app/pos" },
   { icon: ClipboardList, label: "Pedidos", path: "/app/orders" },
   { icon: Truck, label: "Delivery", path: "/app/delivery" },
