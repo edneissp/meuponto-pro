@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import FiadoPanel from "@/components/pos/FiadoPanel";
 import CustomerSelectDialog from "@/components/pos/CustomerSelectDialog";
 import ThermalReceipt from "@/components/pos/ThermalReceipt";
+import OptionalSelectDialog from "@/components/pos/OptionalSelectDialog";
 
 interface Product {
   id: string;
@@ -18,9 +19,17 @@ interface Product {
   stock_quantity: number;
 }
 
+interface SelectedOptional {
+  id: string;
+  name: string;
+  price: number;
+}
+
 interface CartItem {
   product: Product;
   quantity: number;
+  optionals: SelectedOptional[];
+  cartKey: string; // unique key for items with different optionals
 }
 
 interface Customer {
@@ -50,10 +59,22 @@ const POS = () => {
   const [receiptOpen, setReceiptOpen] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
+  // Optional selection state
+  const [optionalDialogOpen, setOptionalDialogOpen] = useState(false);
+  const [pendingProduct, setPendingProduct] = useState<Product | null>(null);
+  const [productHasOptionals, setProductHasOptionals] = useState<Set<string>>(new Set());
+
   useEffect(() => {
     const load = async () => {
       const { data } = await supabase.from("products").select("id, name, sale_price, stock_quantity").eq("is_active", true).order("name");
       if (data) setProducts(data as Product[]);
+
+      // Load which products have optional groups linked
+      const { data: links } = await supabase.from("product_option_groups").select("product_id");
+      if (links) {
+        const ids = new Set(links.map(l => (l as any).product_id as string));
+        setProductHasOptionals(ids);
+      }
     };
     load();
   }, []);
@@ -66,26 +87,52 @@ const POS = () => {
   }, [payment]);
 
   const addToCart = (product: Product) => {
+    // If product has optionals, show dialog
+    if (productHasOptionals.has(product.id)) {
+      if (product.stock_quantity <= 0) {
+        toast.error("Produto sem estoque");
+        return;
+      }
+      setPendingProduct(product);
+      setOptionalDialogOpen(true);
+      return;
+    }
+
+    // Normal add (no optionals)
+    addToCartDirect(product, []);
+  };
+
+  const addToCartDirect = (product: Product, optionals: SelectedOptional[]) => {
+    const cartKey = product.id + (optionals.length > 0 ? "_" + optionals.map(o => o.id).sort().join(",") : "");
+
     setCart(prev => {
-      const existing = prev.find(c => c.product.id === product.id);
+      const existing = prev.find(c => c.cartKey === cartKey);
       if (existing) {
         if (existing.quantity >= product.stock_quantity) {
           toast.error("Estoque insuficiente");
           return prev;
         }
-        return prev.map(c => c.product.id === product.id ? { ...c, quantity: c.quantity + 1 } : c);
+        return prev.map(c => c.cartKey === cartKey ? { ...c, quantity: c.quantity + 1 } : c);
       }
       if (product.stock_quantity <= 0) {
         toast.error("Produto sem estoque");
         return prev;
       }
-      return [...prev, { product, quantity: 1 }];
+      return [...prev, { product, quantity: 1, optionals, cartKey }];
     });
   };
 
-  const updateQty = (productId: string, delta: number) => {
+  const handleOptionalsConfirm = (optionals: SelectedOptional[]) => {
+    if (pendingProduct) {
+      addToCartDirect(pendingProduct, optionals);
+    }
+    setOptionalDialogOpen(false);
+    setPendingProduct(null);
+  };
+
+  const updateQty = (cartKey: string, delta: number) => {
     setCart(prev => prev.map(c => {
-      if (c.product.id !== productId) return c;
+      if (c.cartKey !== cartKey) return c;
       const newQty = c.quantity + delta;
       if (newQty <= 0) return c;
       if (newQty > c.product.stock_quantity) { toast.error("Estoque insuficiente"); return c; }
@@ -93,11 +140,16 @@ const POS = () => {
     }));
   };
 
-  const removeFromCart = (productId: string) => {
-    setCart(prev => prev.filter(c => c.product.id !== productId));
+  const removeFromCart = (cartKey: string) => {
+    setCart(prev => prev.filter(c => c.cartKey !== cartKey));
   };
 
-  const subtotal = cart.reduce((sum, c) => sum + Number(c.product.sale_price) * c.quantity, 0);
+  const getItemPrice = (item: CartItem) => {
+    const optionalsPrice = item.optionals.reduce((sum, o) => sum + o.price, 0);
+    return Number(item.product.sale_price) + optionalsPrice;
+  };
+
+  const subtotal = cart.reduce((sum, c) => sum + getItemPrice(c) * c.quantity, 0);
   const taxRate = payment === "credit_card" ? 0.03 : payment === "debit_card" ? 0.015 : 0;
   const taxAmount = subtotal * taxRate;
   const total = subtotal - discount + taxAmount;
@@ -133,12 +185,33 @@ const POS = () => {
       product_id: c.product.id,
       tenant_id: profile.tenant_id,
       quantity: c.quantity,
-      unit_price: Number(c.product.sale_price),
-      total: Number(c.product.sale_price) * c.quantity,
+      unit_price: getItemPrice(c),
+      total: getItemPrice(c) * c.quantity,
     }));
 
-    const { error: itemsError } = await supabase.from("sale_items").insert(items);
+    const { data: insertedItems, error: itemsError } = await supabase.from("sale_items").insert(items).select("id");
     if (itemsError) { setLoading(false); return toast.error("Erro ao registrar itens"); }
+
+    // Save optionals for each sale item
+    if (insertedItems) {
+      const optionalsToInsert: any[] = [];
+      cart.forEach((c, idx) => {
+        if (c.optionals.length > 0 && insertedItems[idx]) {
+          c.optionals.forEach(o => {
+            optionalsToInsert.push({
+              sale_item_id: insertedItems[idx].id,
+              optional_id: o.id,
+              name: o.name,
+              price: o.price,
+              tenant_id: profile.tenant_id,
+            });
+          });
+        }
+      });
+      if (optionalsToInsert.length > 0) {
+        await supabase.from("sale_item_optionals").insert(optionalsToInsert);
+      }
+    }
 
     // Create fiado record if payment is fiado
     if (payment === "fiado" && selectedCustomer) {
@@ -155,7 +228,13 @@ const POS = () => {
     // Prepare receipt data
     setReceiptData({
       saleId: sale.id,
-      items: cart.map(c => ({ name: c.product.name, quantity: c.quantity, unitPrice: Number(c.product.sale_price), total: Number(c.product.sale_price) * c.quantity })),
+      items: cart.map(c => ({
+        name: c.product.name,
+        quantity: c.quantity,
+        unitPrice: getItemPrice(c),
+        total: getItemPrice(c) * c.quantity,
+        optionals: c.optionals,
+      })),
       subtotal, discount, taxAmount, total,
       paymentMethod: payment,
       customerName: selectedCustomer?.name,
@@ -204,9 +283,14 @@ const POS = () => {
             >
               <p className="font-medium text-sm truncate group-hover:text-primary transition-colors">{p.name}</p>
               <p className="text-lg font-bold mt-1">R$ {Number(p.sale_price).toFixed(2)}</p>
-              <Badge variant={p.stock_quantity <= 5 ? "destructive" : "secondary"} className="mt-2 text-xs">
-                {p.stock_quantity} un
-              </Badge>
+              <div className="flex items-center gap-1 mt-2">
+                <Badge variant={p.stock_quantity <= 5 ? "destructive" : "secondary"} className="text-xs">
+                  {p.stock_quantity} un
+                </Badge>
+                {productHasOptionals.has(p.id) && (
+                  <Badge variant="outline" className="text-xs text-primary border-primary/30">+ opcionais</Badge>
+                )}
+              </div>
             </button>
           ))}
           {filtered.length === 0 && (
@@ -228,24 +312,35 @@ const POS = () => {
           {cart.length === 0 ? (
             <p className="text-center text-muted-foreground py-8">Adicione produtos ao carrinho</p>
           ) : cart.map(c => (
-            <div key={c.product.id} className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{c.product.name}</p>
-                <p className="text-xs text-muted-foreground">R$ {Number(c.product.sale_price).toFixed(2)}</p>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.product.id, -1)}>
-                  <Minus className="h-3 w-3" />
+            <div key={c.cartKey} className="flex flex-col gap-1 p-3 rounded-lg bg-muted/50">
+              <div className="flex items-center gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{c.product.name}</p>
+                  <p className="text-xs text-muted-foreground">R$ {Number(c.product.sale_price).toFixed(2)}</p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.cartKey, -1)}>
+                    <Minus className="h-3 w-3" />
+                  </Button>
+                  <span className="w-8 text-center text-sm font-medium">{c.quantity}</span>
+                  <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.cartKey, 1)}>
+                    <Plus className="h-3 w-3" />
+                  </Button>
+                </div>
+                <p className="text-sm font-semibold w-20 text-right">R$ {(getItemPrice(c) * c.quantity).toFixed(2)}</p>
+                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeFromCart(c.cartKey)}>
+                  <Trash2 className="h-3 w-3 text-destructive" />
                 </Button>
-                <span className="w-8 text-center text-sm font-medium">{c.quantity}</span>
-                <Button variant="outline" size="icon" className="h-7 w-7" onClick={() => updateQty(c.product.id, 1)}>
-                  <Plus className="h-3 w-3" />
-                </Button>
               </div>
-              <p className="text-sm font-semibold w-20 text-right">R$ {(Number(c.product.sale_price) * c.quantity).toFixed(2)}</p>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => removeFromCart(c.product.id)}>
-                <Trash2 className="h-3 w-3 text-destructive" />
-              </Button>
+              {c.optionals.length > 0 && (
+                <div className="ml-1 pl-2 border-l-2 border-primary/20 space-y-0.5">
+                  {c.optionals.map(o => (
+                    <p key={o.id} className="text-xs text-muted-foreground">
+                      + {o.name} {o.price > 0 ? `(R$ ${o.price.toFixed(2)})` : ""}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -317,6 +412,17 @@ const POS = () => {
         onClose={() => setReceiptOpen(false)}
         data={receiptData}
       />
+
+      {pendingProduct && (
+        <OptionalSelectDialog
+          open={optionalDialogOpen}
+          productId={pendingProduct.id}
+          productName={pendingProduct.name}
+          productPrice={Number(pendingProduct.sale_price)}
+          onClose={() => { setOptionalDialogOpen(false); setPendingProduct(null); }}
+          onConfirm={handleOptionalsConfirm}
+        />
+      )}
     </div>
   );
 };
