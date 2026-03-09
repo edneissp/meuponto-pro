@@ -41,13 +41,20 @@ const Products = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [allGroups, setAllGroups] = useState<OptionalGroup[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
 
   const loadProducts = async () => {
     const { data } = await supabase.from("products").select("*").order("name");
     if (data) setProducts(data as Product[]);
   };
 
-  useEffect(() => { loadProducts(); }, []);
+  const loadGroups = async () => {
+    const { data } = await supabase.from("optional_groups").select("id, name").order("name");
+    if (data) setAllGroups(data as OptionalGroup[]);
+  };
+
+  useEffect(() => { loadProducts(); loadGroups(); }, []);
 
   const getTenantId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
