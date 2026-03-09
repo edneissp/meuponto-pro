@@ -262,6 +262,77 @@ export type Database = {
         }
         Relationships: []
       }
+      optional_groups: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optional_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      optionals: {
+        Row: {
+          created_at: string
+          group_id: string
+          id: string
+          name: string
+          price: number
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          group_id: string
+          id?: string
+          name: string
+          price?: number
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          group_id?: string
+          id?: string
+          name?: string
+          price?: number
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optionals_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "optional_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "optionals_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       order_items: {
         Row: {
           created_at: string
@@ -435,6 +506,49 @@ export type Database = {
           },
         ]
       }
+      product_option_groups: {
+        Row: {
+          group_id: string
+          id: string
+          product_id: string
+          tenant_id: string
+        }
+        Insert: {
+          group_id: string
+          id?: string
+          product_id: string
+          tenant_id: string
+        }
+        Update: {
+          group_id?: string
+          id?: string
+          product_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_option_groups_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "optional_groups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_option_groups_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_option_groups_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barcode: string | null
@@ -535,6 +649,55 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_item_optionals: {
+        Row: {
+          id: string
+          name: string
+          optional_id: string
+          price: number
+          sale_item_id: string
+          tenant_id: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          optional_id: string
+          price?: number
+          sale_item_id: string
+          tenant_id: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          optional_id?: string
+          price?: number
+          sale_item_id?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_item_optionals_optional_id_fkey"
+            columns: ["optional_id"]
+            isOneToOne: false
+            referencedRelation: "optionals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_item_optionals_sale_item_id_fkey"
+            columns: ["sale_item_id"]
+            isOneToOne: false
+            referencedRelation: "sale_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_item_optionals_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
