@@ -198,6 +198,7 @@ const Products = () => {
     setForm({ name: "", barcode: "", purchase_price: "", sale_price: "", stock_quantity: "", min_stock: "5", expiry_date: "" });
     setImageFile(null);
     setImagePreview(null);
+    setSelectedGroupIds(new Set());
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
