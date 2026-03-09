@@ -170,7 +170,7 @@ const Products = () => {
     loadProducts();
   };
 
-  const openEdit = (p: Product) => {
+  const openEdit = async (p: Product) => {
     setEditingProduct(p);
     setForm({
       name: p.name,
@@ -183,6 +183,13 @@ const Products = () => {
     });
     setImagePreview(p.image_url || null);
     setImageFile(null);
+    // Load linked optional groups
+    const { data: links } = await supabase.from("product_option_groups").select("group_id").eq("product_id", p.id);
+    if (links) {
+      setSelectedGroupIds(new Set(links.map(l => (l as any).group_id as string)));
+    } else {
+      setSelectedGroupIds(new Set());
+    }
     setDialogOpen(true);
   };
 
