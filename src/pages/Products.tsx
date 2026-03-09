@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Plus, Search, Edit, Trash2, Upload, ImageIcon, X } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 
 interface Product {
@@ -23,6 +24,11 @@ interface Product {
   image_url: string | null;
 }
 
+interface OptionalGroup {
+  id: string;
+  name: string;
+}
+
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
@@ -35,13 +41,20 @@ const Products = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [allGroups, setAllGroups] = useState<OptionalGroup[]>([]);
+  const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
 
   const loadProducts = async () => {
     const { data } = await supabase.from("products").select("*").order("name");
     if (data) setProducts(data as Product[]);
   };
 
-  useEffect(() => { loadProducts(); }, []);
+  const loadGroups = async () => {
+    const { data } = await supabase.from("optional_groups").select("id, name").order("name");
+    if (data) setAllGroups(data as OptionalGroup[]);
+  };
+
+  useEffect(() => { loadProducts(); loadGroups(); }, []);
 
   const getTenantId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -119,17 +132,32 @@ const Products = () => {
       tenant_id: tenantId,
     };
 
+    let productId: string;
     if (editingProduct) {
       const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
       setUploading(false);
       if (error) return toast.error("Erro ao atualizar");
+      productId = editingProduct.id;
       toast.success("Produto atualizado!");
     } else {
-      const { error } = await supabase.from("products").insert(payload);
+      const { data: newProduct, error } = await supabase.from("products").insert(payload).select("id").single();
       setUploading(false);
-      if (error) return toast.error("Erro ao criar produto");
+      if (error || !newProduct) return toast.error("Erro ao criar produto");
+      productId = newProduct.id;
       toast.success("Produto criado!");
     }
+
+    // Save optional group links
+    await supabase.from("product_option_groups").delete().eq("product_id", productId);
+    if (selectedGroupIds.size > 0) {
+      const links = Array.from(selectedGroupIds).map(gid => ({
+        product_id: productId,
+        group_id: gid,
+        tenant_id: tenantId,
+      }));
+      await supabase.from("product_option_groups").insert(links);
+    }
+
     setDialogOpen(false);
     resetForm();
     loadProducts();
@@ -142,7 +170,7 @@ const Products = () => {
     loadProducts();
   };
 
-  const openEdit = (p: Product) => {
+  const openEdit = async (p: Product) => {
     setEditingProduct(p);
     setForm({
       name: p.name,
@@ -155,6 +183,13 @@ const Products = () => {
     });
     setImagePreview(p.image_url || null);
     setImageFile(null);
+    // Load linked optional groups
+    const { data: links } = await supabase.from("product_option_groups").select("group_id").eq("product_id", p.id);
+    if (links) {
+      setSelectedGroupIds(new Set(links.map(l => (l as any).group_id as string)));
+    } else {
+      setSelectedGroupIds(new Set());
+    }
     setDialogOpen(true);
   };
 
@@ -163,6 +198,7 @@ const Products = () => {
     setForm({ name: "", barcode: "", purchase_price: "", sale_price: "", stock_quantity: "", min_stock: "5", expiry_date: "" });
     setImageFile(null);
     setImagePreview(null);
+    setSelectedGroupIds(new Set());
   };
 
   const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
@@ -261,6 +297,29 @@ const Products = () => {
                   <Input type="date" value={form.expiry_date} onChange={e => setForm({ ...form, expiry_date: e.target.value })} />
                 </div>
               </div>
+              {/* Optional groups */}
+              {allGroups.length > 0 && (
+                <div>
+                  <Label className="mb-2 block">Grupos de Opcionais</Label>
+                  <div className="space-y-2 max-h-32 overflow-auto border border-border rounded-lg p-3">
+                    {allGroups.map(g => (
+                      <label key={g.id} className="flex items-center gap-2 cursor-pointer">
+                        <Checkbox
+                          checked={selectedGroupIds.has(g.id)}
+                          onCheckedChange={() => {
+                            setSelectedGroupIds(prev => {
+                              const next = new Set(prev);
+                              next.has(g.id) ? next.delete(g.id) : next.add(g.id);
+                              return next;
+                            });
+                          }}
+                        />
+                        <span className="text-sm">{g.name}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              )}
               <Button onClick={handleSave} disabled={uploading}>
                 {uploading ? "Enviando..." : editingProduct ? "Atualizar" : "Criar"}
               </Button>
