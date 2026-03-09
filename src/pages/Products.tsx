@@ -132,17 +132,32 @@ const Products = () => {
       tenant_id: tenantId,
     };
 
+    let productId: string;
     if (editingProduct) {
       const { error } = await supabase.from("products").update(payload).eq("id", editingProduct.id);
       setUploading(false);
       if (error) return toast.error("Erro ao atualizar");
+      productId = editingProduct.id;
       toast.success("Produto atualizado!");
     } else {
-      const { error } = await supabase.from("products").insert(payload);
+      const { data: newProduct, error } = await supabase.from("products").insert(payload).select("id").single();
       setUploading(false);
-      if (error) return toast.error("Erro ao criar produto");
+      if (error || !newProduct) return toast.error("Erro ao criar produto");
+      productId = newProduct.id;
       toast.success("Produto criado!");
     }
+
+    // Save optional group links
+    await supabase.from("product_option_groups").delete().eq("product_id", productId);
+    if (selectedGroupIds.size > 0) {
+      const links = Array.from(selectedGroupIds).map(gid => ({
+        product_id: productId,
+        group_id: gid,
+        tenant_id: tenantId,
+      }));
+      await supabase.from("product_option_groups").insert(links);
+    }
+
     setDialogOpen(false);
     resetForm();
     loadProducts();
