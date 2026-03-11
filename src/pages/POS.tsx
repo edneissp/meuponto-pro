@@ -178,7 +178,11 @@ const POS = () => {
       total,
     }).select("id").single();
 
-    if (saleError || !sale) { setLoading(false); return toast.error("Erro ao registrar venda"); }
+    if (saleError || !sale) { 
+      console.error("Erro ao registrar venda:", saleError);
+      setLoading(false); 
+      return toast.error("Erro ao registrar venda: " + (saleError?.message || "desconhecido")); 
+    }
 
     const items = cart.map(c => ({
       sale_id: sale.id,
