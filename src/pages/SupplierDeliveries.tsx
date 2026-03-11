@@ -426,8 +426,101 @@ const SupplierDeliveries = () => {
             </Card>
           ))}
         </TabsContent>
+        {/* Expenses Tab */}
+        <TabsContent value="expenses" className="space-y-4 mt-4">
+          {pendingExpenses.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4 text-warning" /> Pendentes ({pendingExpenses.length})
+              </h3>
+              <div className="space-y-2">
+                {pendingExpenses.map(exp => (
+                  <Card key={exp.id} className="p-3 flex items-center justify-between border-warning/20">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{exp.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {exp.category || "Sem categoria"} • {new Date(exp.created_at).toLocaleDateString("pt-BR")}
+                        {exp.due_date && ` • Venc: ${new Date(exp.due_date).toLocaleDateString("pt-BR")}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">R$ {Number(exp.amount).toFixed(2)}</span>
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => toggleExpensePaid(exp)}>
+                        <CheckCircle2 className="h-3 w-3" /> Pagar
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          {paidExpenses.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4 text-success" /> Pagas ({paidExpenses.length})
+              </h3>
+              <div className="space-y-2">
+                {paidExpenses.map(exp => (
+                  <Card key={exp.id} className="p-3 flex items-center justify-between opacity-70">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{exp.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {exp.category || "Sem categoria"} • Pago em {exp.paid_at ? new Date(exp.paid_at).toLocaleDateString("pt-BR") : "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-success">R$ {Number(exp.amount).toFixed(2)}</span>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleExpensePaid(exp)}>
+                        Desfazer
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          {expenses.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">Nenhuma despesa registrada</div>
+          )}
+        </TabsContent>
 
-        <TabsContent value="prices" className="mt-4">
+        {/* Fiados Received Tab */}
+        <TabsContent value="fiados" className="space-y-3 mt-4">
+          {paidFiados.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">Nenhum fiado recebido ainda</div>
+          ) : (
+            <>
+              <Card className="p-4 bg-success/5 border-success/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Recebido de Fiados</span>
+                  <span className="text-lg font-bold text-success">
+                    R$ {paidFiados.reduce((sum, f) => sum + Number(f.paid_amount || f.amount), 0).toFixed(2)}
+                  </span>
+                </div>
+              </Card>
+              <div className="space-y-2">
+                {paidFiados.map(f => (
+                  <Card key={f.id} className="p-3 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{f.customers?.name || "Cliente"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {f.notes || "Fiado"} • Pago em {f.paid_at ? new Date(f.paid_at).toLocaleDateString("pt-BR") : "—"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-sm text-success">R$ {Number(f.paid_amount || f.amount).toFixed(2)}</span>
+                      {Number(f.paid_amount) !== Number(f.amount) && (
+                        <p className="text-xs text-muted-foreground">de R$ {Number(f.amount).toFixed(2)}</p>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+        </TabsContent>
+
+
           {priceHistory.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhum histórico de preço</div>
           ) : (
