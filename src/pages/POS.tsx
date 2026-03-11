@@ -230,7 +230,11 @@ const POS = () => {
         amount: total,
         notes: `Venda #${sale.id.slice(0, 8)}`,
       });
-      if (fiadoError) { setLoading(false); return toast.error("Erro ao registrar fiado"); }
+      if (fiadoError) { 
+        console.error("Erro ao registrar fiado:", fiadoError);
+        setLoading(false); 
+        return toast.error("Erro ao registrar fiado: " + fiadoError.message); 
+      }
     }
 
     // Prepare receipt data
