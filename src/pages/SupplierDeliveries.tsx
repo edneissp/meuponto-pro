@@ -50,11 +50,36 @@ interface PriceHistory {
   recorded_at: string;
 }
 
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string | null;
+  due_date: string | null;
+  paid: boolean;
+  paid_at: string | null;
+  supplier_id: string | null;
+  created_at: string;
+}
+
+interface FiadoRecord {
+  id: string;
+  amount: number;
+  paid_amount: number;
+  paid: boolean;
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+  customers?: { name: string } | null;
+}
+
 const SupplierDeliveries = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
   const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [paidFiados, setPaidFiados] = useState<FiadoRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form state
@@ -69,16 +94,20 @@ const SupplierDeliveries = () => {
 
   const loadData = async () => {
     setLoading(true);
-    const [suppRes, prodRes, delRes, priceRes] = await Promise.all([
+    const [suppRes, prodRes, delRes, priceRes, expRes, fiadoRes] = await Promise.all([
       supabase.from("suppliers").select("id, name").order("name"),
       supabase.from("products").select("id, name, sale_price, purchase_price, stock_quantity").order("name"),
       supabase.from("supplier_deliveries").select("*, supplier_delivery_items(*, products:product_id(name)), suppliers:supplier_id(name)").order("delivery_date", { ascending: false }).limit(50),
       supabase.from("supplier_price_history").select("*, suppliers:supplier_id(name), products:product_id(name)").order("recorded_at", { ascending: false }).limit(100),
+      supabase.from("expenses").select("*").order("created_at", { ascending: false }),
+      supabase.from("fiados").select("*, customers(name)").eq("paid", true).order("paid_at", { ascending: false }).limit(50),
     ]);
     if (suppRes.data) setSuppliers(suppRes.data);
     if (prodRes.data) setProducts(prodRes.data);
     if (delRes.data) setDeliveries(delRes.data as any);
     if (priceRes.data) setPriceHistory(priceRes.data as any);
+    if (expRes.data) setExpenses(expRes.data as Expense[]);
+    if (fiadoRes.data) setPaidFiados(fiadoRes.data as FiadoRecord[]);
     setLoading(false);
   };
 
