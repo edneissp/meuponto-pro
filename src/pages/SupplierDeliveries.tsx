@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Truck, History, Package, DollarSign, TrendingUp, Edit } from "lucide-react";
+import { Plus, Trash2, Truck, History, Package, DollarSign, TrendingUp, Edit, CheckCircle2, AlertCircle, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 interface Supplier { id: string; name: string; }
@@ -50,11 +50,36 @@ interface PriceHistory {
   recorded_at: string;
 }
 
+interface Expense {
+  id: string;
+  description: string;
+  amount: number;
+  category: string | null;
+  due_date: string | null;
+  paid: boolean;
+  paid_at: string | null;
+  supplier_id: string | null;
+  created_at: string;
+}
+
+interface FiadoRecord {
+  id: string;
+  amount: number;
+  paid_amount: number;
+  paid: boolean;
+  paid_at: string | null;
+  notes: string | null;
+  created_at: string;
+  customers?: { name: string } | null;
+}
+
 const SupplierDeliveries = () => {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryRecord[]>([]);
   const [priceHistory, setPriceHistory] = useState<PriceHistory[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [paidFiados, setPaidFiados] = useState<FiadoRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Form state
@@ -69,16 +94,20 @@ const SupplierDeliveries = () => {
 
   const loadData = async () => {
     setLoading(true);
-    const [suppRes, prodRes, delRes, priceRes] = await Promise.all([
+    const [suppRes, prodRes, delRes, priceRes, expRes, fiadoRes] = await Promise.all([
       supabase.from("suppliers").select("id, name").order("name"),
       supabase.from("products").select("id, name, sale_price, purchase_price, stock_quantity").order("name"),
       supabase.from("supplier_deliveries").select("*, supplier_delivery_items(*, products:product_id(name)), suppliers:supplier_id(name)").order("delivery_date", { ascending: false }).limit(50),
       supabase.from("supplier_price_history").select("*, suppliers:supplier_id(name), products:product_id(name)").order("recorded_at", { ascending: false }).limit(100),
+      supabase.from("expenses").select("*").order("created_at", { ascending: false }),
+      supabase.from("fiados").select("*, customers(name)").eq("paid", true).order("paid_at", { ascending: false }).limit(50),
     ]);
     if (suppRes.data) setSuppliers(suppRes.data);
     if (prodRes.data) setProducts(prodRes.data);
     if (delRes.data) setDeliveries(delRes.data as any);
     if (priceRes.data) setPriceHistory(priceRes.data as any);
+    if (expRes.data) setExpenses(expRes.data as Expense[]);
+    if (fiadoRes.data) setPaidFiados(fiadoRes.data as FiadoRecord[]);
     setLoading(false);
   };
 
@@ -316,6 +345,19 @@ const SupplierDeliveries = () => {
     return { cost, sale, margin };
   };
 
+  const toggleExpensePaid = async (exp: Expense) => {
+    const update = exp.paid
+      ? { paid: false, paid_at: null }
+      : { paid: true, paid_at: new Date().toISOString() };
+    const { error } = await supabase.from("expenses").update(update).eq("id", exp.id);
+    if (error) return toast.error("Erro ao atualizar");
+    toast.success(exp.paid ? "Despesa marcada como pendente" : "Despesa marcada como paga");
+    loadData();
+  };
+
+  const pendingExpenses = expenses.filter(e => !e.paid);
+  const paidExpenses = expenses.filter(e => e.paid);
+
   if (loading) {
     return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando...</div>;
   }
@@ -330,9 +372,11 @@ const SupplierDeliveries = () => {
       </div>
 
       <Tabs defaultValue="deliveries">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="deliveries" className="gap-1"><Truck className="h-4 w-4" /> Entregas</TabsTrigger>
-          <TabsTrigger value="prices" className="gap-1"><History className="h-4 w-4" /> Histórico de Preços</TabsTrigger>
+          <TabsTrigger value="expenses" className="gap-1"><DollarSign className="h-4 w-4" /> Despesas</TabsTrigger>
+          <TabsTrigger value="fiados" className="gap-1"><BookOpen className="h-4 w-4" /> Fiados Recebidos</TabsTrigger>
+          <TabsTrigger value="prices" className="gap-1"><History className="h-4 w-4" /> Preços</TabsTrigger>
           <TabsTrigger value="margins" className="gap-1"><TrendingUp className="h-4 w-4" /> Margens</TabsTrigger>
         </TabsList>
 
@@ -381,6 +425,99 @@ const SupplierDeliveries = () => {
               {del.notes && <p className="text-xs text-muted-foreground mt-1">Obs: {del.notes}</p>}
             </Card>
           ))}
+        </TabsContent>
+        {/* Expenses Tab */}
+        <TabsContent value="expenses" className="space-y-4 mt-4">
+          {pendingExpenses.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                <AlertCircle className="h-4 w-4 text-warning" /> Pendentes ({pendingExpenses.length})
+              </h3>
+              <div className="space-y-2">
+                {pendingExpenses.map(exp => (
+                  <Card key={exp.id} className="p-3 flex items-center justify-between border-warning/20">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{exp.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {exp.category || "Sem categoria"} • {new Date(exp.created_at).toLocaleDateString("pt-BR")}
+                        {exp.due_date && ` • Venc: ${new Date(exp.due_date).toLocaleDateString("pt-BR")}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm">R$ {Number(exp.amount).toFixed(2)}</span>
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => toggleExpensePaid(exp)}>
+                        <CheckCircle2 className="h-3 w-3" /> Pagar
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          {paidExpenses.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1">
+                <CheckCircle2 className="h-4 w-4 text-success" /> Pagas ({paidExpenses.length})
+              </h3>
+              <div className="space-y-2">
+                {paidExpenses.map(exp => (
+                  <Card key={exp.id} className="p-3 flex items-center justify-between opacity-70">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{exp.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {exp.category || "Sem categoria"} • Pago em {exp.paid_at ? new Date(exp.paid_at).toLocaleDateString("pt-BR") : "—"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm text-success">R$ {Number(exp.amount).toFixed(2)}</span>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleExpensePaid(exp)}>
+                        Desfazer
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          {expenses.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">Nenhuma despesa registrada</div>
+          )}
+        </TabsContent>
+
+        {/* Fiados Received Tab */}
+        <TabsContent value="fiados" className="space-y-3 mt-4">
+          {paidFiados.length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">Nenhum fiado recebido ainda</div>
+          ) : (
+            <>
+              <Card className="p-4 bg-success/5 border-success/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Total Recebido de Fiados</span>
+                  <span className="text-lg font-bold text-success">
+                    R$ {paidFiados.reduce((sum, f) => sum + Number(f.paid_amount || f.amount), 0).toFixed(2)}
+                  </span>
+                </div>
+              </Card>
+              <div className="space-y-2">
+                {paidFiados.map(f => (
+                  <Card key={f.id} className="p-3 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">{f.customers?.name || "Cliente"}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {f.notes || "Fiado"} • Pago em {f.paid_at ? new Date(f.paid_at).toLocaleDateString("pt-BR") : "—"}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span className="font-bold text-sm text-success">R$ {Number(f.paid_amount || f.amount).toFixed(2)}</span>
+                      {Number(f.paid_amount) !== Number(f.amount) && (
+                        <p className="text-xs text-muted-foreground">de R$ {Number(f.amount).toFixed(2)}</p>
+                      )}
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
         </TabsContent>
 
         <TabsContent value="prices" className="mt-4">
