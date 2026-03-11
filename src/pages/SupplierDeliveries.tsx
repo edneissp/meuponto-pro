@@ -345,6 +345,19 @@ const SupplierDeliveries = () => {
     return { cost, sale, margin };
   };
 
+  const toggleExpensePaid = async (exp: Expense) => {
+    const update = exp.paid
+      ? { paid: false, paid_at: null }
+      : { paid: true, paid_at: new Date().toISOString() };
+    const { error } = await supabase.from("expenses").update(update).eq("id", exp.id);
+    if (error) return toast.error("Erro ao atualizar");
+    toast.success(exp.paid ? "Despesa marcada como pendente" : "Despesa marcada como paga");
+    loadData();
+  };
+
+  const pendingExpenses = expenses.filter(e => !e.paid);
+  const paidExpenses = expenses.filter(e => e.paid);
+
   if (loading) {
     return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando...</div>;
   }
@@ -359,9 +372,11 @@ const SupplierDeliveries = () => {
       </div>
 
       <Tabs defaultValue="deliveries">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="deliveries" className="gap-1"><Truck className="h-4 w-4" /> Entregas</TabsTrigger>
-          <TabsTrigger value="prices" className="gap-1"><History className="h-4 w-4" /> Histórico de Preços</TabsTrigger>
+          <TabsTrigger value="expenses" className="gap-1"><DollarSign className="h-4 w-4" /> Despesas</TabsTrigger>
+          <TabsTrigger value="fiados" className="gap-1"><BookOpen className="h-4 w-4" /> Fiados Recebidos</TabsTrigger>
+          <TabsTrigger value="prices" className="gap-1"><History className="h-4 w-4" /> Preços</TabsTrigger>
           <TabsTrigger value="margins" className="gap-1"><TrendingUp className="h-4 w-4" /> Margens</TabsTrigger>
         </TabsList>
 
