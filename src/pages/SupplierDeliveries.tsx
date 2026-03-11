@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Truck, History, Package, DollarSign, TrendingUp, Edit } from "lucide-react";
+import { Plus, Trash2, Truck, History, Package, DollarSign, TrendingUp, Edit, CheckCircle2, AlertCircle, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 
 interface Supplier { id: string; name: string; }
