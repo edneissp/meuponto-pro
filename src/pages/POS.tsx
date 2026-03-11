@@ -194,7 +194,11 @@ const POS = () => {
     }));
 
     const { data: insertedItems, error: itemsError } = await supabase.from("sale_items").insert(items).select("id");
-    if (itemsError) { setLoading(false); return toast.error("Erro ao registrar itens"); }
+    if (itemsError) { 
+      console.error("Erro ao registrar itens:", itemsError);
+      setLoading(false); 
+      return toast.error("Erro ao registrar itens: " + itemsError.message); 
+    }
 
     // Save optionals for each sale item
     if (insertedItems) {
