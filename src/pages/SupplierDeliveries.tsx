@@ -520,7 +520,7 @@ const SupplierDeliveries = () => {
           )}
         </TabsContent>
 
-
+        <TabsContent value="prices" className="mt-4">
           {priceHistory.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhum histórico de preço</div>
           ) : (
