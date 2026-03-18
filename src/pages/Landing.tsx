@@ -140,11 +140,12 @@ const Landing = () => {
               Experimente o YouControl gratuitamente por 30 dias e descubra como é fácil organizar seu comércio.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.25s" }}>
-              <Button size="lg" className="text-base px-8 shadow-glow" asChild>
-                <Link to="/register">🚀 Teste grátis por 30 dias</Link>
+              <Button size="lg" className="text-base px-8 shadow-glow" onClick={handleStartDemo} disabled={demoLoading}>
+                <FlaskConical className="mr-2 h-5 w-5" />
+                {demoLoading ? "Preparando..." : "Testar agora"}
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-                <a href="#features">Ver funcionalidades</a>
+                <Link to="/register">🚀 Teste grátis por 30 dias</Link>
               </Button>
             </div>
             <p className="text-sm text-primary-foreground/50 mt-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
