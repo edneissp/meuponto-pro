@@ -1216,6 +1216,7 @@ export type Database = {
           created_at: string
           delivery_date: string
           delivery_status: string
+          expense_id: string | null
           id: string
           notes: string | null
           payment_date: string | null
@@ -1229,6 +1230,7 @@ export type Database = {
           created_at?: string
           delivery_date?: string
           delivery_status?: string
+          expense_id?: string | null
           id?: string
           notes?: string | null
           payment_date?: string | null
@@ -1242,6 +1244,7 @@ export type Database = {
           created_at?: string
           delivery_date?: string
           delivery_status?: string
+          expense_id?: string | null
           id?: string
           notes?: string | null
           payment_date?: string | null
@@ -1252,6 +1255,13 @@ export type Database = {
           total_amount?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "supplier_deliveries_expense_id_fkey"
+            columns: ["expense_id"]
+            isOneToOne: false
+            referencedRelation: "expenses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "supplier_deliveries_supplier_id_fkey"
             columns: ["supplier_id"]
