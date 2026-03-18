@@ -6,6 +6,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import DemoExpired from "./pages/DemoExpired";
 import AdminPanel from "./pages/AdminPanel";
 import AppLayout from "./components/AppLayout";
 import Subscription from "./pages/Subscription";
@@ -35,6 +38,9 @@ const App = () => (
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/demo-expired" element={<DemoExpired />} />
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/menu/:tenantId" element={<DigitalMenu />} />
