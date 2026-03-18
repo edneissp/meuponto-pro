@@ -59,6 +59,67 @@ export type Database = {
           },
         ]
       }
+      billing_webhook_events: {
+        Row: {
+          created_at: string
+          event_id: string
+          event_type: string | null
+          gateway: string
+          id: string
+          invoice_id: string | null
+          payload: Json
+          processed_at: string | null
+          subscription_id: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          event_type?: string | null
+          gateway: string
+          id?: string
+          invoice_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          subscription_id?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          event_type?: string | null
+          gateway?: string
+          id?: string
+          invoice_id?: string | null
+          payload?: Json
+          processed_at?: string | null
+          subscription_id?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "billing_webhook_events_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_webhook_events_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "billing_webhook_events_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -228,6 +289,90 @@ export type Database = {
           },
           {
             foreignKeyName: "fiados_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoices: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          download_url: string | null
+          due_date: string
+          gateway_event_id: string | null
+          gateway_payment_id: string | null
+          id: string
+          invoice_number: string
+          invoice_url: string | null
+          last_retry_at: string | null
+          metadata: Json
+          next_retry_at: string | null
+          paid_at: string | null
+          payment_gateway: string
+          retry_count: number
+          status: string
+          subscription_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          download_url?: string | null
+          due_date: string
+          gateway_event_id?: string | null
+          gateway_payment_id?: string | null
+          id?: string
+          invoice_number: string
+          invoice_url?: string | null
+          last_retry_at?: string | null
+          metadata?: Json
+          next_retry_at?: string | null
+          paid_at?: string | null
+          payment_gateway: string
+          retry_count?: number
+          status?: string
+          subscription_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          download_url?: string | null
+          due_date?: string
+          gateway_event_id?: string | null
+          gateway_payment_id?: string | null
+          id?: string
+          invoice_number?: string
+          invoice_url?: string | null
+          last_retry_at?: string | null
+          metadata?: Json
+          next_retry_at?: string | null
+          paid_at?: string | null
+          payment_gateway?: string
+          retry_count?: number
+          status?: string
+          subscription_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoices_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoices_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -852,6 +997,77 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          billing_cycle: string
+          created_at: string
+          currency: string
+          customer_country: string | null
+          customer_country_source: string | null
+          customer_email: string | null
+          gateway: string
+          gateway_subscription_id: string | null
+          id: string
+          metadata: Json
+          next_billing_date: string | null
+          plan_name: string
+          plan_price: number
+          preferred_payment_method: string | null
+          status: string
+          tenant_id: string
+          trial_end: string | null
+          updated_at: string
+        }
+        Insert: {
+          billing_cycle?: string
+          created_at?: string
+          currency?: string
+          customer_country?: string | null
+          customer_country_source?: string | null
+          customer_email?: string | null
+          gateway?: string
+          gateway_subscription_id?: string | null
+          id?: string
+          metadata?: Json
+          next_billing_date?: string | null
+          plan_name: string
+          plan_price?: number
+          preferred_payment_method?: string | null
+          status?: string
+          tenant_id: string
+          trial_end?: string | null
+          updated_at?: string
+        }
+        Update: {
+          billing_cycle?: string
+          created_at?: string
+          currency?: string
+          customer_country?: string | null
+          customer_country_source?: string | null
+          customer_email?: string | null
+          gateway?: string
+          gateway_subscription_id?: string | null
+          id?: string
+          metadata?: Json
+          next_billing_date?: string | null
+          plan_name?: string
+          plan_price?: number
+          preferred_payment_method?: string | null
+          status?: string
+          tenant_id?: string
+          trial_end?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       supplier_deliveries: {
         Row: {
           created_at: string
@@ -1045,6 +1261,13 @@ export type Database = {
       tenants: {
         Row: {
           ativo: boolean
+          billing_contact_email: string | null
+          billing_country_code: string | null
+          billing_country_source: string | null
+          billing_currency: string | null
+          billing_customer_name: string | null
+          billing_detection_checked_at: string | null
+          billing_gateway: string | null
           created_at: string
           delivery_fee: number
           delivery_fee_per_km: number
@@ -1065,6 +1288,13 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          billing_contact_email?: string | null
+          billing_country_code?: string | null
+          billing_country_source?: string | null
+          billing_currency?: string | null
+          billing_customer_name?: string | null
+          billing_detection_checked_at?: string | null
+          billing_gateway?: string | null
           created_at?: string
           delivery_fee?: number
           delivery_fee_per_km?: number
@@ -1085,6 +1315,13 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          billing_contact_email?: string | null
+          billing_country_code?: string | null
+          billing_country_source?: string | null
+          billing_currency?: string | null
+          billing_customer_name?: string | null
+          billing_detection_checked_at?: string | null
+          billing_gateway?: string | null
           created_at?: string
           delivery_fee?: number
           delivery_fee_per_km?: number
@@ -1139,6 +1376,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_invoice_number: { Args: never; Returns: string }
       get_user_tenant_id: { Args: never; Returns: string }
       has_role: {
         Args: {
