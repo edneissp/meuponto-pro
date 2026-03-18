@@ -1341,6 +1341,7 @@ export type Database = {
         Row: {
           created_at: string
           delivery_id: string
+          expiry_date: string | null
           id: string
           product_id: string
           quantity: number
@@ -1351,6 +1352,7 @@ export type Database = {
         Insert: {
           created_at?: string
           delivery_id: string
+          expiry_date?: string | null
           id?: string
           product_id: string
           quantity?: number
@@ -1361,6 +1363,7 @@ export type Database = {
         Update: {
           created_at?: string
           delivery_id?: string
+          expiry_date?: string | null
           id?: string
           product_id?: string
           quantity?: number
@@ -1517,6 +1520,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          origin: string
           pix_key: string | null
           plano: string
           primary_color: string | null
@@ -1545,6 +1549,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          origin?: string
           pix_key?: string | null
           plano?: string
           primary_color?: string | null
@@ -1573,6 +1578,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          origin?: string
           pix_key?: string | null
           plano?: string
           primary_color?: string | null
