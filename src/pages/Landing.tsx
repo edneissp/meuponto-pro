@@ -61,6 +61,19 @@ const faqs = [
 const Landing = () => {
   const [leadForm, setLeadForm] = useState({ name: "", email: "", whatsapp: "", business_name: "" });
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
+  const navigate = useNavigate();
+
+  const handleStartDemo = async () => {
+    setDemoLoading(true);
+    try {
+      await startDemoSession();
+      navigate("/app");
+    } catch (err: any) {
+      toast.error(err?.message || "Não foi possível iniciar a demonstração.");
+    }
+    setDemoLoading(false);
+  };
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
