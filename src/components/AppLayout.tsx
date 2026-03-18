@@ -5,8 +5,10 @@ import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
+import { useDemoSession } from "@/hooks/use-demo-session";
 import Subscription from "@/pages/Subscription";
 import TrialBanner from "@/components/TrialBanner";
+import DemoBanner from "@/components/DemoBanner";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
@@ -31,7 +33,9 @@ const AppLayout = () => {
   const [tenantStatus, setTenantStatus] = useState<string | null>(null);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [tenantPlano, setTenantPlano] = useState<string | null>(null);
+  const [tenantOrigin, setTenantOrigin] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
+  const demoSession = useDemoSession(tenantOrigin === "demo");
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -40,7 +44,6 @@ const AppLayout = () => {
         navigate("/login");
         return;
       }
-      // Get tenant info
       const { data: profile } = await supabase
         .from("profiles")
         .select("tenant_id")
@@ -49,15 +52,16 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name, subscription_status, logo_url, trial_end, plano, ativo")
+          .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin")
           .eq("id", profile.tenant_id)
           .single();
         if (tenant) {
           setTenantName(tenant.name);
           setTenantLogo(tenant.logo_url);
           setTenantPlano((tenant as any).plano || null);
+          setTenantOrigin((tenant as any).origin || null);
+          applyColor((tenant as any).primary_color || null);
 
-          // Check trial expiration
           const plano = (tenant as any).plano as string;
           const trialEnd = (tenant as any).trial_end as string | null;
 
@@ -69,7 +73,6 @@ const AppLayout = () => {
             setTrialDaysLeft(diffDays);
 
             if (diffDays < 0) {
-              // Trial expired - update tenant
               await supabase
                 .from("tenants")
                 .update({ plano: "expirado", subscription_status: "suspended" })
@@ -84,7 +87,6 @@ const AppLayout = () => {
           }
         }
       }
-      // Check admin role
       const { data: roles } = await supabase
         .from("user_roles")
         .select("role")
@@ -98,14 +100,22 @@ const AppLayout = () => {
       if (event === "SIGNED_OUT") navigate("/login");
     });
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, applyColor]);
+
+  useEffect(() => {
+    if (tenantOrigin === "demo" && demoSession.isExpired) {
+      supabase.auth.signOut();
+      demoSession.clearSession();
+      navigate("/demo-expired");
+    }
+  }, [tenantOrigin, demoSession.isExpired, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    if (tenantOrigin === "demo") demoSession.clearSession();
     navigate("/");
   };
 
-  // Block access for pending/suspended/expired tenants (allow payment-status page and admins)
   const isBlocked = tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
   const isPaymentPage = location.pathname.includes("payment-status");
   const isTrialExpired = tenantPlano === "expirado";
@@ -116,12 +126,10 @@ const AppLayout = () => {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      {/* Mobile overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 bg-foreground/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
       <aside className={cn(
         "fixed lg:static inset-y-0 left-0 z-50 w-64 flex flex-col bg-sidebar border-r border-sidebar-border transition-transform duration-300 lg:translate-x-0",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -186,7 +194,6 @@ const AppLayout = () => {
         </div>
       </aside>
 
-      {/* Main content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="h-16 border-b border-border flex items-center px-4 lg:px-6 bg-card">
           <Button variant="ghost" size="icon" className="lg:hidden mr-2" onClick={() => setSidebarOpen(true)}>
@@ -196,7 +203,9 @@ const AppLayout = () => {
             {navItems.find(n => n.path === location.pathname)?.label || "MeuPonto"}
           </h1>
         </header>
-        {/* Trial banner */}
+        {tenantOrigin === "demo" && !demoSession.isExpired && (
+          <DemoBanner remainingMinutes={demoSession.remainingMinutes} />
+        )}
         {tenantPlano === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7 && trialDaysLeft >= 0 && (
           <TrialBanner daysLeft={trialDaysLeft} />
         )}
