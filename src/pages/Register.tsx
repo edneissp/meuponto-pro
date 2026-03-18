@@ -1,11 +1,11 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle, Zap } from "lucide-react";
+import { CheckCircle, FlaskConical, Zap } from "lucide-react";
 
 const trialBenefits = [
   "30 dias grátis — sem cartão de crédito",
@@ -20,7 +20,11 @@ const Register = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const origin = useMemo(() => (searchParams.get("origin") === "demo" ? "demo" : "direct"), [searchParams]);
+  const isFromDemo = origin === "demo";
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +37,7 @@ const Register = () => {
       email,
       password,
       options: {
-        data: { full_name: fullName, business_name: businessName },
+        data: { full_name: fullName, business_name: businessName, origin },
         emailRedirectTo: window.location.origin,
       },
     });
@@ -74,12 +78,24 @@ const Register = () => {
             <div className="h-8 w-8 rounded-lg gradient-primary" />
             <span className="text-xl font-bold">YouControl</span>
           </div>
-          <div className="lg:hidden inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-4">
-            <Zap className="h-3 w-3" />
-            30 dias grátis
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+              <Zap className="h-3 w-3" />
+              30 dias grátis
+            </div>
+            {isFromDemo && (
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent text-accent-foreground text-xs font-medium">
+                <FlaskConical className="h-3 w-3" />
+                Veio da DEMO
+              </div>
+            )}
           </div>
           <h1 className="text-2xl font-bold mb-2">Criar conta grátis</h1>
-          <p className="text-muted-foreground mb-8">Comece seu teste grátis de 30 dias — sem cartão de crédito</p>
+          <p className="text-muted-foreground mb-6">
+            {isFromDemo
+              ? "Sua conta real será criada com um novo ambiente e trial de 30 dias ativado automaticamente."
+              : "Comece seu teste grátis de 30 dias — sem cartão de crédito"}
+          </p>
           <form onSubmit={handleRegister} className="space-y-4">
             <div>
               <Label htmlFor="fullName">Seu nome</Label>

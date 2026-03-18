@@ -27,6 +27,7 @@ interface Product {
   sale_price: number;
   purchase_price: number;
   stock_quantity: number;
+  expiry_date?: string | null;
 }
 
 interface DeliveryItem {
@@ -35,6 +36,7 @@ interface DeliveryItem {
   quantity: number;
   unit_price: number;
   total: number;
+  expiry_date: string;
 }
 
 interface DeliveryRecord {
@@ -57,6 +59,7 @@ interface DeliveryRecord {
     quantity: number;
     unit_price: number;
     total: number;
+    expiry_date?: string | null;
   }[];
 }
 
@@ -173,12 +176,17 @@ const SupplierDeliveries = () => {
     return createdExpense.id;
   };
 
+  const syncProductExpiry = async (productId: string, expiryDate?: string) => {
+    if (!expiryDate) return;
+    await supabase.from("products").update({ expiry_date: expiryDate }).eq("id", productId);
+  };
+
   const loadData = async () => {
     setLoading(true);
 
     const [suppRes, prodRes, delRes, priceRes, expRes, fiadoRes] = await Promise.all([
       supabase.from("suppliers").select("id, name").order("name"),
-      supabase.from("products").select("id, name, sale_price, purchase_price, stock_quantity").order("name"),
+      supabase.from("products").select("id, name, sale_price, purchase_price, stock_quantity, expiry_date").order("name"),
       supabase
         .from("supplier_deliveries")
         .select("*, supplier_delivery_items(*, products:product_id(name)), suppliers:supplier_id(name)")
@@ -199,7 +207,7 @@ const SupplierDeliveries = () => {
     ]);
 
     if (suppRes.data) setSuppliers(suppRes.data);
-    if (prodRes.data) setProducts(prodRes.data);
+    if (prodRes.data) setProducts(prodRes.data as Product[]);
     if (delRes.data) setDeliveries(delRes.data as any);
     if (priceRes.data) setPriceHistory(priceRes.data as any);
     if (expRes.data) setExpenses(expRes.data as Expense[]);
@@ -213,7 +221,7 @@ const SupplierDeliveries = () => {
   }, []);
 
   const addItem = () => {
-    setItems((prev) => [...prev, { product_id: "", product_name: "", quantity: 1, unit_price: 0, total: 0 }]);
+    setItems((prev) => [...prev, { product_id: "", product_name: "", quantity: 1, unit_price: 0, total: 0, expiry_date: "" }]);
   };
 
   const updateItem = (index: number, field: string, value: any) => {
@@ -229,6 +237,7 @@ const SupplierDeliveries = () => {
             updated.product_name = product.name;
             updated.unit_price = Number(product.purchase_price);
             updated.total = updated.quantity * updated.unit_price;
+            updated.expiry_date = product.expiry_date || "";
           }
         }
 
@@ -282,10 +291,15 @@ const SupplierDeliveries = () => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total: item.total,
+          expiry_date: item.expiry_date || null,
         }));
 
         const { error: itemsError } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
         if (itemsError) throw new Error("Erro ao salvar itens");
+
+        for (const item of items) {
+          await syncProductExpiry(item.product_id, item.expiry_date);
+        }
 
         if (purchaseType === "traditional") {
           const expensePayload = buildExpensePayload(tenantId, selectedSupplier, deliveryDate, totalAmount);
@@ -326,6 +340,7 @@ const SupplierDeliveries = () => {
           quantity: item.quantity,
           unit_price: item.unit_price,
           total: item.total,
+          expiry_date: item.expiry_date || null,
         }));
 
         const { error: itemsError } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
@@ -344,6 +359,7 @@ const SupplierDeliveries = () => {
             .update({
               stock_quantity: currentStock + item.quantity,
               purchase_price: item.unit_price,
+              expiry_date: item.expiry_date || null,
             })
             .eq("id", item.product_id);
 
@@ -410,6 +426,7 @@ const SupplierDeliveries = () => {
         quantity: item.quantity,
         unit_price: Number(item.unit_price),
         total: Number(item.total),
+        expiry_date: item.expiry_date || "",
       }))
     );
     setDialogOpen(true);
@@ -676,6 +693,9 @@ const SupplierDeliveries = () => {
                     <span>
                       <span className="font-bold text-primary mr-1">{item.quantity}x</span>
                       {item.products?.name || "Produto"}
+                      {item.expiry_date && (
+                        <span className="ml-2 text-xs text-muted-foreground">• Validade {new Date(`${item.expiry_date}T12:00:00`).toLocaleDateString("pt-BR")}</span>
+                      )}
                     </span>
                     <span className="text-muted-foreground text-right">
                       R$ {Number(item.unit_price).toFixed(2)} = R$ {Number(item.total).toFixed(2)}
@@ -887,7 +907,7 @@ const SupplierDeliveries = () => {
 
               {items.map((item, index) => (
                 <div key={index} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5">
+                  <div className="col-span-12 md:col-span-4">
                     {index === 0 && <label className="text-xs text-muted-foreground">Produto</label>}
                     <Select value={item.product_id} onValueChange={(value) => updateItem(index, "product_id", value)}>
                       <SelectTrigger><SelectValue placeholder="Produto" /></SelectTrigger>
@@ -898,7 +918,7 @@ const SupplierDeliveries = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-4 md:col-span-2">
                     {index === 0 && <label className="text-xs text-muted-foreground">Qtd</label>}
                     <Input
                       type="number"
@@ -907,7 +927,7 @@ const SupplierDeliveries = () => {
                       onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 0)}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-4 md:col-span-2">
                     {index === 0 && <label className="text-xs text-muted-foreground">Preço Unit.</label>}
                     <Input
                       type="number"
@@ -917,11 +937,19 @@ const SupplierDeliveries = () => {
                       onChange={(e) => updateItem(index, "unit_price", parseFloat(e.target.value) || 0)}
                     />
                   </div>
-                  <div className="col-span-2">
+                  <div className="col-span-4 md:col-span-2">
+                    {index === 0 && <label className="text-xs text-muted-foreground">Validade</label>}
+                    <Input
+                      type="date"
+                      value={item.expiry_date}
+                      onChange={(e) => updateItem(index, "expiry_date", e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-6 md:col-span-1">
                     {index === 0 && <label className="text-xs text-muted-foreground">Total</label>}
                     <Input value={`R$ ${item.total.toFixed(2)}`} disabled />
                   </div>
-                  <div className="col-span-1">
+                  <div className="col-span-2 md:col-span-1">
                     {index === 0 && <label className="text-xs text-muted-foreground">&nbsp;</label>}
                     <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => removeItem(index)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
