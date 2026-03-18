@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,27 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, Trash2, Truck, History, Package, DollarSign, TrendingUp, Edit, CheckCircle2, AlertCircle, BookOpen } from "lucide-react";
+import { CheckCircle2, AlertCircle, Plus, Trash2, Truck, History, TrendingUp, Edit, BookOpen, DollarSign, PackageCheck, Wallet } from "lucide-react";
 import { toast } from "sonner";
+import {
+  deliveryStatusLabels,
+  getDeliveryBadgeVariant,
+  getPaymentBadgeVariant,
+  paymentStatusLabels,
+} from "@/lib/billing";
 
-interface Supplier { id: string; name: string; }
-interface Product { id: string; name: string; sale_price: number; purchase_price: number; stock_quantity: number; }
+interface Supplier {
+  id: string;
+  name: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  sale_price: number;
+  purchase_price: number;
+  stock_quantity: number;
+}
 
 interface DeliveryItem {
   product_id: string;
@@ -30,6 +46,10 @@ interface DeliveryRecord {
   purchase_type: string;
   notes: string | null;
   created_at: string;
+  delivery_status: string;
+  payment_status: string;
+  payment_date: string | null;
+  expense_id: string | null;
   supplier_delivery_items?: {
     id: string;
     product_id: string;
@@ -81,8 +101,10 @@ const SupplierDeliveries = () => {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [paidFiados, setPaidFiados] = useState<FiadoRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [updatingDeliveryId, setUpdatingDeliveryId] = useState<string | null>(null);
+  const [updatingExpenseId, setUpdatingExpenseId] = useState<string | null>(null);
 
-  // Form state
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingDelivery, setEditingDelivery] = useState<DeliveryRecord | null>(null);
   const [selectedSupplier, setSelectedSupplier] = useState("");
@@ -90,88 +112,170 @@ const SupplierDeliveries = () => {
   const [deliveryDate, setDeliveryDate] = useState(new Date().toISOString().split("T")[0]);
   const [notes, setNotes] = useState("");
   const [items, setItems] = useState<DeliveryItem[]>([]);
-  const [saving, setSaving] = useState(false);
+
+  const getTenantId = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return null;
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("tenant_id")
+      .eq("user_id", session.user.id)
+      .single();
+
+    return profile?.tenant_id || null;
+  };
+
+  const getSupplierName = (supplierId: string) => suppliers.find((supplier) => supplier.id === supplierId)?.name || "Fornecedor";
+
+  const buildExpensePayload = (tenantId: string, supplierId: string, date: string, amount: number) => ({
+    tenant_id: tenantId,
+    description: `Entrega - ${getSupplierName(supplierId)} (${date})`,
+    amount,
+    category: "Compra de Mercadorias",
+    supplier_id: supplierId,
+    paid: false,
+    paid_at: null,
+    due_date: date,
+  });
+
+  const ensureExpenseForDelivery = async (delivery: DeliveryRecord) => {
+    if (delivery.purchase_type !== "traditional") return null;
+    if (delivery.expense_id) return delivery.expense_id;
+
+    const tenantId = await getTenantId();
+    if (!tenantId) throw new Error("Sessão expirada");
+
+    const { data: existingExpense } = await supabase
+      .from("expenses")
+      .select("id")
+      .eq("supplier_id", delivery.supplier_id)
+      .eq("amount", delivery.total_amount)
+      .eq("due_date", delivery.delivery_date)
+      .eq("category", "Compra de Mercadorias")
+      .limit(1)
+      .maybeSingle();
+
+    if (existingExpense?.id) {
+      await supabase.from("supplier_deliveries").update({ expense_id: existingExpense.id }).eq("id", delivery.id);
+      return existingExpense.id;
+    }
+
+    const { data: createdExpense, error } = await supabase
+      .from("expenses")
+      .insert(buildExpensePayload(tenantId, delivery.supplier_id, delivery.delivery_date, delivery.total_amount))
+      .select("id")
+      .single();
+
+    if (error || !createdExpense) throw new Error("Erro ao vincular despesa da entrega");
+
+    await supabase.from("supplier_deliveries").update({ expense_id: createdExpense.id }).eq("id", delivery.id);
+    return createdExpense.id;
+  };
 
   const loadData = async () => {
     setLoading(true);
+
     const [suppRes, prodRes, delRes, priceRes, expRes, fiadoRes] = await Promise.all([
       supabase.from("suppliers").select("id, name").order("name"),
       supabase.from("products").select("id, name, sale_price, purchase_price, stock_quantity").order("name"),
-      supabase.from("supplier_deliveries").select("*, supplier_delivery_items(*, products:product_id(name)), suppliers:supplier_id(name)").order("delivery_date", { ascending: false }).limit(50),
-      supabase.from("supplier_price_history").select("*, suppliers:supplier_id(name), products:product_id(name)").order("recorded_at", { ascending: false }).limit(100),
+      supabase
+        .from("supplier_deliveries")
+        .select("*, supplier_delivery_items(*, products:product_id(name)), suppliers:supplier_id(name)")
+        .order("delivery_date", { ascending: false })
+        .limit(50),
+      supabase
+        .from("supplier_price_history")
+        .select("*, suppliers:supplier_id(name), products:product_id(name)")
+        .order("recorded_at", { ascending: false })
+        .limit(100),
       supabase.from("expenses").select("*").order("created_at", { ascending: false }),
-      supabase.from("fiados").select("*, customers(name)").eq("paid", true).order("paid_at", { ascending: false }).limit(50),
+      supabase
+        .from("fiados")
+        .select("*, customers(name)")
+        .eq("paid", true)
+        .order("paid_at", { ascending: false })
+        .limit(50),
     ]);
+
     if (suppRes.data) setSuppliers(suppRes.data);
     if (prodRes.data) setProducts(prodRes.data);
     if (delRes.data) setDeliveries(delRes.data as any);
     if (priceRes.data) setPriceHistory(priceRes.data as any);
     if (expRes.data) setExpenses(expRes.data as Expense[]);
     if (fiadoRes.data) setPaidFiados(fiadoRes.data as FiadoRecord[]);
+
     setLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
+  useEffect(() => {
+    loadData();
+  }, []);
 
   const addItem = () => {
-    setItems(prev => [...prev, { product_id: "", product_name: "", quantity: 1, unit_price: 0, total: 0 }]);
+    setItems((prev) => [...prev, { product_id: "", product_name: "", quantity: 1, unit_price: 0, total: 0 }]);
   };
 
   const updateItem = (index: number, field: string, value: any) => {
-    setItems(prev => prev.map((item, i) => {
-      if (i !== index) return item;
-      const updated = { ...item, [field]: value };
-      if (field === "product_id") {
-        const prod = products.find(p => p.id === value);
-        if (prod) {
-          updated.product_name = prod.name;
-          updated.unit_price = Number(prod.purchase_price);
-          updated.total = updated.quantity * updated.unit_price;
+    setItems((prev) =>
+      prev.map((item, currentIndex) => {
+        if (currentIndex !== index) return item;
+
+        const updated = { ...item, [field]: value };
+
+        if (field === "product_id") {
+          const product = products.find((entry) => entry.id === value);
+          if (product) {
+            updated.product_name = product.name;
+            updated.unit_price = Number(product.purchase_price);
+            updated.total = updated.quantity * updated.unit_price;
+          }
         }
-      }
-      if (field === "quantity" || field === "unit_price") {
-        updated.total = Number(updated.quantity) * Number(updated.unit_price);
-      }
-      return updated;
-    }));
+
+        if (field === "quantity" || field === "unit_price") {
+          updated.total = Number(updated.quantity) * Number(updated.unit_price);
+        }
+
+        return updated;
+      })
+    );
   };
 
   const removeItem = (index: number) => {
-    setItems(prev => prev.filter((_, i) => i !== index));
+    setItems((prev) => prev.filter((_, currentIndex) => currentIndex !== index));
   };
 
-  const totalAmount = items.reduce((sum, item) => sum + item.total, 0);
+  const totalAmount = useMemo(() => items.reduce((sum, item) => sum + item.total, 0), [items]);
 
   const handleSave = async () => {
-    if (!selectedSupplier || items.length === 0 || items.some(i => !i.product_id || i.quantity <= 0)) {
+    if (!selectedSupplier || items.length === 0 || items.some((item) => !item.product_id || item.quantity <= 0)) {
       toast.error("Preencha fornecedor e pelo menos um item válido");
       return;
     }
+
     setSaving(true);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error("Sessão expirada"); setSaving(false); return; }
-      const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
-      if (!profile) { toast.error("Perfil não encontrado"); setSaving(false); return; }
-      const tenantId = profile.tenant_id;
+      const tenantId = await getTenantId();
+      if (!tenantId) throw new Error("Sessão expirada");
 
       if (editingDelivery) {
-        // UPDATE mode
-        // 1. Update delivery header
-        const { error: delErr } = await supabase.from("supplier_deliveries").update({
-          supplier_id: selectedSupplier,
-          delivery_date: deliveryDate,
-          total_amount: totalAmount,
-          purchase_type: purchaseType,
-          notes: notes || null,
-        }).eq("id", editingDelivery.id);
-        if (delErr) throw new Error("Erro ao atualizar entrega");
+        const { error: deliveryError } = await supabase
+          .from("supplier_deliveries")
+          .update({
+            supplier_id: selectedSupplier,
+            delivery_date: deliveryDate,
+            total_amount: totalAmount,
+            purchase_type: purchaseType,
+            notes: notes || null,
+          })
+          .eq("id", editingDelivery.id);
 
-        // 2. Delete old items and insert new ones
+        if (deliveryError) throw new Error("Erro ao atualizar entrega");
+
         await supabase.from("supplier_delivery_items").delete().eq("delivery_id", editingDelivery.id);
 
-        const deliveryItems = items.map(item => ({
+        const deliveryItems = items.map((item) => ({
           delivery_id: editingDelivery.id,
           tenant_id: tenantId,
           product_id: item.product_id,
@@ -179,59 +283,76 @@ const SupplierDeliveries = () => {
           unit_price: item.unit_price,
           total: item.total,
         }));
-        const { error: itemsErr } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
-        if (itemsErr) throw new Error("Erro ao salvar itens");
+
+        const { error: itemsError } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
+        if (itemsError) throw new Error("Erro ao salvar itens");
+
+        if (purchaseType === "traditional") {
+          const expensePayload = buildExpensePayload(tenantId, selectedSupplier, deliveryDate, totalAmount);
+          const expenseId = editingDelivery.expense_id || (await ensureExpenseForDelivery({ ...editingDelivery, supplier_id: selectedSupplier, delivery_date: deliveryDate, total_amount: totalAmount } as DeliveryRecord));
+
+          if (expenseId) {
+            await supabase.from("expenses").update({
+              description: expensePayload.description,
+              amount: expensePayload.amount,
+              category: expensePayload.category,
+              supplier_id: expensePayload.supplier_id,
+              due_date: expensePayload.due_date,
+            }).eq("id", expenseId);
+          }
+        }
 
         toast.success("Entrega atualizada com sucesso!");
       } else {
-        // CREATE mode
-        const { data: delivery, error: delErr } = await supabase.from("supplier_deliveries").insert({
-          tenant_id: tenantId,
-          supplier_id: selectedSupplier,
-          delivery_date: deliveryDate,
-          total_amount: totalAmount,
-          purchase_type: purchaseType,
-          notes: notes || null,
-        }).select("id").single();
+        const { data: createdDelivery, error: deliveryError } = await supabase
+          .from("supplier_deliveries")
+          .insert({
+            tenant_id: tenantId,
+            supplier_id: selectedSupplier,
+            delivery_date: deliveryDate,
+            total_amount: totalAmount,
+            purchase_type: purchaseType,
+            notes: notes || null,
+          })
+          .select("id")
+          .single();
 
-        if (delErr || !delivery) throw new Error("Erro ao criar entrega");
+        if (deliveryError || !createdDelivery) throw new Error("Erro ao criar entrega");
 
-        const deliveryItems = items.map(item => ({
-          delivery_id: delivery.id,
+        const deliveryItems = items.map((item) => ({
+          delivery_id: createdDelivery.id,
           tenant_id: tenantId,
           product_id: item.product_id,
           quantity: item.quantity,
           unit_price: item.unit_price,
           total: item.total,
         }));
-        const { error: itemsErr } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
-        if (itemsErr) throw new Error("Erro ao salvar itens");
 
-        // Update stock + record movements + update purchase_price + record price history
+        const { error: itemsError } = await supabase.from("supplier_delivery_items").insert(deliveryItems);
+        if (itemsError) throw new Error("Erro ao salvar itens");
+
         for (const item of items) {
-          // Fetch current stock from DB to avoid stale state
           const { data: currentProduct } = await supabase
             .from("products")
             .select("stock_quantity")
             .eq("id", item.product_id)
             .single();
-          
+
           const currentStock = currentProduct?.stock_quantity ?? 0;
-          const { error: updateErr } = await supabase.from("products").update({
-            stock_quantity: currentStock + item.quantity,
-            purchase_price: item.unit_price,
-          }).eq("id", item.product_id);
-          
-          if (updateErr) {
-            console.error("Erro ao atualizar estoque:", updateErr);
-          }
+          await supabase
+            .from("products")
+            .update({
+              stock_quantity: currentStock + item.quantity,
+              purchase_price: item.unit_price,
+            })
+            .eq("id", item.product_id);
 
           await supabase.from("stock_movements").insert({
             tenant_id: tenantId,
             product_id: item.product_id,
             type: "entry",
             quantity: item.quantity,
-            notes: `Entrega fornecedor: ${suppliers.find(s => s.id === selectedSupplier)?.name || ""}`,
+            notes: `Entrega fornecedor: ${getSupplierName(selectedSupplier)}`,
           });
 
           await supabase.from("supplier_price_history").insert({
@@ -243,15 +364,15 @@ const SupplierDeliveries = () => {
         }
 
         if (purchaseType === "traditional") {
-          await supabase.from("expenses").insert({
-            tenant_id: tenantId,
-            description: `Entrega - ${suppliers.find(s => s.id === selectedSupplier)?.name || "Fornecedor"} (${deliveryDate})`,
-            amount: totalAmount,
-            category: "Compra de Mercadorias",
-            supplier_id: selectedSupplier,
-            paid: false,
-            due_date: deliveryDate,
-          });
+          const { data: expense, error: expenseError } = await supabase
+            .from("expenses")
+            .insert(buildExpensePayload(tenantId, selectedSupplier, deliveryDate, totalAmount))
+            .select("id")
+            .single();
+
+          if (!expenseError && expense?.id) {
+            await supabase.from("supplier_deliveries").update({ expense_id: expense.id }).eq("id", createdDelivery.id);
+          }
         }
 
         toast.success("Entrega registrada com sucesso!");
@@ -259,10 +380,11 @@ const SupplierDeliveries = () => {
 
       setDialogOpen(false);
       resetForm();
-      loadData();
+      await loadData();
     } catch (err: any) {
       toast.error(err.message || "Erro ao salvar entrega");
     }
+
     setSaving(false);
   };
 
@@ -275,14 +397,14 @@ const SupplierDeliveries = () => {
     setItems([]);
   };
 
-  const openEdit = (del: DeliveryRecord) => {
-    setEditingDelivery(del);
-    setSelectedSupplier(del.supplier_id);
-    setPurchaseType(del.purchase_type as "traditional" | "consigned");
-    setDeliveryDate(del.delivery_date);
-    setNotes(del.notes || "");
+  const openEdit = (delivery: DeliveryRecord) => {
+    setEditingDelivery(delivery);
+    setSelectedSupplier(delivery.supplier_id);
+    setPurchaseType(delivery.purchase_type as "traditional" | "consigned");
+    setDeliveryDate(delivery.delivery_date);
+    setNotes(delivery.notes || "");
     setItems(
-      (del.supplier_delivery_items || []).map((item: any) => ({
+      (delivery.supplier_delivery_items || []).map((item: any) => ({
         product_id: item.product_id,
         product_name: item.products?.name || "",
         quantity: item.quantity,
@@ -293,17 +415,17 @@ const SupplierDeliveries = () => {
     setDialogOpen(true);
   };
 
-  const handleDelete = async (del: DeliveryRecord) => {
-    if (!confirm(`Excluir entrega de ${(del.suppliers as any)?.name || "Fornecedor"} em ${new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}?`)) return;
+  const handleDelete = async (delivery: DeliveryRecord) => {
+    if (!confirm(`Excluir entrega de ${(delivery.suppliers as any)?.name || "Fornecedor"} em ${new Date(`${delivery.delivery_date}T12:00:00`).toLocaleDateString("pt-BR")}?`)) return;
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { toast.error("Sessão expirada"); return; }
-      const { data: profile } = await supabase.from("profiles").select("tenant_id").eq("user_id", session.user.id).single();
-      if (!profile) { toast.error("Perfil não encontrado"); return; }
+      const tenantId = await getTenantId();
+      if (!tenantId) {
+        toast.error("Sessão expirada");
+        return;
+      }
 
-      // Revert stock for each item
-      for (const item of del.supplier_delivery_items || []) {
+      for (const item of delivery.supplier_delivery_items || []) {
         const { data: currentProduct } = await supabase
           .from("products")
           .select("stock_quantity")
@@ -311,30 +433,93 @@ const SupplierDeliveries = () => {
           .single();
 
         if (currentProduct) {
-          await supabase.from("products").update({
-            stock_quantity: Math.max(0, (currentProduct.stock_quantity ?? 0) - item.quantity),
-          }).eq("id", item.product_id);
+          await supabase
+            .from("products")
+            .update({
+              stock_quantity: Math.max(0, (currentProduct.stock_quantity ?? 0) - item.quantity),
+            })
+            .eq("id", item.product_id);
         }
 
         await supabase.from("stock_movements").insert({
-          tenant_id: profile.tenant_id,
+          tenant_id: tenantId,
           product_id: item.product_id,
           type: "adjustment",
           quantity: -item.quantity,
-          notes: `Exclusão entrega fornecedor: ${(del.suppliers as any)?.name || ""}`,
+          notes: `Exclusão entrega fornecedor: ${(delivery.suppliers as any)?.name || ""}`,
         });
       }
 
-      // Delete items then delivery
-      await supabase.from("supplier_delivery_items").delete().eq("delivery_id", del.id);
-      const { error } = await supabase.from("supplier_deliveries").delete().eq("id", del.id);
+      await supabase.from("supplier_delivery_items").delete().eq("delivery_id", delivery.id);
+      const { error } = await supabase.from("supplier_deliveries").delete().eq("id", delivery.id);
       if (error) throw error;
 
       toast.success("Entrega excluída com sucesso!");
-      loadData();
+      await loadData();
     } catch (err: any) {
-      toast.error("Erro ao excluir: " + err.message);
+      toast.error(`Erro ao excluir: ${err.message}`);
     }
+  };
+
+  const handleDeliveryStatusChange = async (delivery: DeliveryRecord, value: string) => {
+    if (value === delivery.delivery_status) return;
+
+    setUpdatingDeliveryId(delivery.id);
+
+    const { error } = await supabase
+      .from("supplier_deliveries")
+      .update({ delivery_status: value })
+      .eq("id", delivery.id);
+
+    if (error) {
+      toast.error("Erro ao atualizar status da entrega");
+      setUpdatingDeliveryId(null);
+      return;
+    }
+
+    toast.success("Status da entrega atualizado!");
+    await loadData();
+    setUpdatingDeliveryId(null);
+  };
+
+  const handlePaymentStatusChange = async (delivery: DeliveryRecord, value: string) => {
+    if (value === delivery.payment_status) return;
+
+    setUpdatingDeliveryId(delivery.id);
+
+    try {
+      const paymentDate = value === "paid" ? new Date().toISOString() : null;
+
+      if (delivery.purchase_type === "traditional") {
+        const expenseId = await ensureExpenseForDelivery(delivery);
+
+        if (expenseId) {
+          const expenseUpdate = value === "paid"
+            ? { paid: true, paid_at: paymentDate }
+            : { paid: false, paid_at: null };
+
+          const { error: expenseError } = await supabase.from("expenses").update(expenseUpdate).eq("id", expenseId);
+          if (expenseError) throw new Error("Erro ao sincronizar despesa financeira");
+        }
+      }
+
+      const { error } = await supabase
+        .from("supplier_deliveries")
+        .update({
+          payment_status: value,
+          payment_date: paymentDate,
+        })
+        .eq("id", delivery.id);
+
+      if (error) throw new Error("Erro ao atualizar status do pagamento");
+
+      toast.success("Status de pagamento atualizado!");
+      await loadData();
+    } catch (err: any) {
+      toast.error(err.message || "Erro ao atualizar pagamento");
+    }
+
+    setUpdatingDeliveryId(null);
   };
 
   const getMarginInfo = (product: Product) => {
@@ -345,18 +530,35 @@ const SupplierDeliveries = () => {
     return { cost, sale, margin };
   };
 
-  const toggleExpensePaid = async (exp: Expense) => {
-    const update = exp.paid
+  const toggleExpensePaid = async (expense: Expense) => {
+    setUpdatingExpenseId(expense.id);
+
+    const update = expense.paid
       ? { paid: false, paid_at: null }
       : { paid: true, paid_at: new Date().toISOString() };
-    const { error } = await supabase.from("expenses").update(update).eq("id", exp.id);
-    if (error) return toast.error("Erro ao atualizar");
-    toast.success(exp.paid ? "Despesa marcada como pendente" : "Despesa marcada como paga");
-    loadData();
+
+    const { error } = await supabase.from("expenses").update(update).eq("id", expense.id);
+    if (error) {
+      toast.error("Erro ao atualizar");
+      setUpdatingExpenseId(null);
+      return;
+    }
+
+    await supabase
+      .from("supplier_deliveries")
+      .update({
+        payment_status: update.paid ? "paid" : "pending",
+        payment_date: update.paid ? update.paid_at : null,
+      })
+      .eq("expense_id", expense.id);
+
+    toast.success(expense.paid ? "Despesa marcada como pendente" : "Despesa marcada como paga");
+    await loadData();
+    setUpdatingExpenseId(null);
   };
 
-  const pendingExpenses = expenses.filter(e => !e.paid);
-  const paidExpenses = expenses.filter(e => e.paid);
+  const pendingExpenses = expenses.filter((expense) => !expense.paid);
+  const paidExpenses = expenses.filter((expense) => expense.paid);
 
   if (loading) {
     return <div className="flex items-center justify-center py-12 text-muted-foreground">Carregando...</div>;
@@ -383,50 +585,115 @@ const SupplierDeliveries = () => {
         <TabsContent value="deliveries" className="space-y-3 mt-4">
           {deliveries.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhuma entrega registrada</div>
-          ) : deliveries.map(del => (
-            <Card key={del.id} className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <Truck className="h-4 w-4 text-primary" />
-                  <span className="font-bold">{(del.suppliers as any)?.name || "Fornecedor"}</span>
-                  <Badge variant={del.purchase_type === "consigned" ? "secondary" : "default"}>
-                    {del.purchase_type === "consigned" ? "Consignado" : "Tradicional"}
-                  </Badge>
+          ) : deliveries.map((delivery) => (
+            <Card key={delivery.id} className="p-4 space-y-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-2 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Truck className="h-4 w-4 text-primary" />
+                    <span className="font-bold truncate">{(delivery.suppliers as any)?.name || "Fornecedor"}</span>
+                    <Badge variant={delivery.purchase_type === "consigned" ? "secondary" : "default"}>
+                      {delivery.purchase_type === "consigned" ? "Consignado" : "Tradicional"}
+                    </Badge>
+                    <Badge variant={getDeliveryBadgeVariant(delivery.delivery_status)}>
+                      {deliveryStatusLabels[delivery.delivery_status] || delivery.delivery_status}
+                    </Badge>
+                    <Badge variant={getPaymentBadgeVariant(delivery.payment_status)}>
+                      {paymentStatusLabels[delivery.payment_status] || delivery.payment_status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1">
+                    <p>{new Date(`${delivery.delivery_date}T12:00:00`).toLocaleDateString("pt-BR")}</p>
+                    {delivery.payment_date && (
+                      <p>Pagamento registrado em {new Date(delivery.payment_date).toLocaleDateString("pt-BR")}</p>
+                    )}
+                  </div>
                 </div>
-                <span className="text-sm text-muted-foreground">
-                  {new Date(del.delivery_date + "T12:00:00").toLocaleDateString("pt-BR")}
-                </span>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(del)}>
+
+                <div className="flex gap-1 self-end sm:self-start">
+                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(delivery)}>
                     <Edit className="h-4 w-4" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(del)}>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDelete(delivery)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
               </div>
-              <div className="space-y-1 mb-2">
-                {del.supplier_delivery_items?.map((item: any) => (
-                  <div key={item.id} className="flex justify-between text-sm">
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <PackageCheck className="h-4 w-4 text-primary" />
+                    Status da entrega
+                  </div>
+                  <Select
+                    value={delivery.delivery_status}
+                    onValueChange={(value) => handleDeliveryStatusChange(delivery, value)}
+                    disabled={updatingDeliveryId === delivery.id}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="received">Recebida</SelectItem>
+                      <SelectItem value="processing">Em processamento</SelectItem>
+                      <SelectItem value="completed">Concluída</SelectItem>
+                      <SelectItem value="canceled">Cancelada</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Wallet className="h-4 w-4 text-primary" />
+                    Status do pagamento
+                  </div>
+                  <Select
+                    value={delivery.payment_status}
+                    onValueChange={(value) => handlePaymentStatusChange(delivery, value)}
+                    disabled={updatingDeliveryId === delivery.id}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pendente</SelectItem>
+                      <SelectItem value="partial">Parcial</SelectItem>
+                      <SelectItem value="paid">Pago</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    {delivery.purchase_type === "traditional"
+                      ? "Ao marcar como pago, a despesa vinculada é atualizada automaticamente no financeiro."
+                      : "Compra consignada: o status é apenas operacional e não gera baixa automática em despesa."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                {delivery.supplier_delivery_items?.map((item: any) => (
+                  <div key={item.id} className="flex justify-between gap-3 text-sm">
                     <span>
                       <span className="font-bold text-primary mr-1">{item.quantity}x</span>
                       {item.products?.name || "Produto"}
                     </span>
-                    <span className="text-muted-foreground">
+                    <span className="text-muted-foreground text-right">
                       R$ {Number(item.unit_price).toFixed(2)} = R$ {Number(item.total).toFixed(2)}
                     </span>
                   </div>
                 ))}
               </div>
+
               <div className="flex justify-between items-center pt-2 border-t border-border">
                 <span className="text-sm text-muted-foreground">Total</span>
-                <span className="text-lg font-bold">R$ {Number(del.total_amount).toFixed(2)}</span>
+                <span className="text-lg font-bold">R$ {Number(delivery.total_amount).toFixed(2)}</span>
               </div>
-              {del.notes && <p className="text-xs text-muted-foreground mt-1">Obs: {del.notes}</p>}
+
+              {delivery.notes && <p className="text-xs text-muted-foreground">Obs: {delivery.notes}</p>}
             </Card>
           ))}
         </TabsContent>
-        {/* Expenses Tab */}
+
         <TabsContent value="expenses" className="space-y-4 mt-4">
           {pendingExpenses.length > 0 && (
             <div>
@@ -434,18 +701,18 @@ const SupplierDeliveries = () => {
                 <AlertCircle className="h-4 w-4 text-warning" /> Pendentes ({pendingExpenses.length})
               </h3>
               <div className="space-y-2">
-                {pendingExpenses.map(exp => (
-                  <Card key={exp.id} className="p-3 flex items-center justify-between border-warning/20">
+                {pendingExpenses.map((expense) => (
+                  <Card key={expense.id} className="p-3 flex items-center justify-between border-warning/20 gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{exp.description}</p>
+                      <p className="text-sm font-medium truncate">{expense.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        {exp.category || "Sem categoria"} • {new Date(exp.created_at).toLocaleDateString("pt-BR")}
-                        {exp.due_date && ` • Venc: ${new Date(exp.due_date).toLocaleDateString("pt-BR")}`}
+                        {expense.category || "Sem categoria"} • {new Date(expense.created_at).toLocaleDateString("pt-BR")}
+                        {expense.due_date && ` • Venc: ${new Date(`${expense.due_date}T12:00:00`).toLocaleDateString("pt-BR")}`}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm">R$ {Number(exp.amount).toFixed(2)}</span>
-                      <Button variant="outline" size="sm" className="gap-1" onClick={() => toggleExpensePaid(exp)}>
+                      <span className="font-bold text-sm">R$ {Number(expense.amount).toFixed(2)}</span>
+                      <Button variant="outline" size="sm" className="gap-1" onClick={() => toggleExpensePaid(expense)} disabled={updatingExpenseId === expense.id}>
                         <CheckCircle2 className="h-3 w-3" /> Pagar
                       </Button>
                     </div>
@@ -454,23 +721,24 @@ const SupplierDeliveries = () => {
               </div>
             </div>
           )}
+
           {paidExpenses.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-muted-foreground mb-2 flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-success" /> Pagas ({paidExpenses.length})
               </h3>
               <div className="space-y-2">
-                {paidExpenses.map(exp => (
-                  <Card key={exp.id} className="p-3 flex items-center justify-between opacity-70">
+                {paidExpenses.map((expense) => (
+                  <Card key={expense.id} className="p-3 flex items-center justify-between opacity-70 gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{exp.description}</p>
+                      <p className="text-sm font-medium truncate">{expense.description}</p>
                       <p className="text-xs text-muted-foreground">
-                        {exp.category || "Sem categoria"} • Pago em {exp.paid_at ? new Date(exp.paid_at).toLocaleDateString("pt-BR") : "—"}
+                        {expense.category || "Sem categoria"} • Pago em {expense.paid_at ? new Date(expense.paid_at).toLocaleDateString("pt-BR") : "—"}
                       </p>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm text-success">R$ {Number(exp.amount).toFixed(2)}</span>
-                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleExpensePaid(exp)}>
+                      <span className="font-bold text-sm text-success">R$ {Number(expense.amount).toFixed(2)}</span>
+                      <Button variant="ghost" size="sm" className="text-xs" onClick={() => toggleExpensePaid(expense)} disabled={updatingExpenseId === expense.id}>
                         Desfazer
                       </Button>
                     </div>
@@ -479,12 +747,12 @@ const SupplierDeliveries = () => {
               </div>
             </div>
           )}
+
           {expenses.length === 0 && (
             <div className="text-center py-12 text-muted-foreground">Nenhuma despesa registrada</div>
           )}
         </TabsContent>
 
-        {/* Fiados Received Tab */}
         <TabsContent value="fiados" className="space-y-3 mt-4">
           {paidFiados.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">Nenhum fiado recebido ainda</div>
@@ -494,23 +762,23 @@ const SupplierDeliveries = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Total Recebido de Fiados</span>
                   <span className="text-lg font-bold text-success">
-                    R$ {paidFiados.reduce((sum, f) => sum + Number(f.paid_amount || f.amount), 0).toFixed(2)}
+                    R$ {paidFiados.reduce((sum, fiado) => sum + Number(fiado.paid_amount || fiado.amount), 0).toFixed(2)}
                   </span>
                 </div>
               </Card>
               <div className="space-y-2">
-                {paidFiados.map(f => (
-                  <Card key={f.id} className="p-3 flex items-center justify-between">
+                {paidFiados.map((fiado) => (
+                  <Card key={fiado.id} className="p-3 flex items-center justify-between gap-3">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{f.customers?.name || "Cliente"}</p>
+                      <p className="text-sm font-medium truncate">{fiado.customers?.name || "Cliente"}</p>
                       <p className="text-xs text-muted-foreground">
-                        {f.notes || "Fiado"} • Pago em {f.paid_at ? new Date(f.paid_at).toLocaleDateString("pt-BR") : "—"}
+                        {fiado.notes || "Fiado"} • Pago em {fiado.paid_at ? new Date(fiado.paid_at).toLocaleDateString("pt-BR") : "—"}
                       </p>
                     </div>
                     <div className="text-right">
-                      <span className="font-bold text-sm text-success">R$ {Number(f.paid_amount || f.amount).toFixed(2)}</span>
-                      {Number(f.paid_amount) !== Number(f.amount) && (
-                        <p className="text-xs text-muted-foreground">de R$ {Number(f.amount).toFixed(2)}</p>
+                      <span className="font-bold text-sm text-success">R$ {Number(fiado.paid_amount || fiado.amount).toFixed(2)}</span>
+                      {Number(fiado.paid_amount) !== Number(fiado.amount) && (
+                        <p className="text-xs text-muted-foreground">de R$ {Number(fiado.amount).toFixed(2)}</p>
                       )}
                     </div>
                   </Card>
@@ -525,15 +793,15 @@ const SupplierDeliveries = () => {
             <div className="text-center py-12 text-muted-foreground">Nenhum histórico de preço</div>
           ) : (
             <div className="space-y-2">
-              {priceHistory.map(ph => (
-                <Card key={ph.id} className="p-3 flex items-center justify-between">
+              {priceHistory.map((price) => (
+                <Card key={price.id} className="p-3 flex items-center justify-between gap-3">
                   <div>
-                    <p className="font-medium text-sm">{(ph.products as any)?.name || "Produto"}</p>
+                    <p className="font-medium text-sm">{(price.products as any)?.name || "Produto"}</p>
                     <p className="text-xs text-muted-foreground">
-                      {(ph.suppliers as any)?.name || "Fornecedor"} • {new Date(ph.recorded_at).toLocaleDateString("pt-BR")}
+                      {(price.suppliers as any)?.name || "Fornecedor"} • {new Date(price.recorded_at).toLocaleDateString("pt-BR")}
                     </p>
                   </div>
-                  <span className="font-bold">R$ {Number(ph.unit_price).toFixed(2)}</span>
+                  <span className="font-bold">R$ {Number(price.unit_price).toFixed(2)}</span>
                 </Card>
               ))}
             </div>
@@ -542,11 +810,13 @@ const SupplierDeliveries = () => {
 
         <TabsContent value="margins" className="mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-            {products.filter(p => getMarginInfo(p)).map(p => {
-              const info = getMarginInfo(p)!;
+            {products.filter((product) => getMarginInfo(product)).map((product) => {
+              const info = getMarginInfo(product)!;
+              const marginColor = info.margin >= 30 ? "text-success" : info.margin >= 15 ? "text-warning" : "text-destructive";
+
               return (
-                <Card key={p.id} className="p-4">
-                  <p className="font-medium text-sm truncate mb-2">{p.name}</p>
+                <Card key={product.id} className="p-4">
+                  <p className="font-medium text-sm truncate mb-2">{product.name}</p>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
                       <p className="text-xs text-muted-foreground">Compra</p>
@@ -558,9 +828,7 @@ const SupplierDeliveries = () => {
                     </div>
                     <div>
                       <p className="text-xs text-muted-foreground">Margem</p>
-                      <p className={`font-bold text-sm ${info.margin >= 30 ? "text-green-500" : info.margin >= 15 ? "text-yellow-500" : "text-red-500"}`}>
-                        {info.margin.toFixed(1)}%
-                      </p>
+                      <p className={`font-bold text-sm ${marginColor}`}>{info.margin.toFixed(1)}%</p>
                     </div>
                   </div>
                 </Card>
@@ -570,11 +838,10 @@ const SupplierDeliveries = () => {
         </TabsContent>
       </Tabs>
 
-      {/* New Delivery Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
           <DialogHeader>
-             <DialogTitle className="flex items-center gap-2">
+            <DialogTitle className="flex items-center gap-2">
               <Truck className="h-5 w-5" /> {editingDelivery ? "Editar Entrega" : "Registrar Entrega"}
             </DialogTitle>
           </DialogHeader>
@@ -586,15 +853,15 @@ const SupplierDeliveries = () => {
                 <Select value={selectedSupplier} onValueChange={setSelectedSupplier}>
                   <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {suppliers.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                    {suppliers.map((supplier) => (
+                      <SelectItem key={supplier.id} value={supplier.id}>{supplier.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Tipo de Compra</label>
-                <Select value={purchaseType} onValueChange={(v: any) => setPurchaseType(v)}>
+                <Select value={purchaseType} onValueChange={(value: any) => setPurchaseType(value)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="traditional">Tradicional</SelectItem>
@@ -604,13 +871,12 @@ const SupplierDeliveries = () => {
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Data da Entrega</label>
-                <Input type="date" value={deliveryDate} onChange={e => setDeliveryDate(e.target.value)} />
+                <Input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />
               </div>
             </div>
 
-            <Input placeholder="Observações (opcional)" value={notes} onChange={e => setNotes(e.target.value)} />
+            <Input placeholder="Observações (opcional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
 
-            {/* Items */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-sm font-medium">Itens da Entrega</label>
@@ -623,11 +889,11 @@ const SupplierDeliveries = () => {
                 <div key={index} className="grid grid-cols-12 gap-2 items-end">
                   <div className="col-span-5">
                     {index === 0 && <label className="text-xs text-muted-foreground">Produto</label>}
-                    <Select value={item.product_id} onValueChange={v => updateItem(index, "product_id", v)}>
+                    <Select value={item.product_id} onValueChange={(value) => updateItem(index, "product_id", value)}>
                       <SelectTrigger><SelectValue placeholder="Produto" /></SelectTrigger>
                       <SelectContent>
-                        {products.map(p => (
-                          <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                        {products.map((product) => (
+                          <SelectItem key={product.id} value={product.id}>{product.name}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -638,7 +904,7 @@ const SupplierDeliveries = () => {
                       type="number"
                       min={1}
                       value={item.quantity}
-                      onChange={e => updateItem(index, "quantity", parseInt(e.target.value) || 0)}
+                      onChange={(e) => updateItem(index, "quantity", parseInt(e.target.value) || 0)}
                     />
                   </div>
                   <div className="col-span-2">
@@ -648,7 +914,7 @@ const SupplierDeliveries = () => {
                       min={0}
                       step={0.01}
                       value={item.unit_price}
-                      onChange={e => updateItem(index, "unit_price", parseFloat(e.target.value) || 0)}
+                      onChange={(e) => updateItem(index, "unit_price", parseFloat(e.target.value) || 0)}
                     />
                   </div>
                   <div className="col-span-2">
