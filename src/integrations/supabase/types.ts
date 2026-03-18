@@ -270,6 +270,58 @@ export type Database = {
           },
         ]
       }
+      fiado_payments: {
+        Row: {
+          amount: number
+          created_at: string
+          fiado_id: string
+          id: string
+          notes: string | null
+          paid_at: string
+          tenant_id: string
+        }
+        Insert: {
+          amount?: number
+          created_at?: string
+          fiado_id: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          tenant_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          fiado_id?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiado_payments_fiado_id_fkey"
+            columns: ["fiado_id"]
+            isOneToOne: false
+            referencedRelation: "fiados"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiado_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiado_payments_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiados: {
         Row: {
           amount: number
