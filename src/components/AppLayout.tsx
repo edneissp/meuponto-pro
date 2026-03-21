@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, Link, useLocation, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield, CreditCard, ClipboardList, Truck, PackageCheck, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -26,19 +26,24 @@ const navItems = [
 const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get("demo") === "true";
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tenantName, setTenantName] = useState("MeuPonto");
+  const [tenantName, setTenantName] = useState(isDemoMode ? "Demo YouControl" : "MeuPonto");
   const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tenantStatus, setTenantStatus] = useState<string | null>(null);
+  const [tenantStatus, setTenantStatus] = useState<string | null>(isDemoMode ? "active" : null);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
-  const [tenantPlano, setTenantPlano] = useState<string | null>(null);
-  const [tenantOrigin, setTenantOrigin] = useState<string | null>(null);
+  const [tenantPlano, setTenantPlano] = useState<string | null>(isDemoMode ? "demo" : null);
+  const [tenantOrigin, setTenantOrigin] = useState<string | null>(isDemoMode ? "demo" : null);
   const { applyColor } = useTenantTheme();
-  const demoSession = useDemoSession(tenantOrigin === "demo");
+  const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip auth for demo mode
+      if (isDemoMode) return;
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/login");
@@ -100,25 +105,25 @@ const AppLayout = () => {
       if (event === "SIGNED_OUT") navigate("/login");
     });
     return () => subscription.unsubscribe();
-  }, [navigate, applyColor]);
+  }, [navigate, applyColor, isDemoMode]);
 
   useEffect(() => {
-    if (tenantOrigin === "demo" && demoSession.isExpired) {
-      supabase.auth.signOut();
+    if ((isDemoMode || tenantOrigin === "demo") && demoSession.isExpired) {
+      if (!isDemoMode) supabase.auth.signOut();
       demoSession.clearSession();
       navigate("/demo-expired");
     }
-  }, [tenantOrigin, demoSession.isExpired, navigate]);
+  }, [isDemoMode, tenantOrigin, demoSession.isExpired, navigate]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    if (tenantOrigin === "demo") demoSession.clearSession();
+    if (!isDemoMode) await supabase.auth.signOut();
+    if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
     navigate("/");
   };
 
-  const isBlocked = tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
+  const isBlocked = !isDemoMode && tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
   const isPaymentPage = location.pathname.includes("payment-status");
-  const isTrialExpired = tenantPlano === "expirado";
+  const isTrialExpired = !isDemoMode && tenantPlano === "expirado";
 
   if ((isBlocked || isTrialExpired) && !isPaymentPage && !isAdmin) {
     return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} />;
@@ -203,7 +208,7 @@ const AppLayout = () => {
             {navItems.find(n => n.path === location.pathname)?.label || "MeuPonto"}
           </h1>
         </header>
-        {tenantOrigin === "demo" && !demoSession.isExpired && (
+        {(isDemoMode || tenantOrigin === "demo") && !demoSession.isExpired && (
           <DemoBanner remainingMinutes={demoSession.remainingMinutes} />
         )}
         {tenantPlano === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7 && trialDaysLeft >= 0 && (

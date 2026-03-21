@@ -8,11 +8,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, CreditCard, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, CreditCard, FileText, BookOpen } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import SubscriptionTab from "@/components/finance/SubscriptionTab";
 import InvoicesTab from "@/components/finance/InvoicesTab";
+import FiadoTab from "@/components/finance/FiadoTab";
 import type { Expense, InvoiceRecord, Period, SubscriptionRecord, Supplier, SummaryStats } from "@/components/finance/types";
 
 const EXPENSE_CATEGORIES = [
@@ -329,6 +330,10 @@ const Finance = () => {
       <Tabs defaultValue="expenses">
         <TabsList className="flex h-auto flex-wrap gap-2 bg-transparent p-0">
           <TabsTrigger value="expenses">Despesas / Contas a Pagar</TabsTrigger>
+          <TabsTrigger value="fiado" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Contas a Receber
+          </TabsTrigger>
           <TabsTrigger value="suppliers">Fornecedores</TabsTrigger>
           <TabsTrigger value="subscription" className="gap-2">
             <CreditCard className="h-4 w-4" />
@@ -537,6 +542,10 @@ const Finance = () => {
               </TableBody>
             </Table>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="fiado" className="mt-4">
+          <FiadoTab />
         </TabsContent>
 
         <TabsContent value="subscription" className="mt-4">

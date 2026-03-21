@@ -64,15 +64,10 @@ const Landing = () => {
   const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleStartDemo = async () => {
+  const handleStartDemo = () => {
     setDemoLoading(true);
-    try {
-      await startDemoSession();
-      navigate("/app");
-    } catch (err: any) {
-      toast.error(err?.message || "Não foi possível iniciar a demonstração.");
-    }
-    setDemoLoading(false);
+    startDemoSession();
+    navigate("/app?demo=true");
   };
 
   const handleLeadSubmit = async (e: React.FormEvent) => {
