@@ -715,6 +715,46 @@ const SupplierDeliveries = () => {
           ))}
         </TabsContent>
 
+        <TabsContent value="history" className="space-y-3 mt-4">
+          {deliveries.filter(d => d.payment_status === "paid").length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">Nenhuma entrega paga no histórico</div>
+          ) : deliveries.filter(d => d.payment_status === "paid").map((delivery) => (
+            <Card key={delivery.id} className="p-4 space-y-3 opacity-80">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1 min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Truck className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-bold truncate">{(delivery.suppliers as any)?.name || "Fornecedor"}</span>
+                    <Badge variant={delivery.purchase_type === "consigned" ? "secondary" : "default"}>
+                      {delivery.purchase_type === "consigned" ? "Consignado" : "Tradicional"}
+                    </Badge>
+                    <Badge variant="default" className="bg-success text-success-foreground">Pago</Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-0.5">
+                    <p>Entrega: {new Date(`${delivery.delivery_date}T12:00:00`).toLocaleDateString("pt-BR")}</p>
+                    {delivery.payment_date && (
+                      <p>Pago em: {new Date(delivery.payment_date).toLocaleDateString("pt-BR")}</p>
+                    )}
+                  </div>
+                </div>
+                <span className="text-lg font-bold text-success">R$ {Number(delivery.total_amount).toFixed(2)}</span>
+              </div>
+              <div className="space-y-1">
+                {delivery.supplier_delivery_items?.map((item: any) => (
+                  <div key={item.id} className="flex justify-between gap-3 text-sm text-muted-foreground">
+                    <span>
+                      <span className="font-bold text-foreground mr-1">{item.quantity}x</span>
+                      {item.products?.name || "Produto"}
+                    </span>
+                    <span>R$ {Number(item.total).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
+              {delivery.notes && <p className="text-xs text-muted-foreground">Obs: {delivery.notes}</p>}
+            </Card>
+          ))}
+        </TabsContent>
+
         <TabsContent value="expenses" className="space-y-4 mt-4">
           {pendingExpenses.length > 0 && (
             <div>
