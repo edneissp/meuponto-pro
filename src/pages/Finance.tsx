@@ -13,6 +13,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { toast } from "sonner";
 import SubscriptionTab from "@/components/finance/SubscriptionTab";
 import InvoicesTab from "@/components/finance/InvoicesTab";
+import FiadoTab from "@/components/finance/FiadoTab";
 import type { Expense, InvoiceRecord, Period, SubscriptionRecord, Supplier, SummaryStats } from "@/components/finance/types";
 
 const EXPENSE_CATEGORIES = [
