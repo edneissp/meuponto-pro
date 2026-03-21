@@ -593,9 +593,10 @@ const SupplierDeliveries = () => {
       <Tabs defaultValue="deliveries">
         <TabsList className="flex-wrap">
           <TabsTrigger value="deliveries" className="gap-1"><Truck className="h-4 w-4" /> Entregas</TabsTrigger>
+          <TabsTrigger value="history" className="gap-1"><History className="h-4 w-4" /> Histórico de Compras</TabsTrigger>
           <TabsTrigger value="expenses" className="gap-1"><DollarSign className="h-4 w-4" /> Despesas</TabsTrigger>
           <TabsTrigger value="fiados" className="gap-1"><BookOpen className="h-4 w-4" /> Fiados Recebidos</TabsTrigger>
-          <TabsTrigger value="prices" className="gap-1"><History className="h-4 w-4" /> Preços</TabsTrigger>
+          <TabsTrigger value="prices" className="gap-1"><TrendingUp className="h-4 w-4" /> Preços</TabsTrigger>
           <TabsTrigger value="margins" className="gap-1"><TrendingUp className="h-4 w-4" /> Margens</TabsTrigger>
         </TabsList>
 
