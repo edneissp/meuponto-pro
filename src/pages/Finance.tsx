@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, CreditCard, FileText } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, TrendingUp, TrendingDown, AlertCircle, CheckCircle2, CreditCard, FileText, BookOpen } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { toast } from "sonner";
 import SubscriptionTab from "@/components/finance/SubscriptionTab";
