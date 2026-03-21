@@ -544,6 +544,10 @@ const Finance = () => {
           </Card>
         </TabsContent>
 
+        <TabsContent value="fiado" className="mt-4">
+          <FiadoTab />
+        </TabsContent>
+
         <TabsContent value="subscription" className="mt-4">
           <SubscriptionTab subscription={subscription} />
         </TabsContent>
