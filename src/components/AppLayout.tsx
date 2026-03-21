@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Outlet, useNavigate, Link, useLocation } from "react-router-dom";
+import { Outlet, useNavigate, Link, useLocation, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, Settings, LogOut, Menu, X, Shield, CreditCard, ClipboardList, Truck, PackageCheck, ListChecks } from "lucide-react";
 import { Button } from "@/components/ui/button";
