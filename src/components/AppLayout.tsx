@@ -116,8 +116,8 @@ const AppLayout = () => {
   }, [isDemoMode, tenantOrigin, demoSession.isExpired, navigate]);
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    if (tenantOrigin === "demo") demoSession.clearSession();
+    if (!isDemoMode) await supabase.auth.signOut();
+    if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
     navigate("/");
   };
 
