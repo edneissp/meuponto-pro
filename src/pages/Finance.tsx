@@ -330,6 +330,10 @@ const Finance = () => {
       <Tabs defaultValue="expenses">
         <TabsList className="flex h-auto flex-wrap gap-2 bg-transparent p-0">
           <TabsTrigger value="expenses">Despesas / Contas a Pagar</TabsTrigger>
+          <TabsTrigger value="fiado" className="gap-2">
+            <BookOpen className="h-4 w-4" />
+            Contas a Receber
+          </TabsTrigger>
           <TabsTrigger value="suppliers">Fornecedores</TabsTrigger>
           <TabsTrigger value="subscription" className="gap-2">
             <CreditCard className="h-4 w-4" />
