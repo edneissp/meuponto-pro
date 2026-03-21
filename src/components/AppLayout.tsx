@@ -121,9 +121,9 @@ const AppLayout = () => {
     navigate("/");
   };
 
-  const isBlocked = tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
+  const isBlocked = !isDemoMode && tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
   const isPaymentPage = location.pathname.includes("payment-status");
-  const isTrialExpired = tenantPlano === "expirado";
+  const isTrialExpired = !isDemoMode && tenantPlano === "expirado";
 
   if ((isBlocked || isTrialExpired) && !isPaymentPage && !isAdmin) {
     return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} />;
