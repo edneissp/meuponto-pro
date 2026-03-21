@@ -1,5 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
-
 export const DEMO_SESSION_KEY = "youcontrol-demo-session";
 export const DEMO_SESSION_DURATION_MS = 20 * 60 * 1000;
 
@@ -35,28 +33,14 @@ export const clearDemoSession = () => {
   window.localStorage.removeItem(DEMO_SESSION_KEY);
 };
 
-export const startDemoSession = async () => {
-  const { data, error } = await supabase.functions.invoke("demo-session", {
-    body: { action: "start" },
-  });
-
-  if (error) throw error;
-  if (!data?.access_token || !data?.refresh_token) {
-    throw new Error("Não foi possível iniciar a demonstração agora.");
-  }
-
-  const { error: sessionError } = await supabase.auth.setSession({
-    access_token: data.access_token,
-    refresh_token: data.refresh_token,
-  });
-
-  if (sessionError) throw sessionError;
-
+/**
+ * Start demo mode by saving session locally and redirecting.
+ * No Edge Functions or external API calls.
+ */
+export const startDemoSession = () => {
   const startedAt = Date.now();
   saveDemoSession({
     startedAt,
     expiresAt: startedAt + DEMO_SESSION_DURATION_MS,
   });
-
-  return data;
 };
