@@ -208,7 +208,7 @@ const AppLayout = () => {
             {navItems.find(n => n.path === location.pathname)?.label || "MeuPonto"}
           </h1>
         </header>
-        {tenantOrigin === "demo" && !demoSession.isExpired && (
+        {(isDemoMode || tenantOrigin === "demo") && !demoSession.isExpired && (
           <DemoBanner remainingMinutes={demoSession.remainingMinutes} />
         )}
         {tenantPlano === "trial" && trialDaysLeft !== null && trialDaysLeft <= 7 && trialDaysLeft >= 0 && (
