@@ -105,7 +105,7 @@ const AppLayout = () => {
       if (event === "SIGNED_OUT") navigate("/login");
     });
     return () => subscription.unsubscribe();
-  }, [navigate, applyColor]);
+  }, [navigate, applyColor, isDemoMode]);
 
   useEffect(() => {
     if (tenantOrigin === "demo" && demoSession.isExpired) {
