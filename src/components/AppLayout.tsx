@@ -108,12 +108,12 @@ const AppLayout = () => {
   }, [navigate, applyColor, isDemoMode]);
 
   useEffect(() => {
-    if (tenantOrigin === "demo" && demoSession.isExpired) {
-      supabase.auth.signOut();
+    if ((isDemoMode || tenantOrigin === "demo") && demoSession.isExpired) {
+      if (!isDemoMode) supabase.auth.signOut();
       demoSession.clearSession();
       navigate("/demo-expired");
     }
-  }, [tenantOrigin, demoSession.isExpired, navigate]);
+  }, [isDemoMode, tenantOrigin, demoSession.isExpired, navigate]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
