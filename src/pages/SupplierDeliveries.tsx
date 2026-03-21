@@ -601,9 +601,9 @@ const SupplierDeliveries = () => {
         </TabsList>
 
         <TabsContent value="deliveries" className="space-y-3 mt-4">
-          {deliveries.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">Nenhuma entrega registrada</div>
-          ) : deliveries.map((delivery) => (
+          {deliveries.filter(d => d.payment_status !== "paid").length === 0 ? (
+            <div className="text-center py-12 text-muted-foreground">Nenhuma entrega pendente. Confira o Histórico de Compras para entregas pagas.</div>
+          ) : deliveries.filter(d => d.payment_status !== "paid").map((delivery) => (
             <Card key={delivery.id} className="p-4 space-y-4">
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-2 min-w-0">
