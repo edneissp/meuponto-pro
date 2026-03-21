@@ -41,6 +41,9 @@ const AppLayout = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
+      // Skip auth for demo mode
+      if (isDemoMode) return;
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/login");
