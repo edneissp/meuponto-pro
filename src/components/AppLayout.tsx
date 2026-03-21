@@ -26,16 +26,18 @@ const navItems = [
 const AppLayout = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const isDemoMode = searchParams.get("demo") === "true";
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tenantName, setTenantName] = useState("MeuPonto");
+  const [tenantName, setTenantName] = useState(isDemoMode ? "Demo YouControl" : "MeuPonto");
   const [tenantLogo, setTenantLogo] = useState<string | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [tenantStatus, setTenantStatus] = useState<string | null>(null);
+  const [tenantStatus, setTenantStatus] = useState<string | null>(isDemoMode ? "active" : null);
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
-  const [tenantPlano, setTenantPlano] = useState<string | null>(null);
-  const [tenantOrigin, setTenantOrigin] = useState<string | null>(null);
+  const [tenantPlano, setTenantPlano] = useState<string | null>(isDemoMode ? "demo" : null);
+  const [tenantOrigin, setTenantOrigin] = useState<string | null>(isDemoMode ? "demo" : null);
   const { applyColor } = useTenantTheme();
-  const demoSession = useDemoSession(tenantOrigin === "demo");
+  const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
 
   useEffect(() => {
     const checkAuth = async () => {
