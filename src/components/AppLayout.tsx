@@ -36,6 +36,7 @@ const AppLayout = () => {
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [tenantPlano, setTenantPlano] = useState<string | null>(isDemoMode ? "demo" : null);
   const [tenantOrigin, setTenantOrigin] = useState<string | null>(isDemoMode ? "demo" : null);
+  const [billingCountryCode, setBillingCountryCode] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
   const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
 
@@ -57,7 +58,7 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin")
+          .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin, billing_country_code")
           .eq("id", profile.tenant_id)
           .single();
         if (tenant) {
@@ -66,6 +67,7 @@ const AppLayout = () => {
           setTenantPlano((tenant as any).plano || null);
           setTenantOrigin((tenant as any).origin || null);
           applyColor((tenant as any).primary_color || null);
+          setBillingCountryCode((tenant as any).billing_country_code || null);
 
           const plano = (tenant as any).plano as string;
           const trialEnd = (tenant as any).trial_end as string | null;
@@ -126,7 +128,7 @@ const AppLayout = () => {
   const isTrialExpired = !isDemoMode && tenantPlano === "expirado";
 
   if ((isBlocked || isTrialExpired) && !isPaymentPage && !isAdmin) {
-    return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} />;
+    return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} billingCountryCode={billingCountryCode} />;
   }
 
   return (

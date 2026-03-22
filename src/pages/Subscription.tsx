@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock, Clock, ShoppingCart, Package, BarChart3, Printer, LayoutDashboard, Bell, TrendingDown } from "lucide-react";
+import { usePricing } from "@/hooks/use-pricing";
 
 type SubscriptionPageProps = {
   blocked?: boolean;
   tenantName?: string;
   trialExpired?: boolean;
+  billingCountryCode?: string | null;
 };
 
 const benefits = [
@@ -22,9 +24,10 @@ const benefits = [
   { icon: TrendingDown, text: "Relatório de estoque baixo" },
 ];
 
-const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", trialExpired = false }: SubscriptionPageProps) => {
+const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", trialExpired = false, billingCountryCode }: SubscriptionPageProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const pricing = usePricing(billingCountryCode);
 
   const handleCheckout = async () => {
     setLoading(true);
@@ -108,8 +111,8 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
           <div className="bg-muted/50 rounded-lg p-6 text-center space-y-2">
             <p className="text-sm font-medium text-primary">YouControl Profissional</p>
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-bold">R$ 99,90</span>
-              <span className="text-muted-foreground">/mês</span>
+              <span className="text-4xl font-bold">{pricing.label}</span>
+              <span className="text-muted-foreground">{pricing.periodLabel}</span>
             </div>
           </div>
 
