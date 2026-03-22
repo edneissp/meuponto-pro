@@ -11,6 +11,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Search, DollarSign, CheckCircle, History, AlertCircle, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { format, subMonths, startOfMonth, endOfMonth, eachMonthOfInterval } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Customer {
   id: string;
@@ -210,6 +213,27 @@ const FiadoTab = () => {
     }
   };
 
+  // Chart data: payments received per month (last 6 months)
+  const chartData = useMemo(() => {
+    const now = new Date();
+    const start = startOfMonth(subMonths(now, 5));
+    const end = endOfMonth(now);
+    const months = eachMonthOfInterval({ start, end });
+
+    const allPayments = fiados.flatMap(f => f.payment_history);
+
+    return months.map(month => {
+      const key = format(month, "yyyy-MM");
+      const label = format(month, "MMM/yy", { locale: ptBR });
+      const total = allPayments
+        .filter(p => p.paid_at && format(new Date(p.paid_at), "yyyy-MM") === key)
+        .reduce((sum, p) => sum + Number(p.amount), 0);
+      return { name: label, recebido: total };
+    });
+  }, [fiados]);
+
+  const hasChartData = chartData.some(d => d.recebido > 0);
+
   return (
     <div className="space-y-4">
       {/* Summary cards */}
@@ -237,6 +261,34 @@ const FiadoTab = () => {
           </div>
         </Card>
       </div>
+
+      {/* Evolution chart */}
+      <Card className="p-5 shadow-card">
+        <h3 className="font-semibold mb-4">Evolução de Fiados Recebidos (últimos 6 meses)</h3>
+        <div className="h-64">
+          {hasChartData ? (
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="colorRecebido" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(142, 76%, 36%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickFormatter={(v: number) => `R$ ${v.toFixed(0)}`} />
+                <Tooltip formatter={(value: number) => [`R$ ${value.toFixed(2)}`, "Recebido"]} />
+                <Area type="monotone" dataKey="recebido" stroke="hsl(142, 76%, 36%)" strokeWidth={2} fill="url(#colorRecebido)" dot={{ r: 4 }} activeDot={{ r: 6 }} />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              Nenhum recebimento registrado no período
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">

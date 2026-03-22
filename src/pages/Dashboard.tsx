@@ -39,13 +39,14 @@ const Dashboard = () => {
       const monthStartISO = monthStart.toISOString();
       const monthEndISO = new Date(monthEnd.getFullYear(), monthEnd.getMonth(), monthEnd.getDate() + 1).toISOString();
 
-      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes, topItemsRes] = await Promise.all([
+      const [salesRes, productsRes, saleItemsRes, weeklySalesRes, monthlySalesRes, topItemsRes, fiadoPaymentsRes] = await Promise.all([
         supabase.from("sales").select("*").eq("status", "completed").gte("created_at", startOfDay).lt("created_at", endOfDay),
         supabase.from("products").select("id, purchase_price, sale_price, name"),
         supabase.from("sale_items").select("product_id, quantity, unit_price, total").gte("created_at", startOfDay).lt("created_at", endOfDay),
         supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", weekStartISO).lt("created_at", weekEndISO),
         supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
         supabase.from("sale_items").select("product_id, quantity").gte("created_at", monthStartISO).lt("created_at", monthEndISO),
+        supabase.from("fiado_payments").select("amount, paid_at").gte("paid_at", startOfDay).lt("paid_at", endOfDay),
       ]);
 
       const sales = salesRes.data;
@@ -53,7 +54,8 @@ const Dashboard = () => {
       const saleItems = saleItemsRes.data;
 
       if (sales) {
-        const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+        const fiadoReceived = (fiadoPaymentsRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
+        const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0) + fiadoReceived;
         let totalCost = 0;
         if (saleItems && products) {
           const productMap = new Map(products.map(p => [p.id, Number(p.purchase_price)]));
