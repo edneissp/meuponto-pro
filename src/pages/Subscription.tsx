@@ -11,6 +11,7 @@ type SubscriptionPageProps = {
   blocked?: boolean;
   tenantName?: string;
   trialExpired?: boolean;
+  billingCountryCode?: string | null;
 };
 
 const benefits = [
