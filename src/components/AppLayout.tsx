@@ -58,7 +58,7 @@ const AppLayout = () => {
       if (profile) {
         const { data: tenant } = await supabase
           .from("tenants")
-          .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin")
+          .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin, billing_country_code")
           .eq("id", profile.tenant_id)
           .single();
         if (tenant) {
