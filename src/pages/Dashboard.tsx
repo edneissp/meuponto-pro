@@ -54,7 +54,8 @@ const Dashboard = () => {
       const saleItems = saleItemsRes.data;
 
       if (sales) {
-        const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0);
+        const fiadoReceived = (fiadoPaymentsRes.data || []).reduce((sum, p) => sum + Number(p.amount), 0);
+        const revenue = sales.reduce((sum, s) => sum + Number(s.total), 0) + fiadoReceived;
         let totalCost = 0;
         if (saleItems && products) {
           const productMap = new Map(products.map(p => [p.id, Number(p.purchase_price)]));
