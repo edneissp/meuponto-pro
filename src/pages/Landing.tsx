@@ -64,6 +64,7 @@ const Landing = () => {
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
+  const pricing = usePricing();
 
   const handleStartDemo = () => {
     setDemoLoading(true);
