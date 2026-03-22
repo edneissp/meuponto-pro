@@ -128,7 +128,7 @@ const AppLayout = () => {
   const isTrialExpired = !isDemoMode && tenantPlano === "expirado";
 
   if ((isBlocked || isTrialExpired) && !isPaymentPage && !isAdmin) {
-    return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} />;
+    return <Subscription blocked tenantName={tenantName} trialExpired={isTrialExpired} billingCountryCode={billingCountryCode} />;
   }
 
   return (
