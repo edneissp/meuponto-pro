@@ -67,6 +67,7 @@ const AppLayout = () => {
           setTenantPlano((tenant as any).plano || null);
           setTenantOrigin((tenant as any).origin || null);
           applyColor((tenant as any).primary_color || null);
+          setBillingCountryCode((tenant as any).billing_country_code || null);
 
           const plano = (tenant as any).plano as string;
           const trialEnd = (tenant as any).trial_end as string | null;
