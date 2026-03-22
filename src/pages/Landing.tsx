@@ -233,11 +233,11 @@ const Landing = () => {
               <div className="text-center mb-8">
                 <h3 className="text-xl font-bold mb-1">YouControl Profissional</h3>
                 <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                  Teste grátis por 30 dias
+                  {pricing.countryCode === "BR" ? "Teste grátis por 30 dias" : "Free 30-day trial"}
                 </div>
                 <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-extrabold text-gradient">R$99,90</span>
-                  <span className="text-muted-foreground">/mês</span>
+                  <span className="text-5xl font-extrabold text-gradient">{pricing.label}</span>
+                  <span className="text-muted-foreground">{pricing.periodLabel}</span>
                 </div>
               </div>
               <ul className="space-y-3 mb-8">
@@ -251,10 +251,12 @@ const Landing = () => {
                 ))}
               </ul>
               <Button className="w-full" size="lg" asChild>
-                <Link to="/register">Teste grátis por 30 dias</Link>
+                <Link to="/register">{pricing.countryCode === "BR" ? "Teste grátis por 30 dias" : "Start free 30-day trial"}</Link>
               </Button>
               <p className="text-center text-xs text-muted-foreground mt-3">
-                Sem fidelidade • Sem cartão de crédito • Cancele quando quiser
+                {pricing.countryCode === "BR"
+                  ? "Sem fidelidade • Sem cartão de crédito • Cancele quando quiser"
+                  : "No commitment • No credit card • Cancel anytime"}
               </p>
             </div>
           </div>

@@ -111,8 +111,8 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
           <div className="bg-muted/50 rounded-lg p-6 text-center space-y-2">
             <p className="text-sm font-medium text-primary">YouControl Profissional</p>
             <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-bold">R$ 99,90</span>
-              <span className="text-muted-foreground">/mês</span>
+              <span className="text-4xl font-bold">{pricing.label}</span>
+              <span className="text-muted-foreground">{pricing.periodLabel}</span>
             </div>
           </div>
 
