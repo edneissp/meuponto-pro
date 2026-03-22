@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { startDemoSession } from "@/lib/demo";
 import heroImage from "@/assets/hero-dashboard.jpg";
+import { usePricing } from "@/hooks/use-pricing";
 
 const features = [
   { icon: ShoppingCart, title: "PDV Rápido e Fácil", desc: "Registre vendas em segundos com combos, descontos e múltiplas formas de pagamento." },
