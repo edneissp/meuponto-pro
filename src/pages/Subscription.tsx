@@ -24,9 +24,10 @@ const benefits = [
   { icon: TrendingDown, text: "Relatório de estoque baixo" },
 ];
 
-const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", trialExpired = false }: SubscriptionPageProps) => {
+const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", trialExpired = false, billingCountryCode }: SubscriptionPageProps) => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const pricing = usePricing(billingCountryCode);
 
   const handleCheckout = async () => {
     setLoading(true);
