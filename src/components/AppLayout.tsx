@@ -36,6 +36,7 @@ const AppLayout = () => {
   const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
   const [tenantPlano, setTenantPlano] = useState<string | null>(isDemoMode ? "demo" : null);
   const [tenantOrigin, setTenantOrigin] = useState<string | null>(isDemoMode ? "demo" : null);
+  const [billingCountryCode, setBillingCountryCode] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
   const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
 
