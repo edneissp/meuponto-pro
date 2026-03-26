@@ -29,8 +29,8 @@ const Login = () => {
       <div className="hidden lg:flex lg:w-1/2 gradient-hero items-center justify-center p-12">
         <div className="max-w-md">
           <div className="flex items-center gap-2 mb-8">
-            <div className="h-10 w-10 rounded-lg gradient-primary" />
-            <span className="text-2xl font-bold text-primary-foreground">MeuPonto</span>
+            <img src="/logo.png" alt="YouControl" className="h-10 w-10 rounded-lg object-contain" />
+            <span className="text-2xl font-bold text-primary-foreground">YouControl</span>
           </div>
           <h2 className="text-3xl font-bold text-primary-foreground mb-4">Gerencie seu negócio com facilidade</h2>
           <p className="text-primary-foreground/70">Acesse seu painel e tenha controle total de vendas, estoque e finanças.</p>
