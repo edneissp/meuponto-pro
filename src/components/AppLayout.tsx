@@ -146,7 +146,7 @@ const AppLayout = () => {
             {tenantLogo ? (
               <img src={tenantLogo} alt={tenantName} className="h-8 w-8 rounded-lg object-cover" />
             ) : (
-              <div className="h-8 w-8 rounded-lg bg-primary" />
+              <img src="/logo.png" alt="YouControl" className="h-8 w-8 rounded-lg object-contain" />
             )}
             <span className="font-bold text-sidebar-foreground truncate">{tenantName}</span>
           </div>
