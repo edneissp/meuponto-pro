@@ -1,0 +1,1 @@
+UPDATE tenants SET billing_country_code = 'DE', billing_currency = 'EUR' WHERE id = 'c0be56b8-8776-4809-b949-57cafafe9f92'
