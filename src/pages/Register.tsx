@@ -55,7 +55,7 @@ const Register = () => {
       <div className="hidden lg:flex lg:w-1/2 gradient-hero items-center justify-center p-12">
         <div className="max-w-md">
           <div className="flex items-center gap-2 mb-8">
-            <div className="h-10 w-10 rounded-lg gradient-primary" />
+            <img src="/logo.png" alt="YouControl" className="h-10 w-10 rounded-lg object-contain" />
             <span className="text-2xl font-bold text-primary-foreground">YouControl</span>
           </div>
           <h2 className="text-3xl font-bold text-primary-foreground mb-4">Teste grátis por 30 dias</h2>
