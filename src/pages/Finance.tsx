@@ -47,7 +47,7 @@ const Finance = () => {
     return profile?.tenant_id || null;
   };
 
-  const buildProfitChart = (sales: any[], saleItems: any[], exps: Expense[]) => {
+  const buildProfitChart = (sales: any[], saleItems: any[], exps: Expense[], fiadoPayments: any[] = []) => {
     const now = new Date();
     const points: Record<string, { revenue: number; cost: number; expense: number }> = {};
 
@@ -79,6 +79,13 @@ const Finance = () => {
       items.forEach((item: any) => {
         points[key].cost += Number(item.products?.purchase_price || 0) * item.quantity;
       });
+    });
+
+    // Include fiado payments as revenue
+    fiadoPayments.filter((p) => new Date(p.paid_at) >= cutoff).forEach((p) => {
+      const key = getKey(new Date(p.paid_at));
+      if (!points[key]) points[key] = { revenue: 0, cost: 0, expense: 0 };
+      points[key].revenue += Number(p.amount);
     });
 
     exps.filter((expense) => expense.paid && new Date(expense.created_at) >= cutoff).forEach((expense) => {
