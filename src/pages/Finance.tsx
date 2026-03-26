@@ -149,6 +149,28 @@ const Finance = () => {
 
   useEffect(() => {
     loadData();
+
+    // Realtime: auto-refresh when fiado payments change
+    const channel = supabase
+      .channel('finance-fiado-payments')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fiado_payments' },
+        () => loadData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'expenses' },
+        () => loadData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sales' },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
