@@ -39,8 +39,8 @@ const Login = () => {
       <div className="flex-1 flex items-center justify-center p-8">
         <div className="w-full max-w-sm">
           <div className="lg:hidden flex items-center gap-2 mb-8">
-            <div className="h-8 w-8 rounded-lg gradient-primary" />
-            <span className="text-xl font-bold">MeuPonto</span>
+            <img src="/logo.png" alt="YouControl" className="h-8 w-8 rounded-lg object-contain" />
+            <span className="text-xl font-bold">YouControl</span>
           </div>
           <h1 className="text-2xl font-bold mb-2">Bem-vindo de volta</h1>
           <p className="text-muted-foreground mb-8">Entre com suas credenciais</p>

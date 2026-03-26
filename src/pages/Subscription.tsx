@@ -80,7 +80,7 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
             </div>
           ) : (
             <div className="flex flex-col items-center gap-3">
-              <CreditCard className="h-12 w-12 text-primary" />
+              <img src="/logo.png" alt="YouControl" className="h-12 w-12 object-contain" />
               <CardTitle className="text-2xl">Continue usando o YouControl</CardTitle>
             </div>
           )}
