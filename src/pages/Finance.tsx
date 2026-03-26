@@ -47,7 +47,7 @@ const Finance = () => {
     return profile?.tenant_id || null;
   };
 
-  const buildProfitChart = (sales: any[], saleItems: any[], exps: Expense[]) => {
+  const buildProfitChart = (sales: any[], saleItems: any[], exps: Expense[], fiadoPayments: any[] = []) => {
     const now = new Date();
     const points: Record<string, { revenue: number; cost: number; expense: number }> = {};
 
@@ -81,6 +81,13 @@ const Finance = () => {
       });
     });
 
+    // Include fiado payments as revenue
+    fiadoPayments.filter((p) => new Date(p.paid_at) >= cutoff).forEach((p) => {
+      const key = getKey(new Date(p.paid_at));
+      if (!points[key]) points[key] = { revenue: 0, cost: 0, expense: 0 };
+      points[key].revenue += Number(p.amount);
+    });
+
     exps.filter((expense) => expense.paid && new Date(expense.created_at) >= cutoff).forEach((expense) => {
       const key = getKey(new Date(expense.created_at));
       if (!points[key]) points[key] = { revenue: 0, cost: 0, expense: 0 };
@@ -100,7 +107,7 @@ const Finance = () => {
   const loadData = async () => {
     const tenantId = await getTenantId();
 
-    const [expRes, supRes, salesRes, saleItemsRes, subscriptionRes, invoicesRes] = await Promise.all([
+    const [expRes, supRes, salesRes, saleItemsRes, subscriptionRes, invoicesRes, fiadoPaymentsRes] = await Promise.all([
       supabase.from("expenses").select("*").order("created_at", { ascending: false }),
       supabase.from("suppliers").select("*").order("name"),
       supabase.from("sales").select("*").eq("status", "completed"),
@@ -111,18 +118,22 @@ const Finance = () => {
       tenantId
         ? supabase.from("invoices").select("*").eq("tenant_id", tenantId).order("due_date", { ascending: false }).limit(20)
         : Promise.resolve({ data: [], error: null } as any),
+      supabase.from("fiado_payments").select("amount, paid_at"),
     ]);
 
     const expData = expRes.data || [];
     const salesData = salesRes.data || [];
     const saleItemsData = saleItemsRes.data || [];
+    const fiadoPaymentsData = fiadoPaymentsRes.data || [];
 
     setExpenses(expData as Expense[]);
     setSuppliers((supRes.data || []) as Supplier[]);
     setSubscription((subscriptionRes.data as SubscriptionRecord | null) || null);
     setInvoices((invoicesRes.data || []) as InvoiceRecord[]);
 
-    const revenue = salesData.reduce((sum, sale) => sum + Number(sale.total), 0);
+    const salesRevenue = salesData.reduce((sum, sale) => sum + Number(sale.total), 0);
+    const fiadoReceived = fiadoPaymentsData.reduce((sum, p) => sum + Number(p.amount), 0);
+    const revenue = salesRevenue + fiadoReceived;
     const costs = saleItemsData.reduce((sum, item) => {
       const purchasePrice = (item as any).products?.purchase_price || 0;
       return sum + Number(purchasePrice) * item.quantity;
@@ -133,11 +144,33 @@ const Finance = () => {
     const margin = revenue > 0 ? (profit / revenue) * 100 : 0;
 
     setSummaryStats({ revenue, costs, expenses: totalExpenses, profit, margin, pending });
-    buildProfitChart(salesData, saleItemsData, expData as Expense[]);
+    buildProfitChart(salesData, saleItemsData, expData as Expense[], fiadoPaymentsData);
   };
 
   useEffect(() => {
     loadData();
+
+    // Realtime: auto-refresh when fiado payments change
+    const channel = supabase
+      .channel('finance-fiado-payments')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'fiado_payments' },
+        () => loadData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'expenses' },
+        () => loadData()
+      )
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'sales' },
+        () => loadData()
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   useEffect(() => {
