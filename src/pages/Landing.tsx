@@ -103,7 +103,7 @@ const Landing = () => {
       <nav className="fixed top-0 w-full z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="container flex h-16 items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg gradient-primary" />
+            <img src="/logo.png" alt="YouControl" className="h-8 w-8 rounded-lg object-contain" />
             <span className="text-xl font-bold">YouControl</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
