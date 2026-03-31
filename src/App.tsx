@@ -59,10 +59,11 @@ const App = () => (
             <Route path="payment-status" element={<PaymentStatus />} />
             <Route path="subscription" element={<Subscription />} />
           </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </TenantProvider>
   </QueryClientProvider>
 );
 
