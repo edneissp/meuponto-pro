@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 import { useDemoSession } from "@/hooks/use-demo-session";
+import { useTenant } from "@/contexts/TenantContext";
 import Subscription from "@/pages/Subscription";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/DemoBanner";
@@ -38,6 +39,7 @@ const AppLayout = () => {
   const [tenantOrigin, setTenantOrigin] = useState<string | null>(isDemoMode ? "demo" : null);
   const [billingCountryCode, setBillingCountryCode] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
+  const { sessionKey } = useTenant();
   const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
 
   useEffect(() => {
@@ -120,6 +122,11 @@ const AppLayout = () => {
   const handleLogout = async () => {
     if (!isDemoMode) await supabase.auth.signOut();
     if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
+    // Clear all cached data on logout
+    try {
+      localStorage.removeItem("youcontrol-demo-session");
+      sessionStorage.clear();
+    } catch {}
     navigate("/");
   };
 
@@ -217,7 +224,7 @@ const AppLayout = () => {
           <TrialBanner daysLeft={trialDaysLeft} />
         )}
         <main className="flex-1 overflow-auto p-4 lg:p-6 bg-background">
-          <Outlet />
+          <Outlet key={sessionKey} />
         </main>
       </div>
     </div>
