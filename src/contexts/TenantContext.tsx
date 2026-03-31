@@ -42,6 +42,11 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     setUserId(null);
     setLoading(false);
     setSessionKey((k) => k + 1);
+    // Clear all cached query data to prevent cross-tenant data leaks
+    queryClient.clear();
+    try {
+      sessionStorage.clear();
+    } catch {}
   }, []);
 
   useEffect(() => {
