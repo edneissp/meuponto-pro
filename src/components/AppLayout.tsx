@@ -122,6 +122,11 @@ const AppLayout = () => {
   const handleLogout = async () => {
     if (!isDemoMode) await supabase.auth.signOut();
     if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
+    // Clear all cached data on logout
+    try {
+      localStorage.removeItem("youcontrol-demo-session");
+      sessionStorage.clear();
+    } catch {}
     navigate("/");
   };
 
