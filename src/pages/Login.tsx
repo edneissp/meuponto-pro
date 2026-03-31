@@ -12,6 +12,13 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Clear stale data when landing on login page
+  useEffect(() => {
+    try {
+      sessionStorage.clear();
+    } catch {}
+  }, []);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
