@@ -25,6 +25,9 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const [sessionKey, setSessionKey] = useState(0);
 
   const loadTenant = useCallback(async (uid: string) => {
+    // Clear previous tenant's cached data before loading new tenant
+    queryClient.clear();
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("tenant_id")
