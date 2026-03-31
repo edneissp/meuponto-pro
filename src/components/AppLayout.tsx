@@ -122,9 +122,10 @@ const AppLayout = () => {
   const handleLogout = async () => {
     if (!isDemoMode) await supabase.auth.signOut();
     if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
-    // Clear all cached data on logout
+    // Clear all cached data on logout to prevent cross-tenant data leaks
     try {
       localStorage.removeItem("youcontrol-demo-session");
+      localStorage.removeItem("sb-zhfzltrxhgdnwzfxnzxl-auth-token");
       sessionStorage.clear();
     } catch {}
     navigate("/");
