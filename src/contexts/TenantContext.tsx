@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { queryClient } from "@/lib/queryClient";
 
 interface TenantContextType {
   tenantId: string | null;
@@ -24,6 +25,9 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const [sessionKey, setSessionKey] = useState(0);
 
   const loadTenant = useCallback(async (uid: string) => {
+    // Clear previous tenant's cached data before loading new tenant
+    queryClient.clear();
+
     const { data: profile } = await supabase
       .from("profiles")
       .select("tenant_id")
@@ -41,6 +45,11 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     setUserId(null);
     setLoading(false);
     setSessionKey((k) => k + 1);
+    // Clear all cached query data to prevent cross-tenant data leaks
+    queryClient.clear();
+    try {
+      sessionStorage.clear();
+    } catch {}
   }, []);
 
   useEffect(() => {
