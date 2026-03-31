@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 import { useDemoSession } from "@/hooks/use-demo-session";
+import { useTenant } from "@/contexts/TenantContext";
 import Subscription from "@/pages/Subscription";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/DemoBanner";
