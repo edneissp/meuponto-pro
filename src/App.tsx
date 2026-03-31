@@ -28,7 +28,7 @@ import SupplierDeliveries from "./pages/SupplierDeliveries";
 import Optionals from "./pages/Optionals";
 import NotFound from "./pages/NotFound";
 
-const queryClient = new QueryClient();
+
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
