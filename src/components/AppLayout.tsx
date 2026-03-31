@@ -39,6 +39,7 @@ const AppLayout = () => {
   const [tenantOrigin, setTenantOrigin] = useState<string | null>(isDemoMode ? "demo" : null);
   const [billingCountryCode, setBillingCountryCode] = useState<string | null>(null);
   const { applyColor } = useTenantTheme();
+  const { sessionKey } = useTenant();
   const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
 
   useEffect(() => {
