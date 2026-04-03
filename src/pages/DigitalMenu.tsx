@@ -230,11 +230,11 @@ const DigitalMenu = () => {
   };
 
   const sendOrder = async () => {
-    if (!tenantId || cart.length === 0) return;
+    if (!tenant || cart.length === 0) return;
     setSending(true);
 
     const { data: order, error: orderError } = await supabase.from("orders").insert({
-      tenant_id: tenantId,
+      tenant_id: tenant.id,
       source: orderType === "delivery" ? "delivery" : "digital_menu",
       customer_name: customerName || null,
       customer_phone: customerPhone || null,
