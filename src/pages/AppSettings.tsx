@@ -33,6 +33,7 @@ const AppSettings = () => {
   const [gettingLocation, setGettingLocation] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
   const [pixKey, setPixKey] = useState("");
+  const [publicSlug, setPublicSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
