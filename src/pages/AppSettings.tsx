@@ -62,6 +62,7 @@ const AppSettings = () => {
         setStoreLng(tenant.store_lng);
         setWhatsapp(tenant.whatsapp || "");
         setPixKey((tenant as any).pix_key || "");
+        setPublicSlug((tenant as any).public_slug || null);
       }
       setLoading(false);
     };
