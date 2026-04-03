@@ -33,6 +33,7 @@ const AppSettings = () => {
   const [gettingLocation, setGettingLocation] = useState(false);
   const [whatsapp, setWhatsapp] = useState("");
   const [pixKey, setPixKey] = useState("");
+  const [publicSlug, setPublicSlug] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -47,7 +48,7 @@ const AppSettings = () => {
       setTenantId(profile.tenant_id);
       const { data: tenant } = await supabase
         .from("tenants")
-        .select("name, primary_color, logo_url, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng, pix_key")
+        .select("name, primary_color, logo_url, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng, pix_key, public_slug")
         .eq("id", profile.tenant_id)
         .single();
       if (tenant) {
@@ -61,6 +62,7 @@ const AppSettings = () => {
         setStoreLng(tenant.store_lng);
         setWhatsapp(tenant.whatsapp || "");
         setPixKey((tenant as any).pix_key || "");
+        setPublicSlug((tenant as any).public_slug || null);
       }
       setLoading(false);
     };
@@ -386,7 +388,7 @@ const AppSettings = () => {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="bg-white p-4 rounded-xl">
                 <QRCodeSVG
-                  value={`${window.location.origin}/menu/${tenantId}`}
+                  value={`${window.location.origin}/menu/${publicSlug || tenantId}`}
                   size={180}
                   fgColor="#000"
                   level="H"
@@ -397,14 +399,14 @@ const AppSettings = () => {
                   Link do cardápio:
                 </p>
                 <code className="block text-xs bg-muted p-2 rounded break-all">
-                  {window.location.origin}/menu/{tenantId}
+                  {window.location.origin}/menu/{publicSlug || tenantId}
                 </code>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/menu/${tenantId}`);
+                      navigator.clipboard.writeText(`${window.location.origin}/menu/${publicSlug || tenantId}`);
                       toast({ title: "Link copiado!" });
                     }}
                   >
@@ -413,7 +415,7 @@ const AppSettings = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(`/menu/${tenantId}`, "_blank")}
+                    onClick={() => window.open(`/menu/${publicSlug || tenantId}`, "_blank")}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" /> Abrir
                   </Button>

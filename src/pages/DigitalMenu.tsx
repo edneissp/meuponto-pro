@@ -84,12 +84,26 @@ const DigitalMenu = () => {
   useEffect(() => {
     if (!tenantId) return;
     const load = async () => {
-      const [tenantRes, productsRes, categoriesRes] = await Promise.all([
-        supabase.from("tenants").select("id, name, logo_url, primary_color, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng, pix_key").eq("id", tenantId).single(),
-        supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", tenantId).eq("is_active", true).order("name"),
-        supabase.from("categories").select("id, name").eq("tenant_id", tenantId).order("name"),
+      // Try lookup by public_slug first, then by id (supports both UUID and slug URLs)
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId);
+      const tenantQuery = supabase
+        .from("public_tenants")
+        .select("id, name, logo_url, primary_color, delivery_fee, whatsapp, free_delivery_radius_km, delivery_fee_per_km, store_lat, store_lng, pix_key, ativo")
+        .eq(isUuid ? "id" : "public_slug", tenantId)
+        .single();
+
+      const tenantRes = await tenantQuery;
+      if (!tenantRes.data || !tenantRes.data.ativo) {
+        setLoading(false);
+        return;
+      }
+      const resolvedId = tenantRes.data.id!;
+      setTenant(tenantRes.data as unknown as TenantInfo);
+
+      const [productsRes, categoriesRes] = await Promise.all([
+        supabase.from("products").select("id, name, description, sale_price, image_url, category_id, stock_quantity").eq("tenant_id", resolvedId).eq("is_active", true).order("name"),
+        supabase.from("categories").select("id, name").eq("tenant_id", resolvedId).order("name"),
       ]);
-      if (tenantRes.data) setTenant(tenantRes.data as unknown as TenantInfo);
       if (productsRes.data) setProducts(productsRes.data as Product[]);
       if (categoriesRes.data) setCategories(categoriesRes.data as Category[]);
       setLoading(false);
@@ -216,11 +230,11 @@ const DigitalMenu = () => {
   };
 
   const sendOrder = async () => {
-    if (!tenantId || cart.length === 0) return;
+    if (!tenant || cart.length === 0) return;
     setSending(true);
 
     const { data: order, error: orderError } = await supabase.from("orders").insert({
-      tenant_id: tenantId,
+      tenant_id: tenant.id,
       source: orderType === "delivery" ? "delivery" : "digital_menu",
       customer_name: customerName || null,
       customer_phone: customerPhone || null,
@@ -240,7 +254,7 @@ const DigitalMenu = () => {
 
     const items = cart.map(c => ({
       order_id: order.id,
-      tenant_id: tenantId,
+      tenant_id: tenant.id,
       product_id: c.product.id,
       product_name: c.product.name,
       quantity: c.quantity,
