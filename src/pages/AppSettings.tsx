@@ -388,7 +388,7 @@ const AppSettings = () => {
             <div className="flex flex-col sm:flex-row items-center gap-6">
               <div className="bg-white p-4 rounded-xl">
                 <QRCodeSVG
-                  value={`${window.location.origin}/menu/${tenantId}`}
+                  value={`${window.location.origin}/menu/${publicSlug || tenantId}`}
                   size={180}
                   fgColor="#000"
                   level="H"
@@ -399,14 +399,14 @@ const AppSettings = () => {
                   Link do cardápio:
                 </p>
                 <code className="block text-xs bg-muted p-2 rounded break-all">
-                  {window.location.origin}/menu/{tenantId}
+                  {window.location.origin}/menu/{publicSlug || tenantId}
                 </code>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      navigator.clipboard.writeText(`${window.location.origin}/menu/${tenantId}`);
+                      navigator.clipboard.writeText(`${window.location.origin}/menu/${publicSlug || tenantId}`);
                       toast({ title: "Link copiado!" });
                     }}
                   >
@@ -415,7 +415,7 @@ const AppSettings = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => window.open(`/menu/${tenantId}`, "_blank")}
+                    onClick={() => window.open(`/menu/${publicSlug || tenantId}`, "_blank")}
                   >
                     <ExternalLink className="h-4 w-4 mr-1" /> Abrir
                   </Button>
