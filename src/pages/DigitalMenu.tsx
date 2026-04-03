@@ -254,7 +254,7 @@ const DigitalMenu = () => {
 
     const items = cart.map(c => ({
       order_id: order.id,
-      tenant_id: tenantId,
+      tenant_id: tenant.id,
       product_id: c.product.id,
       product_name: c.product.name,
       quantity: c.quantity,
