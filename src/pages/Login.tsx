@@ -12,12 +12,17 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Clear stale data when landing on login page
+  // Redirect if already logged in; clear stale data otherwise
   useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        navigate("/app");
+      }
+    });
     try {
       sessionStorage.clear();
     } catch {}
-  }, []);
+  }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
