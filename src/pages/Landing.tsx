@@ -72,7 +72,7 @@ const Landing = () => {
       if (session) navigate("/app");
     });
   }, [navigate]);
-
+  const handleStartDemo = () => {
     setDemoLoading(true);
     startDemoSession();
     navigate("/app?demo=true");
