@@ -9,7 +9,6 @@ import {
   AlertTriangle, TrendingUp, Clock, Bell, Eye, Printer, MessageCircle,
   Send, X, FlaskConical
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { startDemoSession } from "@/lib/demo";
 import heroImage from "@/assets/hero-dashboard.jpg";
