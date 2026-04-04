@@ -94,7 +94,7 @@ Deno.serve(async (req) => {
     } else {
       await supabase.from("payments").insert({
         tenant_id: tenantId,
-        amount: payment.transaction_amount || 50,
+        amount: payment.transaction_amount || 39.90,
         status: mappedStatus,
         mercado_pago_payment_id: String(paymentId),
         mercado_pago_preference_id: payment.preference_id,
