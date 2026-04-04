@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
 
     await serviceClient.from("payments").insert({
       tenant_id: tenant.id,
-      amount: 100,
+      amount: 39.90,
       status: "pending",
       mercado_pago_preference_id: mpData.id,
     });
