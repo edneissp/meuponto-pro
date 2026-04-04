@@ -66,7 +66,13 @@ const Landing = () => {
   const navigate = useNavigate();
   const pricing = usePricing();
 
-  const handleStartDemo = () => {
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) navigate("/app");
+    });
+  }, [navigate]);
+
     setDemoLoading(true);
     startDemoSession();
     navigate("/app?demo=true");
