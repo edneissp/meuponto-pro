@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         {
           title: `MeuPonto Pro - Assinatura Mensal (${tenant.name})`,
           quantity: 1,
-          unit_price: 100,
+          unit_price: 39.90,
           currency_id: "BRL",
         },
       ],
