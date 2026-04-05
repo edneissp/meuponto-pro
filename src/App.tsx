@@ -22,6 +22,7 @@ import Finance from "./pages/Finance";
 import Reports from "./pages/Reports";
 import AppSettings from "./pages/AppSettings";
 import Orders from "./pages/Orders";
+import Tables from "./pages/Tables";
 import Delivery from "./pages/Delivery";
 import DigitalMenu from "./pages/DigitalMenu";
 import SupplierDeliveries from "./pages/SupplierDeliveries";
