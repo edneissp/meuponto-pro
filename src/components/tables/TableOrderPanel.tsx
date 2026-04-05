@@ -431,6 +431,37 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
           } : null}
         />
       )}
+
+      {/* Transfer Dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transferir Pedido #{activeOrder?.order_number} para outra mesa</DialogTitle>
+          </DialogHeader>
+          {availableTables.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhuma mesa disponível para transferência.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-auto">
+              {availableTables.map(t => (
+                <Card
+                  key={t.id}
+                  className="p-3 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                  onClick={() => handleTransfer(t)}
+                >
+                  <p className="font-bold">Mesa {t.table_number}</p>
+                  {t.table_name && <p className="text-xs text-muted-foreground truncate">{t.table_name}</p>}
+                  <span className="text-xs text-muted-foreground flex items-center gap-0.5 mt-1">
+                    <Users className="h-3 w-3" /> {t.capacity}
+                  </span>
+                </Card>
+              ))}
+            </div>
+          )}
+          {transferring && <p className="text-sm text-center text-muted-foreground">Transferindo...</p>}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
