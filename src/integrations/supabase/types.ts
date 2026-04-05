@@ -674,6 +674,7 @@ export type Database = {
           source: string
           status: string
           subtotal: number
+          table_id: string | null
           table_number: string | null
           tenant_id: string
           total: number
@@ -691,6 +692,7 @@ export type Database = {
           source?: string
           status?: string
           subtotal?: number
+          table_id?: string | null
           table_number?: string | null
           tenant_id: string
           total?: number
@@ -708,12 +710,20 @@ export type Database = {
           source?: string
           status?: string
           subtotal?: number
+          table_id?: string | null
           table_number?: string | null
           tenant_id?: string
           total?: number
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -1496,6 +1506,54 @@ export type Database = {
           },
           {
             foreignKeyName: "suppliers_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tables: {
+        Row: {
+          capacity: number
+          created_at: string
+          id: string
+          status: string
+          table_name: string | null
+          table_number: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          status?: string
+          table_name?: string | null
+          table_number: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          capacity?: number
+          created_at?: string
+          id?: string
+          status?: string
+          table_name?: string | null
+          table_number?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tables_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tables_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
