@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Plus,
   Minus,
@@ -13,6 +19,8 @@ import {
   Trash2,
   CheckCircle,
   Printer,
+  ArrowRightLeft,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import OrderReceipt from "@/components/pos/OrderReceipt";
@@ -71,6 +79,9 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
   const [activeOrder, setActiveOrder] = useState<ActiveOrder | null>(initialOrder);
   const [loading, setLoading] = useState(false);
   const [printOrder, setPrintOrder] = useState(false);
+  const [transferOpen, setTransferOpen] = useState(false);
+  const [availableTables, setAvailableTables] = useState<TableData[]>([]);
+  const [transferring, setTransferring] = useState(false);
 
   const loadProducts = useCallback(async () => {
     if (!tenantId) return;
@@ -214,6 +225,47 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
     onCloseTable();
   };
 
+  const openTransferDialog = async () => {
+    if (!tenantId) return;
+    const { data } = await supabase
+      .from("tables")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .in("status", ["available", "reserved"])
+      .neq("id", table.id)
+      .order("table_number");
+    setAvailableTables((data || []) as TableData[]);
+    setTransferOpen(true);
+  };
+
+  const handleTransfer = async (targetTable: TableData) => {
+    if (!activeOrder || !tenantId) return;
+    setTransferring(true);
+
+    // Update order to point to new table
+    const { error } = await supabase
+      .from("orders")
+      .update({ table_id: targetTable.id, table_number: String(targetTable.table_number) })
+      .eq("id", activeOrder.id);
+
+    if (error) {
+      toast.error("Erro ao transferir: " + error.message);
+      setTransferring(false);
+      return;
+    }
+
+    // Mark new table as occupied, old table as available
+    await Promise.all([
+      supabase.from("tables").update({ status: "occupied" }).eq("id", targetTable.id),
+      supabase.from("tables").update({ status: "available" }).eq("id", table.id),
+    ]);
+
+    toast.success(`Pedido #${activeOrder.order_number} transferido para Mesa ${targetTable.table_number}`);
+    setTransferring(false);
+    setTransferOpen(false);
+    onBack();
+  };
+
   const orderTotal = activeOrder ? Number(activeOrder.total) : 0;
 
   return (
@@ -230,7 +282,10 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
           </h2>
         </div>
         {activeOrder && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={openTransferDialog}>
+              <ArrowRightLeft className="h-4 w-4 mr-1" /> Transferir
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setPrintOrder(true)}>
               <Printer className="h-4 w-4 mr-1" /> Comanda
             </Button>
@@ -376,6 +431,37 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
           } : null}
         />
       )}
+
+      {/* Transfer Dialog */}
+      <Dialog open={transferOpen} onOpenChange={setTransferOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transferir Pedido #{activeOrder?.order_number} para outra mesa</DialogTitle>
+          </DialogHeader>
+          {availableTables.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-6">
+              Nenhuma mesa disponível para transferência.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-64 overflow-auto">
+              {availableTables.map(t => (
+                <Card
+                  key={t.id}
+                  className="p-3 cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all"
+                  onClick={() => handleTransfer(t)}
+                >
+                  <p className="font-bold">Mesa {t.table_number}</p>
+                  {t.table_name && <p className="text-xs text-muted-foreground truncate">{t.table_name}</p>}
+                  <span className="text-xs text-muted-foreground flex items-center gap-0.5 mt-1">
+                    <Users className="h-3 w-3" /> {t.capacity}
+                  </span>
+                </Card>
+              ))}
+            </div>
+          )}
+          {transferring && <p className="text-sm text-center text-muted-foreground">Transferindo...</p>}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
