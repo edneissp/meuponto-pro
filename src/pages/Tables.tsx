@@ -50,7 +50,7 @@ interface ActiveOrder {
   total: number;
   status: string;
   created_at: string;
-  order_items: { id: string; product_name: string; quantity: number; total: number; notes: string | null }[];
+  order_items: { id: string; product_name: string; quantity: number; unit_price: number; total: number; notes: string | null }[];
 }
 
 const statusConfig: Record<string, { label: string; color: string; emoji: string }> = {
