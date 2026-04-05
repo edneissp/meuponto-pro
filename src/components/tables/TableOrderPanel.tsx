@@ -282,7 +282,10 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
           </h2>
         </div>
         {activeOrder && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" size="sm" onClick={openTransferDialog}>
+              <ArrowRightLeft className="h-4 w-4 mr-1" /> Transferir
+            </Button>
             <Button variant="outline" size="sm" onClick={() => setPrintOrder(true)}>
               <Printer className="h-4 w-4 mr-1" /> Comanda
             </Button>
