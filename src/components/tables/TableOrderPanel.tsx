@@ -225,6 +225,47 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
     onCloseTable();
   };
 
+  const openTransferDialog = async () => {
+    if (!tenantId) return;
+    const { data } = await supabase
+      .from("tables")
+      .select("*")
+      .eq("tenant_id", tenantId)
+      .in("status", ["available", "reserved"])
+      .neq("id", table.id)
+      .order("table_number");
+    setAvailableTables((data || []) as TableData[]);
+    setTransferOpen(true);
+  };
+
+  const handleTransfer = async (targetTable: TableData) => {
+    if (!activeOrder || !tenantId) return;
+    setTransferring(true);
+
+    // Update order to point to new table
+    const { error } = await supabase
+      .from("orders")
+      .update({ table_id: targetTable.id, table_number: String(targetTable.table_number) })
+      .eq("id", activeOrder.id);
+
+    if (error) {
+      toast.error("Erro ao transferir: " + error.message);
+      setTransferring(false);
+      return;
+    }
+
+    // Mark new table as occupied, old table as available
+    await Promise.all([
+      supabase.from("tables").update({ status: "occupied" }).eq("id", targetTable.id),
+      supabase.from("tables").update({ status: "available" }).eq("id", table.id),
+    ]);
+
+    toast.success(`Pedido #${activeOrder.order_number} transferido para Mesa ${targetTable.table_number}`);
+    setTransferring(false);
+    setTransferOpen(false);
+    onBack();
+  };
+
   const orderTotal = activeOrder ? Number(activeOrder.total) : 0;
 
   return (
