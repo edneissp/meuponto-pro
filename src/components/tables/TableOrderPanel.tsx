@@ -6,6 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   ArrowLeft,
   Plus,
   Minus,
@@ -13,6 +19,8 @@ import {
   Trash2,
   CheckCircle,
   Printer,
+  ArrowRightLeft,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import OrderReceipt from "@/components/pos/OrderReceipt";
