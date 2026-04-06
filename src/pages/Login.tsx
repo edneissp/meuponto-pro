@@ -18,28 +18,22 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If user already has a valid session, redirect
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        // Corrupt token — wipe everything
-        purgeStaleSession();
+        clearDemoKey();
         return;
       }
       if (session) {
         navigate("/app");
         return;
       }
-      // No session — clean up any stale tokens so next login is fresh
-      purgeStaleSession();
+      clearDemoKey();
     });
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // Always purge before attempting login to avoid token conflicts
-    purgeStaleSession();
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
