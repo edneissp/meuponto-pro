@@ -123,13 +123,18 @@ const AppLayout = () => {
   const handleLogout = async () => {
     if (!isDemoMode) await supabase.auth.signOut();
     if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
-    // Clear all cached data on logout to prevent cross-tenant data leaks
+    // Aggressively purge ALL storage to prevent stale session issues
+    try { localStorage.clear(); } catch {}
+    try { sessionStorage.clear(); } catch {}
     try {
-      localStorage.removeItem("youcontrol-demo-session");
-      localStorage.removeItem("sb-zhfzltrxhgdnwzfxnzxl-auth-token");
-      sessionStorage.clear();
+      document.cookie.split(";").forEach((c) => {
+        const name = c.trim().split("=")[0];
+        if (name) {
+          document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+        }
+      });
     } catch {}
-    navigate("/");
+    navigate("/login");
   };
 
   const isBlocked = !isDemoMode && tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
