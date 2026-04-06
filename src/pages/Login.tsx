@@ -6,24 +6,9 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-/** Wipe all residual session data so login starts clean */
-const purgeStaleSession = () => {
-  try { sessionStorage.clear(); } catch {}
-  // Remove only Supabase auth keys from localStorage (not everything,
-  // to preserve unrelated app prefs). But also do a broad clear to be safe.
-  try {
-    const keys = Object.keys(localStorage);
-    keys.forEach((k) => {
-      if (
-        k.startsWith("sb-") ||
-        k.includes("supabase") ||
-        k.includes("auth-token") ||
-        k === "youcontrol-demo-session"
-      ) {
-        localStorage.removeItem(k);
-      }
-    });
-  } catch {}
+/** Remove demo session key only — don't touch auth tokens */
+const clearDemoKey = () => {
+  try { localStorage.removeItem("youcontrol-demo-session"); } catch {}
 };
 
 const Login = () => {
@@ -33,28 +18,22 @@ const Login = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // If user already has a valid session, redirect
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        // Corrupt token — wipe everything
-        purgeStaleSession();
+        clearDemoKey();
         return;
       }
       if (session) {
         navigate("/app");
         return;
       }
-      // No session — clean up any stale tokens so next login is fresh
-      purgeStaleSession();
+      clearDemoKey();
     });
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-
-    // Always purge before attempting login to avoid token conflicts
-    purgeStaleSession();
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
