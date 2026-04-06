@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { queryClient } from "@/lib/queryClient";
 
@@ -18,11 +18,10 @@ const TenantContext = createContext<TenantContextType>({
 
 export const useTenant = () => useContext(TenantContext);
 
-/** Aggressively wipe all browser storage to prevent stale data */
+/** Full storage wipe — only used on explicit logout or SIGNED_OUT */
 const purgeAllStorage = () => {
   try { localStorage.clear(); } catch {}
   try { sessionStorage.clear(); } catch {}
-  // Clear any domain cookies accessible from JS
   try {
     document.cookie.split(";").forEach((c) => {
       const name = c.trim().split("=")[0];
@@ -38,8 +37,13 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionKey, setSessionKey] = useState(0);
+  const loadingRef = useRef<string | null>(null); // tracks which uid is being loaded
 
   const loadTenant = useCallback(async (uid: string) => {
+    // Deduplicate: skip if already loaded or loading for this uid
+    if (loadingRef.current === uid) return;
+    loadingRef.current = uid;
+
     queryClient.clear();
 
     try {
@@ -51,8 +55,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
       if (error || !profile?.tenant_id) {
         console.error("Failed to load tenant for user", uid, error);
-        // Profile missing — force clean logout
-        purgeAllStorage();
+        // Don't wipe auth tokens here — just reset tenant state
+        loadingRef.current = null;
         setTenantId(null);
         setUserId(null);
         setLoading(false);
@@ -65,7 +69,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       setSessionKey((k) => k + 1);
     } catch (err) {
       console.error("Tenant load crash", err);
-      purgeAllStorage();
+      // Don't wipe auth tokens on transient errors
+      loadingRef.current = null;
       setTenantId(null);
       setUserId(null);
       setLoading(false);
@@ -73,6 +78,7 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const clearTenant = useCallback(() => {
+    loadingRef.current = null;
     setTenantId(null);
     setUserId(null);
     setLoading(false);
@@ -83,43 +89,54 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let initialSessionHandled = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
 
-        if (event === "SIGNED_IN" && session?.user) {
+        if (event === "INITIAL_SESSION") {
+          initialSessionHandled = true;
+          if (session?.user) {
+            await loadTenant(session.user.id);
+          } else {
+            setLoading(false);
+          }
+        } else if (event === "SIGNED_IN" && session?.user) {
           await loadTenant(session.user.id);
         } else if (event === "SIGNED_OUT") {
           clearTenant();
         } else if (event === "TOKEN_REFRESHED" && session?.user) {
+          // Only reload if user actually changed (shouldn't normally happen)
           if (session.user.id !== userId) {
+            loadingRef.current = null; // force reload
             await loadTenant(session.user.id);
           }
         }
       }
     );
 
-    // Check current session — handle stale/corrupt tokens
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (!mounted) return;
-
-      if (error) {
-        console.warn("Corrupt session detected, purging storage", error);
-        purgeAllStorage();
-        setLoading(false);
-        return;
-      }
-
-      if (session?.user) {
-        loadTenant(session.user.id);
-      } else {
-        setLoading(false);
-      }
-    });
+    // Fallback: if INITIAL_SESSION doesn't fire within 2s, check manually
+    const fallbackTimer = setTimeout(() => {
+      if (!mounted || initialSessionHandled) return;
+      supabase.auth.getSession().then(({ data: { session }, error }) => {
+        if (!mounted || initialSessionHandled) return;
+        if (error) {
+          console.warn("Corrupt session detected", error);
+          setLoading(false);
+          return;
+        }
+        if (session?.user) {
+          loadTenant(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      });
+    }, 2000);
 
     return () => {
       mounted = false;
+      clearTimeout(fallbackTimer);
       subscription.unsubscribe();
     };
   }, []);
