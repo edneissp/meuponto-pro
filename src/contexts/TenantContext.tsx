@@ -103,6 +103,10 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
             setLoading(false);
           }
         } else if (event === "SIGNED_IN" && session?.user) {
+          // Force reload if different user signs in (account switching)
+          if (session.user.id !== loadingRef.current) {
+            loadingRef.current = null;
+          }
           await loadTenant(session.user.id);
         } else if (event === "SIGNED_OUT") {
           clearTenant();
