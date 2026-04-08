@@ -6,8 +6,8 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-/** Remove demo session key only — don't touch auth tokens */
-const clearDemoKey = () => {
+/** Purge any residual session data so a fresh login starts clean */
+const purgeResidualSession = () => {
   try { localStorage.removeItem("youcontrol-demo-session"); } catch {}
 };
 
@@ -15,25 +15,51 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [checkingSession, setCheckingSession] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session }, error }) => {
-      if (error) {
-        clearDemoKey();
-        return;
+    let cancelled = false;
+    const check = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (cancelled) return;
+        if (error) {
+          // Corrupt/expired session — sign out and stay on login
+          try { await supabase.auth.signOut(); } catch {}
+          purgeResidualSession();
+          setCheckingSession(false);
+          return;
+        }
+        if (session) {
+          // Validate that the token is actually usable
+          const { data: { user }, error: userError } = await supabase.auth.getUser();
+          if (cancelled) return;
+          if (user && !userError) {
+            navigate("/app");
+            return;
+          }
+          // Token exists but is invalid — force clean sign out
+          try { await supabase.auth.signOut(); } catch {}
+          purgeResidualSession();
+        } else {
+          purgeResidualSession();
+        }
+      } catch {
+        purgeResidualSession();
       }
-      if (session) {
-        navigate("/app");
-        return;
-      }
-      clearDemoKey();
-    });
+      if (!cancelled) setCheckingSession(false);
+    };
+    check();
+    return () => { cancelled = true; };
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    // Clear any residual tokens before new login attempt
+    try { await supabase.auth.signOut(); } catch {}
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -43,6 +69,14 @@ const Login = () => {
       navigate("/app");
     }
   };
+
+  if (checkingSession) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex">
