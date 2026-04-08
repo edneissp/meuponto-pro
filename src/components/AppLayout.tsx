@@ -121,8 +121,11 @@ const AppLayout = () => {
   }, [isDemoMode, tenantOrigin, demoSession.isExpired, navigate]);
 
   const handleLogout = async () => {
-    if (!isDemoMode) await supabase.auth.signOut();
     if (isDemoMode || tenantOrigin === "demo") demoSession.clearSession();
+    // Sign out first — this triggers TenantContext's SIGNED_OUT handler
+    if (!isDemoMode) {
+      try { await supabase.auth.signOut(); } catch {}
+    }
     // Aggressively purge ALL storage to prevent stale session issues
     try { localStorage.clear(); } catch {}
     try { sessionStorage.clear(); } catch {}
@@ -134,7 +137,8 @@ const AppLayout = () => {
         }
       });
     } catch {}
-    navigate("/login");
+    // Hard redirect to force full React state reset — prevents stale user/tenant
+    window.location.href = "/login";
   };
 
   const isBlocked = !isDemoMode && tenantStatus && !["active", "free", "trial"].includes(tenantStatus) && !isAdmin;
