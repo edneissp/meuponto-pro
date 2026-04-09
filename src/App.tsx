@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import DemoExpired from "./pages/DemoExpired";
 import AdminPanel from "./pages/AdminPanel";
+import AdminPromotions from "./pages/AdminPromotions";
 import AppLayout from "./components/AppLayout";
 import Subscription from "./pages/Subscription";
 import PaymentStatus from "./pages/PaymentStatus";
@@ -46,6 +47,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/demo-expired" element={<DemoExpired />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin/promotions" element={<AdminPromotions />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/menu/:tenantId" element={<DigitalMenu />} />
           <Route path="/app" element={<AppLayout />}>

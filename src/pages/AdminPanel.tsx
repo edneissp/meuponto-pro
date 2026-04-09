@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Shield, ArrowLeft, Users, Building2, CheckCircle, Clock, XCircle, Gift } from "lucide-react";
+import { Shield, ArrowLeft, Users, Building2, CheckCircle, Clock, XCircle, Gift, Tag } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 type Tenant = {
@@ -108,6 +108,11 @@ const AdminPanel = () => {
           </Button>
           <Shield className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Painel Administrativo</h1>
+          <div className="ml-auto">
+            <Button variant="outline" size="sm" onClick={() => navigate("/admin/promotions")}>
+              <Tag className="h-4 w-4 mr-1" /> Promoções
+            </Button>
+          </div>
         </div>
       </header>
 

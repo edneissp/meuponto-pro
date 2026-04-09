@@ -170,6 +170,81 @@ export type Database = {
           },
         ]
       }
+      coupon_redemptions: {
+        Row: {
+          campaign_id: string | null
+          coupon_id: string
+          created_at: string
+          discount_applied: number
+          final_price: number
+          id: string
+          original_price: number
+          redeemed_at: string
+          subscription_id: string | null
+          tenant_id: string
+        }
+        Insert: {
+          campaign_id?: string | null
+          coupon_id: string
+          created_at?: string
+          discount_applied?: number
+          final_price?: number
+          id?: string
+          original_price?: number
+          redeemed_at?: string
+          subscription_id?: string | null
+          tenant_id: string
+        }
+        Update: {
+          campaign_id?: string | null
+          coupon_id?: string
+          created_at?: string
+          discount_applied?: number
+          final_price?: number
+          id?: string
+          original_price?: number
+          redeemed_at?: string
+          subscription_id?: string | null
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coupon_redemptions_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "discount_campaigns"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_coupon_id_fkey"
+            columns: ["coupon_id"]
+            isOneToOne: false
+            referencedRelation: "discount_coupons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "coupon_redemptions_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           created_at: string
@@ -205,6 +280,110 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discount_campaigns: {
+        Row: {
+          created_at: string
+          currency: string
+          current_users: number
+          description: string | null
+          discount_price: number
+          duration_days: number
+          ends_at: string | null
+          id: string
+          max_users: number
+          name: string
+          normal_price: number
+          starts_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          currency?: string
+          current_users?: number
+          description?: string | null
+          discount_price?: number
+          duration_days?: number
+          ends_at?: string | null
+          id?: string
+          max_users?: number
+          name: string
+          normal_price?: number
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          currency?: string
+          current_users?: number
+          description?: string | null
+          discount_price?: number
+          duration_days?: number
+          ends_at?: string | null
+          id?: string
+          max_users?: number
+          name?: string
+          normal_price?: number
+          starts_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      discount_coupons: {
+        Row: {
+          campaign_id: string | null
+          code: string
+          created_at: string
+          currency: string
+          expires_at: string | null
+          id: string
+          status: string
+          type: string
+          updated_at: string
+          usage_limit: number
+          used_count: number
+          value: number
+        }
+        Insert: {
+          campaign_id?: string | null
+          code: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          usage_limit?: number
+          used_count?: number
+          value?: number
+        }
+        Update: {
+          campaign_id?: string | null
+          code?: string
+          created_at?: string
+          currency?: string
+          expires_at?: string | null
+          id?: string
+          status?: string
+          type?: string
+          updated_at?: string
+          usage_limit?: number
+          used_count?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_coupons_campaign_id_fkey"
+            columns: ["campaign_id"]
+            isOneToOne: false
+            referencedRelation: "discount_campaigns"
             referencedColumns: ["id"]
           },
         ]
