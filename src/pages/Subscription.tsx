@@ -30,6 +30,61 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const pricing = usePricing(billingCountryCode);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<{
+    coupon_id: string;
+    campaign_id: string | null;
+    code: string;
+    type: string;
+    value: number;
+    discount_price?: number;
+    normal_price?: number;
+    duration_days?: number;
+    currency?: string;
+  } | null>(null);
+
+  const getDiscountedPrice = () => {
+    if (!appliedCoupon) return null;
+    if (appliedCoupon.type === "special_offer" && appliedCoupon.discount_price != null) {
+      return { price: appliedCoupon.discount_price, currency: appliedCoupon.currency || pricing.currency, duration: appliedCoupon.duration_days };
+    }
+    if (appliedCoupon.type === "percentage") {
+      return { price: pricing.price * (1 - appliedCoupon.value / 100), currency: pricing.currency, duration: null };
+    }
+    if (appliedCoupon.type === "fixed_amount") {
+      return { price: Math.max(0, pricing.price - appliedCoupon.value), currency: pricing.currency, duration: null };
+    }
+    return null;
+  };
+
+  const discounted = getDiscountedPrice();
+
+  const validateCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("validate-coupon", {
+        body: { code: couponCode.trim() },
+      });
+      if (error) throw error;
+      if (data?.valid) {
+        setAppliedCoupon(data);
+        toast.success(`Cupom ${data.code} aplicado!`);
+      } else {
+        toast.error(data?.error || "Cupom inválido");
+      }
+    } catch {
+      toast.error("Erro ao validar cupom");
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponCode("");
+  };
 
   const handleCheckout = async () => {
     setLoading(true);
