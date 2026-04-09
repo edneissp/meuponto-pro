@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock, Clock, ShoppingCart, Package, BarChart3, Printer, LayoutDashboard, Bell, TrendingDown } from "lucide-react";
+import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock, Clock, ShoppingCart, Package, BarChart3, Printer, LayoutDashboard, Bell, TrendingDown, Tag, X } from "lucide-react";
 import { usePricing } from "@/hooks/use-pricing";
+import { formatPrice } from "@/lib/pricing";
 
 type SubscriptionPageProps = {
   blocked?: boolean;
