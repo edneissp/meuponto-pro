@@ -47,6 +47,7 @@ const App = () => (
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/demo-expired" element={<DemoExpired />} />
           <Route path="/admin" element={<AdminPanel />} />
+          <Route path="/admin/promotions" element={<AdminPromotions />} />
           <Route path="/subscription" element={<Subscription />} />
           <Route path="/menu/:tenantId" element={<DigitalMenu />} />
           <Route path="/app" element={<AppLayout />}>
