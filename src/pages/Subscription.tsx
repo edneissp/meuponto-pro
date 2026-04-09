@@ -167,11 +167,50 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
 
           <div className="bg-muted/50 rounded-lg p-6 text-center space-y-2">
             <p className="text-sm font-medium text-primary">YouControl Profissional</p>
-            <div className="flex items-baseline justify-center gap-1">
-              <span className="text-4xl font-bold">{pricing.label}</span>
-              <span className="text-muted-foreground">{pricing.periodLabel}</span>
-            </div>
+            {discounted ? (
+              <>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-lg line-through text-muted-foreground">{pricing.label}</span>
+                  <span className="text-4xl font-bold text-primary">
+                    {formatPrice(discounted.price, discounted.currency)}
+                  </span>
+                  <span className="text-muted-foreground">{pricing.periodLabel}</span>
+                </div>
+                {discounted.duration && (
+                  <p className="text-xs text-muted-foreground">
+                    Por {discounted.duration} dias, depois {pricing.label}{pricing.periodLabel}
+                  </p>
+                )}
+                <div className="flex items-center justify-center gap-2 mt-2">
+                  <Tag className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">{appliedCoupon?.code}</span>
+                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={removeCoupon}>
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              </>
+            ) : (
+              <div className="flex items-baseline justify-center gap-1">
+                <span className="text-4xl font-bold">{pricing.label}</span>
+                <span className="text-muted-foreground">{pricing.periodLabel}</span>
+              </div>
+            )}
           </div>
+
+          {/* Coupon field */}
+          {!appliedCoupon && (
+            <div className="flex gap-2">
+              <Input
+                placeholder="Cupom promocional"
+                value={couponCode}
+                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                className="font-mono"
+              />
+              <Button variant="outline" onClick={validateCoupon} disabled={couponLoading || !couponCode.trim()}>
+                {couponLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aplicar"}
+              </Button>
+            </div>
+          )}
 
           <ul className="space-y-3">
             {benefits.map((item) => (
