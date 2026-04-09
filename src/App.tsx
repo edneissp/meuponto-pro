@@ -12,6 +12,7 @@ import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import DemoExpired from "./pages/DemoExpired";
 import AdminPanel from "./pages/AdminPanel";
+import AdminPromotions from "./pages/AdminPromotions";
 import AppLayout from "./components/AppLayout";
 import Subscription from "./pages/Subscription";
 import PaymentStatus from "./pages/PaymentStatus";
