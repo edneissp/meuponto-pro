@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          read_at: string | null
+          reference_id: string | null
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          read_at?: string | null
+          reference_id?: string | null
+          status?: string
+          title: string
+          type?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          read_at?: string | null
+          reference_id?: string | null
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: []
+      }
       alerts: {
         Row: {
           created_at: string
@@ -1751,6 +1784,8 @@ export type Database = {
           billing_detection_checked_at: string | null
           billing_gateway: string | null
           created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
           delivery_fee: number
           delivery_fee_per_km: number
           free_delivery_radius_km: number
@@ -1780,6 +1815,8 @@ export type Database = {
           billing_detection_checked_at?: string | null
           billing_gateway?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           delivery_fee?: number
           delivery_fee_per_km?: number
           free_delivery_radius_km?: number
@@ -1809,6 +1846,8 @@ export type Database = {
           billing_detection_checked_at?: string | null
           billing_gateway?: string | null
           created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
           delivery_fee?: number
           delivery_fee_per_km?: number
           free_delivery_radius_km?: number
