@@ -6,8 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Shield, ArrowLeft, Users, Building2, CheckCircle, Clock, XCircle, Gift, Tag } from "lucide-react";
+import { Shield, ArrowLeft, Users, Building2, CheckCircle, Clock, XCircle, Gift, Tag, Trash2, CalendarDays, CalendarRange, AlertCircle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import AdminNotificationBell from "@/components/admin/AdminNotificationBell";
+import DeleteTenantDialog from "@/components/admin/DeleteTenantDialog";
 
 type Tenant = {
   id: string;
@@ -16,6 +18,7 @@ type Tenant = {
   created_at: string;
   primary_color: string | null;
   logo_url: string | null;
+  deleted_at: string | null;
 };
 
 const STATUS_OPTIONS = [
@@ -37,6 +40,8 @@ const AdminPanel = () => {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Tenant | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     const check = async () => {
@@ -66,12 +71,13 @@ const AdminPanel = () => {
     const { data, error } = await supabase
       .from("tenants")
       .select("*")
+      .is("deleted_at", null)
       .order("created_at", { ascending: false });
 
     if (error) {
       toast.error("Erro ao carregar tenants");
     } else {
-      setTenants(data || []);
+      setTenants((data || []) as Tenant[]);
     }
     setLoading(false);
   };
@@ -90,11 +96,43 @@ const AdminPanel = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+
+    const { data: { session } } = await supabase.auth.getSession();
+
+    const { error } = await supabase
+      .from("tenants")
+      .update({
+        deleted_at: new Date().toISOString(),
+        deleted_by: session?.user?.id || null,
+        subscription_status: "suspended",
+        ativo: false,
+      })
+      .eq("id", deleteTarget.id);
+
+    if (error) {
+      toast.error("Erro ao excluir cadastro");
+    } else {
+      toast.success(`"${deleteTarget.name}" excluído com sucesso`);
+      setTenants(prev => prev.filter(t => t.id !== deleteTarget.id));
+    }
+    setDeleting(false);
+    setDeleteTarget(null);
+  };
+
+  const today = new Date();
+  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString();
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString();
+
   const stats = {
     total: tenants.length,
     active: tenants.filter(t => t.subscription_status === "active").length,
     pending: tenants.filter(t => t.subscription_status === "pending").length,
     free: tenants.filter(t => t.subscription_status === "free").length,
+    newToday: tenants.filter(t => t.created_at >= startOfToday).length,
+    newThisMonth: tenants.filter(t => t.created_at >= startOfMonth).length,
   };
 
   if (!isAdmin) return null;
@@ -108,7 +146,8 @@ const AdminPanel = () => {
           </Button>
           <Shield className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold">Painel Administrativo</h1>
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <AdminNotificationBell />
             <Button variant="outline" size="sm" onClick={() => navigate("/admin/promotions")}>
               <Tag className="h-4 w-4 mr-1" /> Promoções
             </Button>
@@ -118,7 +157,7 @@ const AdminPanel = () => {
 
       <main className="container py-6 space-y-6">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">Total</CardTitle>
@@ -147,7 +186,7 @@ const AdminPanel = () => {
             </CardHeader>
             <CardContent>
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-yellow-500" />
+                <AlertCircle className="h-5 w-5 text-yellow-500" />
                 <span className="text-2xl font-bold">{stats.pending}</span>
               </div>
             </CardContent>
@@ -160,6 +199,28 @@ const AdminPanel = () => {
               <div className="flex items-center gap-2">
                 <Gift className="h-5 w-5 text-blue-500" />
                 <span className="text-2xl font-bold">{stats.free}</span>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Novos hoje</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-emerald-500" />
+                <span className="text-2xl font-bold">{stats.newToday}</span>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">No mês</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-2">
+                <CalendarRange className="h-5 w-5 text-violet-500" />
+                <span className="text-2xl font-bold">{stats.newThisMonth}</span>
               </div>
             </CardContent>
           </Card>
@@ -184,6 +245,7 @@ const AdminPanel = () => {
                     <TableHead>Status</TableHead>
                     <TableHead>Cadastrado em</TableHead>
                     <TableHead>Ações</TableHead>
+                    <TableHead></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -228,12 +290,22 @@ const AdminPanel = () => {
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            onClick={() => setDeleteTarget(tenant)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
                   {tenants.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                         Nenhum estabelecimento cadastrado
                       </TableCell>
                     </TableRow>
@@ -244,6 +316,14 @@ const AdminPanel = () => {
           </CardContent>
         </Card>
       </main>
+
+      <DeleteTenantDialog
+        open={!!deleteTarget}
+        tenantName={deleteTarget?.name || ""}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   );
 };
