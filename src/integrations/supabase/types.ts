@@ -1776,6 +1776,51 @@ export type Database = {
           },
         ]
       }
+      system_errors: {
+        Row: {
+          created_at: string
+          error_message: string
+          id: string
+          module: string
+          severity: string
+          stack_trace: string | null
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message: string
+          id?: string
+          module: string
+          severity?: string
+          stack_trace?: string | null
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string
+          id?: string
+          module?: string
+          severity?: string
+          stack_trace?: string | null
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_errors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_errors_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tables: {
         Row: {
           capacity: number

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
 import { useDemoSession } from "@/hooks/use-demo-session";
 import { useTenant } from "@/contexts/TenantContext";
+import { useSessionHeartbeat } from "@/hooks/use-session-heartbeat";
 import Subscription from "@/pages/Subscription";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/DemoBanner";
@@ -42,6 +43,7 @@ const AppLayout = () => {
   const { applyColor } = useTenantTheme();
   const { sessionKey } = useTenant();
   const demoSession = useDemoSession(isDemoMode || tenantOrigin === "demo");
+  useSessionHeartbeat();
 
   useEffect(() => {
     const checkAuth = async () => {
