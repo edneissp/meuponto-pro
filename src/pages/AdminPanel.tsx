@@ -10,6 +10,7 @@ import { Shield, ArrowLeft, Users, Building2, CheckCircle, Clock, XCircle, Gift,
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminNotificationBell from "@/components/admin/AdminNotificationBell";
 import DeleteTenantDialog from "@/components/admin/DeleteTenantDialog";
+import AdminHealthPanel from "@/components/admin/AdminHealthPanel";
 
 type Tenant = {
   id: string;
@@ -156,6 +157,9 @@ const AdminPanel = () => {
       </header>
 
       <main className="container py-6 space-y-6">
+        {/* Health Check */}
+        <AdminHealthPanel />
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <Card>
