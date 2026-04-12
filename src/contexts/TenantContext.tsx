@@ -111,8 +111,8 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         } else if (event === "SIGNED_OUT") {
           clearTenant();
         } else if (event === "TOKEN_REFRESHED" && session?.user) {
-          // Only reload if user actually changed (shouldn't normally happen)
-          if (session.user.id !== userId) {
+          // Safe restore: reload tenant if user changed or tenant lost
+          if (session.user.id !== userId || (!tenantId && session.user.id)) {
             loadingRef.current = null; // force reload
             await loadTenant(session.user.id);
           }
