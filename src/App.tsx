@@ -29,6 +29,7 @@ import DigitalMenu from "./pages/DigitalMenu";
 import SupplierDeliveries from "./pages/SupplierDeliveries";
 import Optionals from "./pages/Optionals";
 import Kitchen from "./pages/Kitchen";
+import FiscalPage from "./pages/Fiscal";
 import NotFound from "./pages/NotFound";
 
 
@@ -61,6 +62,7 @@ const App = () => (
             <Route path="suppliers" element={<SupplierDeliveries />} />
             <Route path="optionals" element={<Optionals />} />
             <Route path="kitchen" element={<Kitchen />} />
+            <Route path="fiscal" element={<FiscalPage />} />
             <Route path="finance" element={<Finance />} />
             <Route path="reports" element={<Reports />} />
             <Route path="settings" element={<AppSettings />} />

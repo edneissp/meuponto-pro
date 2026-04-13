@@ -653,6 +653,157 @@ export type Database = {
           },
         ]
       }
+      fiscal_documents: {
+        Row: {
+          amount: number
+          api_reference: string | null
+          cancel_reason: string | null
+          created_at: string
+          customer_address: string | null
+          customer_document: string | null
+          customer_email: string | null
+          customer_name: string | null
+          error_message: string | null
+          id: string
+          number: string | null
+          pdf_url: string | null
+          sale_id: string | null
+          series: string | null
+          status: string
+          tenant_id: string
+          type: string
+          updated_at: string
+          xml_url: string | null
+        }
+        Insert: {
+          amount?: number
+          api_reference?: string | null
+          cancel_reason?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_document?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          error_message?: string | null
+          id?: string
+          number?: string | null
+          pdf_url?: string | null
+          sale_id?: string | null
+          series?: string | null
+          status?: string
+          tenant_id: string
+          type?: string
+          updated_at?: string
+          xml_url?: string | null
+        }
+        Update: {
+          amount?: number
+          api_reference?: string | null
+          cancel_reason?: string | null
+          created_at?: string
+          customer_address?: string | null
+          customer_document?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          error_message?: string | null
+          id?: string
+          number?: string | null
+          pdf_url?: string | null
+          sale_id?: string | null
+          series?: string | null
+          status?: string
+          tenant_id?: string
+          type?: string
+          updated_at?: string
+          xml_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_documents_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fiscal_settings: {
+        Row: {
+          cep: string | null
+          cidade: string | null
+          cnpj: string | null
+          created_at: string
+          endereco: string | null
+          estado: string | null
+          id: string
+          inscricao_estadual: string | null
+          nome_fantasia: string | null
+          razao_social: string | null
+          regime_tributario: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome_fantasia?: string | null
+          razao_social?: string | null
+          regime_tributario?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          cep?: string | null
+          cidade?: string | null
+          cnpj?: string | null
+          created_at?: string
+          endereco?: string | null
+          estado?: string | null
+          id?: string
+          inscricao_estadual?: string | null
+          nome_fantasia?: string | null
+          razao_social?: string | null
+          regime_tributario?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_settings_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       invoices: {
         Row: {
           amount: number
