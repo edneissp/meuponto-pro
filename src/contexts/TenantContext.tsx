@@ -37,12 +37,16 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [sessionKey, setSessionKey] = useState(0);
-  const loadingRef = useRef<string | null>(null); // tracks which uid is being loaded
+  const loadingRef = useRef<string | null>(null); // tracks which uid completed successfully
+  const loadingInProgress = useRef(false);
 
   const loadTenant = useCallback(async (uid: string) => {
-    // Deduplicate: skip if already loaded or loading for this uid
-    if (loadingRef.current === uid) return;
-    loadingRef.current = uid;
+    // Skip only if this uid already loaded successfully (tenantId is set)
+    if (loadingRef.current === uid && !loading) return;
+
+    // Prevent concurrent loads
+    if (loadingInProgress.current) return;
+    loadingInProgress.current = true;
 
     queryClient.clear();
 
@@ -55,7 +59,6 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
 
       if (error || !profile?.tenant_id) {
         console.error("Failed to load tenant for user", uid, error);
-        // Don't wipe auth tokens here — just reset tenant state
         loadingRef.current = null;
         setTenantId(null);
         setUserId(null);
@@ -63,22 +66,25 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
+      loadingRef.current = uid; // mark as successfully loaded
       setTenantId(profile.tenant_id);
       setUserId(uid);
       setLoading(false);
       setSessionKey((k) => k + 1);
     } catch (err) {
       console.error("Tenant load crash", err);
-      // Don't wipe auth tokens on transient errors
       loadingRef.current = null;
       setTenantId(null);
       setUserId(null);
       setLoading(false);
+    } finally {
+      loadingInProgress.current = false;
     }
-  }, []);
+  }, [loading]);
 
   const clearTenant = useCallback(() => {
     loadingRef.current = null;
+    loadingInProgress.current = false;
     setTenantId(null);
     setUserId(null);
     setLoading(false);
@@ -92,29 +98,30 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
     let initialSessionHandled = false;
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         if (!mounted) return;
 
         if (event === "INITIAL_SESSION") {
           initialSessionHandled = true;
           if (session?.user) {
-            await loadTenant(session.user.id);
+            // Use setTimeout to avoid blocking auth listener
+            setTimeout(() => { if (mounted) loadTenant(session.user.id); }, 0);
           } else {
             setLoading(false);
           }
         } else if (event === "SIGNED_IN" && session?.user) {
-          // Force reload if different user signs in (account switching)
           if (session.user.id !== loadingRef.current) {
             loadingRef.current = null;
+            loadingInProgress.current = false;
           }
-          await loadTenant(session.user.id);
+          setTimeout(() => { if (mounted) loadTenant(session.user.id); }, 0);
         } else if (event === "SIGNED_OUT") {
           clearTenant();
         } else if (event === "TOKEN_REFRESHED" && session?.user) {
-          // Safe restore: reload tenant if user changed or tenant lost
-          if (session.user.id !== userId || (!tenantId && session.user.id)) {
-            loadingRef.current = null; // force reload
-            await loadTenant(session.user.id);
+          if (!tenantId && session.user.id) {
+            loadingRef.current = null;
+            loadingInProgress.current = false;
+            setTimeout(() => { if (mounted) loadTenant(session.user.id); }, 0);
           }
         }
       }
@@ -138,9 +145,18 @@ export const TenantProvider = ({ children }: { children: ReactNode }) => {
       });
     }, 2000);
 
+    // Ultimate safety: force loading=false after 8s no matter what
+    const ultimateTimer = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn("[TenantContext] Ultimate safety timeout — forcing loading=false");
+        setLoading(false);
+      }
+    }, 8000);
+
     return () => {
       mounted = false;
       clearTimeout(fallbackTimer);
+      clearTimeout(ultimateTimer);
       subscription.unsubscribe();
     };
   }, []);

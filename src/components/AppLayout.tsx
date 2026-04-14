@@ -52,61 +52,65 @@ const AppLayout = () => {
       // Skip auth for demo mode
       if (isDemoMode) return;
 
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        navigate("/login");
-        return;
-      }
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("tenant_id")
-        .eq("user_id", session.user.id)
-        .single();
-      if (profile) {
-        const { data: tenant } = await supabase
-          .from("tenants")
-          .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin, billing_country_code")
-          .eq("id", profile.tenant_id)
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+          navigate("/login");
+          return;
+        }
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("tenant_id")
+          .eq("user_id", session.user.id)
           .single();
-        if (tenant) {
-          setTenantName(tenant.name);
-          setTenantLogo(tenant.logo_url);
-          setTenantPlano((tenant as any).plano || null);
-          setTenantOrigin((tenant as any).origin || null);
-          applyColor((tenant as any).primary_color || null);
-          setBillingCountryCode((tenant as any).billing_country_code || null);
+        if (profile) {
+          const { data: tenant } = await supabase
+            .from("tenants")
+            .select("name, subscription_status, logo_url, trial_end, plano, ativo, primary_color, origin, billing_country_code")
+            .eq("id", profile.tenant_id)
+            .single();
+          if (tenant) {
+            setTenantName(tenant.name);
+            setTenantLogo(tenant.logo_url);
+            setTenantPlano((tenant as any).plano || null);
+            setTenantOrigin((tenant as any).origin || null);
+            applyColor((tenant as any).primary_color || null);
+            setBillingCountryCode((tenant as any).billing_country_code || null);
 
-          const plano = (tenant as any).plano as string;
-          const trialEnd = (tenant as any).trial_end as string | null;
+            const plano = (tenant as any).plano as string;
+            const trialEnd = (tenant as any).trial_end as string | null;
 
-          if (plano === "trial" && trialEnd) {
-            const endDate = new Date(trialEnd);
-            const now = new Date();
-            const diffMs = endDate.getTime() - now.getTime();
-            const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-            setTrialDaysLeft(diffDays);
+            if (plano === "trial" && trialEnd) {
+              const endDate = new Date(trialEnd);
+              const now = new Date();
+              const diffMs = endDate.getTime() - now.getTime();
+              const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+              setTrialDaysLeft(diffDays);
 
-            if (diffDays < 0) {
-              await supabase
-                .from("tenants")
-                .update({ plano: "expirado", subscription_status: "suspended" })
-                .eq("id", profile.tenant_id);
-              setTenantStatus("suspended");
-              setTenantPlano("expirado");
+              if (diffDays < 0) {
+                await supabase
+                  .from("tenants")
+                  .update({ plano: "expirado", subscription_status: "suspended" })
+                  .eq("id", profile.tenant_id);
+                setTenantStatus("suspended");
+                setTenantPlano("expirado");
+              } else {
+                setTenantStatus(tenant.subscription_status);
+              }
             } else {
               setTenantStatus(tenant.subscription_status);
             }
-          } else {
-            setTenantStatus(tenant.subscription_status);
           }
         }
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .eq("role", "admin");
+        setIsAdmin(!!(roles && roles.length > 0));
+      } catch (err) {
+        console.error("[AppLayout] checkAuth failed", err);
       }
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .eq("role", "admin");
-      setIsAdmin(!!(roles && roles.length > 0));
     };
     checkAuth();
 
