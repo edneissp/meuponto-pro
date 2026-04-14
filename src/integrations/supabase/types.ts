@@ -653,6 +653,69 @@ export type Database = {
           },
         ]
       }
+      fiscal_api_config: {
+        Row: {
+          api_key_encrypted: string | null
+          api_secret_encrypted: string | null
+          certificate_url: string | null
+          created_at: string
+          environment: string
+          id: string
+          last_test_at: string | null
+          last_test_result: string | null
+          provider: string
+          status: string
+          tenant_id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          certificate_url?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          last_test_at?: string | null
+          last_test_result?: string | null
+          provider?: string
+          status?: string
+          tenant_id: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key_encrypted?: string | null
+          api_secret_encrypted?: string | null
+          certificate_url?: string | null
+          created_at?: string
+          environment?: string
+          id?: string
+          last_test_at?: string | null
+          last_test_result?: string | null
+          provider?: string
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fiscal_api_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "public_tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fiscal_api_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fiscal_documents: {
         Row: {
           amount: number
