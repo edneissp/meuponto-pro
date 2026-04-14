@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,67 +6,81 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-/** Purge any residual session data so a fresh login starts clean */
-const purgeResidualSession = () => {
-  try { localStorage.removeItem("youcontrol-demo-session"); } catch {}
-};
-
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [checkingSession, setCheckingSession] = useState(true);
   const navigate = useNavigate();
+  const loginTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+
+    // Safety timeout: if session check takes >5s, show form
+    const safetyTimer = setTimeout(() => {
+      if (!cancelled && checkingSession) {
+        console.warn("[Login] Session check timeout — showing form");
+        setCheckingSession(false);
+      }
+    }, 5000);
+
     const check = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         if (cancelled) return;
         if (error) {
-          // Corrupt/expired session — sign out and stay on login
           try { await supabase.auth.signOut(); } catch {}
-          purgeResidualSession();
-          setCheckingSession(false);
           return;
         }
         if (session) {
-          // Validate that the token is actually usable
           const { data: { user }, error: userError } = await supabase.auth.getUser();
           if (cancelled) return;
           if (user && !userError) {
             navigate("/app");
             return;
           }
-          // Token exists but is invalid — force clean sign out
           try { await supabase.auth.signOut(); } catch {}
-          purgeResidualSession();
-        } else {
-          purgeResidualSession();
         }
       } catch {
-        purgeResidualSession();
+        // Ignore — form will show
+      } finally {
+        if (!cancelled) setCheckingSession(false);
       }
-      if (!cancelled) setCheckingSession(false);
     };
+
     check();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      clearTimeout(safetyTimer);
+    };
   }, [navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Clear any residual tokens before new login attempt
-    try { await supabase.auth.signOut(); } catch {}
+    // Safety timeout: force loading=false after 10s
+    loginTimeoutRef.current = setTimeout(() => {
+      setLoading(false);
+      toast.error("Tempo de login excedido. Tente novamente.");
+    }, 10000);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message);
-    } else {
-      navigate("/app");
+    try {
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        navigate("/app");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Erro ao entrar");
+    } finally {
+      setLoading(false);
+      if (loginTimeoutRef.current) {
+        clearTimeout(loginTimeoutRef.current);
+        loginTimeoutRef.current = null;
+      }
     }
   };
 
