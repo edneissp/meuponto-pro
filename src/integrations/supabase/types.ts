@@ -481,7 +481,9 @@ export type Database = {
           due_date: string | null
           id: string
           paid: boolean
+          paid_amount: number
           paid_at: string | null
+          payment_status: string
           supplier_id: string | null
           tenant_id: string
         }
@@ -493,7 +495,9 @@ export type Database = {
           due_date?: string | null
           id?: string
           paid?: boolean
+          paid_amount?: number
           paid_at?: string | null
+          payment_status?: string
           supplier_id?: string | null
           tenant_id: string
         }
@@ -505,7 +509,9 @@ export type Database = {
           due_date?: string | null
           id?: string
           paid?: boolean
+          paid_amount?: number
           paid_at?: string | null
+          payment_status?: string
           supplier_id?: string | null
           tenant_id?: string
         }
