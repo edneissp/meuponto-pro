@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import OrderReceipt from "@/components/pos/OrderReceipt";
+import TableClosingDialog from "@/components/tables/TableClosingDialog";
 
 interface Product {
   id: string;
