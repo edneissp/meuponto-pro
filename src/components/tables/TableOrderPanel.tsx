@@ -472,6 +472,15 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
           {transferring && <p className="text-sm text-center text-muted-foreground">Transferindo...</p>}
         </DialogContent>
       </Dialog>
+      {/* Closing Dialog */}
+      <TableClosingDialog
+        open={closingOpen}
+        onOpenChange={setClosingOpen}
+        table={table}
+        activeOrder={activeOrder}
+        allOrders={allTableOrders}
+        onComplete={handleClosingComplete}
+      />
     </div>
   );
 };
