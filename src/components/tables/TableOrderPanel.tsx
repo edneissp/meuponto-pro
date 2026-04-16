@@ -83,6 +83,8 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
   const [transferOpen, setTransferOpen] = useState(false);
   const [availableTables, setAvailableTables] = useState<TableData[]>([]);
   const [transferring, setTransferring] = useState(false);
+  const [closingOpen, setClosingOpen] = useState(false);
+  const [allTableOrders, setAllTableOrders] = useState<ActiveOrder[]>([]);
 
   const loadProducts = useCallback(async () => {
     if (!tenantId) return;
