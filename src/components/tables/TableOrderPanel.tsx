@@ -227,7 +227,12 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
   };
 
   const handleCloseAndPay = () => {
-    onCloseTable();
+    setClosingOpen(true);
+  };
+
+  const handleClosingComplete = () => {
+    setClosingOpen(false);
+    onBack();
   };
 
   const openTransferDialog = async () => {
