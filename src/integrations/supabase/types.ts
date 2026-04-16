@@ -2041,6 +2041,84 @@ export type Database = {
           },
         ]
       }
+      table_closings: {
+        Row: {
+          closed_at: string
+          created_at: string
+          discount: number
+          duration_minutes: number
+          id: string
+          notes: string | null
+          opened_at: string
+          order_id: string | null
+          paid_amount: number
+          payment_method: string | null
+          payment_status: string
+          service_fee: number
+          split_type: string | null
+          subtotal: number
+          table_id: string
+          table_number: number
+          tenant_id: string
+          total: number
+        }
+        Insert: {
+          closed_at?: string
+          created_at?: string
+          discount?: number
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          order_id?: string | null
+          paid_amount?: number
+          payment_method?: string | null
+          payment_status?: string
+          service_fee?: number
+          split_type?: string | null
+          subtotal?: number
+          table_id: string
+          table_number: number
+          tenant_id: string
+          total?: number
+        }
+        Update: {
+          closed_at?: string
+          created_at?: string
+          discount?: number
+          duration_minutes?: number
+          id?: string
+          notes?: string | null
+          opened_at?: string
+          order_id?: string | null
+          paid_amount?: number
+          payment_method?: string | null
+          payment_status?: string
+          service_fee?: number
+          split_type?: string | null
+          subtotal?: number
+          table_id?: string
+          table_number?: number
+          tenant_id?: string
+          total?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_closings_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "table_closings_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tables: {
         Row: {
           capacity: number
