@@ -105,12 +105,14 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
       .eq("tenant_id", tenantId)
       .eq("table_id", table.id)
       .in("status", ["received", "preparing", "ready"])
-      .order("created_at", { ascending: false })
-      .limit(1);
+      .order("created_at", { ascending: false });
+    
     if (data && data.length > 0) {
       setActiveOrder(data[0] as any);
+      setAllTableOrders(data as any);
     } else {
       setActiveOrder(null);
+      setAllTableOrders([]);
     }
   }, [tenantId, table.id]);
 
