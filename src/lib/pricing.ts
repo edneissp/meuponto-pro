@@ -1,7 +1,7 @@
 // Global pricing configuration
 // Base price in USD for international customers
 const BASE_PRICE_USD = 19.90;
-const BRAZIL_PRICE_BRL = 39.90;
+const BRAZIL_PRICE_BRL = 69.90;
 
 // Fixed exchange rates (mock — ready for future API integration)
 const exchangeRates: Record<string, Record<string, number>> = {

@@ -76,8 +76,8 @@ const AdminPromotions = () => {
   const [campaignDialog, setCampaignDialog] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [campaignForm, setCampaignForm] = useState({
-    name: "", description: "", discount_price: "9.90", normal_price: "39.90",
-    currency: "USD", duration_days: "90", max_users: "100",
+    name: "", description: "", discount_price: "39.90", normal_price: "69.90",
+    currency: "BRL", duration_days: "365", max_users: "100",
     starts_at: new Date().toISOString().split("T")[0], ends_at: "",
   });
 
@@ -85,7 +85,7 @@ const AdminPromotions = () => {
   const [couponDialog, setCouponDialog] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
   const [couponForm, setCouponForm] = useState({
-    code: "", type: "percentage", value: "10", currency: "USD",
+    code: "", type: "percentage", value: "10", currency: "BRL",
     campaign_id: "", usage_limit: "100", expires_at: "",
   });
 
@@ -130,8 +130,8 @@ const AdminPromotions = () => {
     } else {
       setEditingCampaign(null);
       setCampaignForm({
-        name: "", description: "", discount_price: "9.90", normal_price: "39.90",
-        currency: "USD", duration_days: "90", max_users: "100",
+        name: "", description: "", discount_price: "39.90", normal_price: "69.90",
+        currency: "BRL", duration_days: "365", max_users: "100",
         starts_at: new Date().toISOString().split("T")[0], ends_at: "",
       });
     }
@@ -196,7 +196,7 @@ const AdminPromotions = () => {
     } else {
       setEditingCoupon(null);
       setCouponForm({
-        code: "", type: "percentage", value: "10", currency: "USD",
+        code: "", type: "percentage", value: "10", currency: "BRL",
         campaign_id: "", usage_limit: "100", expires_at: "",
       });
     }
