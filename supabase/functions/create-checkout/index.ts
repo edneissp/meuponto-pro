@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         {
           title: `MeuPonto Pro - Assinatura Mensal (${tenant.name})`,
           quantity: 1,
-          unit_price: 39.90,
+          unit_price: 69.90,
           currency_id: "BRL",
         },
       ],
@@ -110,7 +110,7 @@ Deno.serve(async (req) => {
 
     await serviceClient.from("payments").insert({
       tenant_id: tenant.id,
-      amount: 39.90,
+      amount: 69.90,
       status: "pending",
       mercado_pago_preference_id: mpData.id,
     });
