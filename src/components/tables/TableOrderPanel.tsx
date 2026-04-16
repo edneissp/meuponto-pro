@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import OrderReceipt from "@/components/pos/OrderReceipt";
+import TableClosingDialog from "@/components/tables/TableClosingDialog";
 
 interface Product {
   id: string;
@@ -82,6 +83,8 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
   const [transferOpen, setTransferOpen] = useState(false);
   const [availableTables, setAvailableTables] = useState<TableData[]>([]);
   const [transferring, setTransferring] = useState(false);
+  const [closingOpen, setClosingOpen] = useState(false);
+  const [allTableOrders, setAllTableOrders] = useState<ActiveOrder[]>([]);
 
   const loadProducts = useCallback(async () => {
     if (!tenantId) return;
@@ -102,12 +105,14 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
       .eq("tenant_id", tenantId)
       .eq("table_id", table.id)
       .in("status", ["received", "preparing", "ready"])
-      .order("created_at", { ascending: false })
-      .limit(1);
+      .order("created_at", { ascending: false });
+    
     if (data && data.length > 0) {
       setActiveOrder(data[0] as any);
+      setAllTableOrders(data as any);
     } else {
       setActiveOrder(null);
+      setAllTableOrders([]);
     }
   }, [tenantId, table.id]);
 
@@ -222,7 +227,12 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
   };
 
   const handleCloseAndPay = () => {
-    onCloseTable();
+    setClosingOpen(true);
+  };
+
+  const handleClosingComplete = () => {
+    setClosingOpen(false);
+    onBack();
   };
 
   const openTransferDialog = async () => {
@@ -462,6 +472,15 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
           {transferring && <p className="text-sm text-center text-muted-foreground">Transferindo...</p>}
         </DialogContent>
       </Dialog>
+      {/* Closing Dialog */}
+      <TableClosingDialog
+        open={closingOpen}
+        onOpenChange={setClosingOpen}
+        table={table}
+        activeOrder={activeOrder}
+        allOrders={allTableOrders}
+        onComplete={handleClosingComplete}
+      />
     </div>
   );
 };
