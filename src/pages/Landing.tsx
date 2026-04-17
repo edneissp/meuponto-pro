@@ -246,7 +246,7 @@ const Landing = () => {
       <footer className="py-12 border-t border-border">
         <div className="container text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <div className="h-6 w-6 rounded-md gradient-primary" />
+            <img src="/logo.png" alt="YouControl" className="h-6 w-6 rounded-md object-contain" />
             <span className="font-bold">YouControl</span>
           </div>
           <p className="text-sm text-muted-foreground">© 2026 YouControl. Todos os direitos reservados.</p>
