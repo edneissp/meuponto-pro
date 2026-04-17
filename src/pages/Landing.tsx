@@ -5,58 +5,41 @@ import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
-  Check, BarChart3, ShoppingCart, Package, DollarSign, Shield, Zap,
-  AlertTriangle, TrendingUp, Clock, Bell, Eye, Printer, MessageCircle,
-  Send, X, FlaskConical
+  Zap, MessageCircle, X, FlaskConical, Send, ShoppingCart, Package,
+  Utensils, ChefHat, DollarSign, FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { startDemoSession } from "@/lib/demo";
 import heroImage from "@/assets/hero-dashboard.jpg";
-import { usePricing } from "@/hooks/use-pricing";
-
-const features = [
-  { icon: ShoppingCart, title: "PDV Rápido e Fácil", desc: "Registre vendas em segundos com combos, descontos e múltiplas formas de pagamento." },
-  { icon: Package, title: "Estoque Inteligente", desc: "Alertas automáticos de validade e estoque baixo. Nunca perca produto por falta de controle." },
-  { icon: BarChart3, title: "Relatórios Automáticos", desc: "Acompanhe vendas, produtos mais vendidos, melhores horários e margem de lucro." },
-  { icon: DollarSign, title: "Financeiro Completo", desc: "Controle despesas, fornecedores e lucro real do seu comércio em tempo real." },
-  { icon: Shield, title: "Seguro e Personalizado", desc: "Seus dados isolados e protegidos. Personalize com a marca do seu negócio." },
-  { icon: Zap, title: "100% Online", desc: "Acesse de qualquer dispositivo — celular, tablet ou computador. Sem instalação." },
-];
+import { BenefitsGrid } from "@/components/landing/BenefitsGrid";
+import { FiscalBlock } from "@/components/landing/FiscalBlock";
+import { PricingBlock } from "@/components/landing/PricingBlock";
 
 const problems = [
   "Não sabe quanto realmente lucrou no dia",
   "Perde produtos por vencimento",
   "Não controla estoque corretamente",
   "Não sabe quais produtos vendem mais",
-  "Não controla quanto deve pagar aos fornecedores",
+  "Demora para fechar mesas e cobrar clientes",
+  "Não emite nota fiscal de forma simples",
 ];
 
-const benefitItems = [
-  { icon: ShoppingCart, text: "PDV rápido e fácil de usar" },
-  { icon: Package, text: "Controle inteligente de estoque" },
-  { icon: BarChart3, text: "Relatórios de vendas automáticos" },
-  { icon: Printer, text: "Impressão térmica de pedidos" },
-  { icon: Clock, text: "Controle de produtos próximos do vencimento" },
-  { icon: Bell, text: "Alertas de estoque baixo" },
-];
-
-const pricingFeatures = [
-  "PDV completo",
-  "Controle de estoque com alertas",
-  "Relatórios de vendas automáticos",
-  "Gestão de fornecedores",
-  "Dashboard inteligente",
-  "Impressão térmica de pedidos",
-  "Controle de validade de produtos",
-  "Alertas de estoque baixo",
+const heroHighlights = [
+  { icon: ShoppingCart, label: "PDV" },
+  { icon: Package, label: "Estoque" },
+  { icon: Utensils, label: "Mesas" },
+  { icon: ChefHat, label: "Cozinha" },
+  { icon: DollarSign, label: "Financeiro" },
+  { icon: FileText, label: "NF-e / NFC-e" },
 ];
 
 const faqs = [
   { q: "Preciso instalar algo?", a: "Não. O sistema funciona direto no navegador, em qualquer dispositivo." },
   { q: "Funciona no celular?", a: "Sim. Celular, tablet ou computador — acesse de onde quiser." },
-  { q: "Preciso entender de tecnologia?", a: "Não. O YouControl foi feito para ser simples e intuitivo." },
+  { q: "O sistema emite NF-e e NFC-e?", a: "Sim. Temos módulo fiscal integrado com emissão direta do PDV, histórico e download de XML/PDF." },
   { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem burocracia." },
-  { q: "Serve para qual tipo de comércio?", a: "Lanchonetes, restaurantes, açaiterias, padarias, mercadinhos e qualquer comércio que precise controlar vendas e estoque." },
+  { q: "Serve para qual tipo de comércio?", a: "Restaurantes, lanchonetes, açaiterias, padarias, mercadinhos e qualquer comércio que precise de PDV, estoque e fiscal." },
+  { q: "Como funciona o cupom PRIMEIROS100?", a: "Os 100 primeiros clientes pagam apenas R$ 39,90/mês durante 12 meses. Após esse período, o valor passa a ser R$ 69,90/mês." },
 ];
 
 const Landing = () => {
@@ -64,14 +47,13 @@ const Landing = () => {
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const navigate = useNavigate();
-  const pricing = usePricing();
 
-  // Redirect authenticated users to dashboard
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) navigate("/app");
     });
   }, [navigate]);
+
   const handleStartDemo = () => {
     setDemoLoading(true);
     startDemoSession();
@@ -100,7 +82,7 @@ const Landing = () => {
     }
   };
 
-  const whatsappMessage = encodeURIComponent("Olá! Quero conhecer o sistema YouControl para meu comércio.");
+  const whatsappMessage = encodeURIComponent("Olá! Quero testar agora o sistema YouControl para meu restaurante.");
   const whatsappUrl = `https://wa.me/5571996219021?text=${whatsappMessage}`;
 
   return (
@@ -113,14 +95,14 @@ const Landing = () => {
             <span className="text-xl font-bold">YouControl</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Funcionalidades</a>
+            <a href="#beneficios" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Benefícios</a>
+            <a href="#fiscal" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Fiscal</a>
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
-            <a href="#contato" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Contato</a>
           </div>
           <div className="flex items-center gap-3">
             <Button variant="ghost" asChild><Link to="/login">Entrar</Link></Button>
-            <Button asChild><Link to="/register">Testar Grátis</Link></Button>
+            <Button asChild><Link to="/register">Teste grátis agora</Link></Button>
           </div>
         </div>
       </nav>
@@ -128,36 +110,44 @@ const Landing = () => {
       {/* Hero */}
       <section className="pt-32 pb-20 gradient-hero">
         <div className="container">
-          <div className="max-w-3xl mx-auto text-center mb-12">
+          <div className="max-w-4xl mx-auto text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 border border-primary/20 mb-6 animate-fade-in">
               <Zap className="h-4 w-4 text-primary" />
-              <span className="text-sm font-medium text-primary">Gestão completa para seu comércio</span>
+              <span className="text-sm font-medium text-primary">Sistema completo para restaurantes</span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-4 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              Controle total do seu comércio em um <span className="text-gradient">único sistema</span>
+            <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
+              PDV, Estoque, Mesas, Cozinha, Financeiro e <span className="text-gradient">NF-e / NFC-e</span> em um só sistema
             </h1>
-            <p className="text-base md:text-lg text-primary-foreground/70 mb-4 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              O YouControl é um sistema completo para gerenciar vendas, estoque, relatórios e pedidos de forma simples e rápida.
+            <p className="text-base md:text-lg text-primary-foreground/70 mb-6 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
+              Gerencie todo o seu restaurante ou comércio em uma plataforma completa. Emita notas fiscais, controle mesas e cozinha em tempo real.
             </p>
-            <p className="text-sm text-primary-foreground/50 mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
-              Experimente o YouControl gratuitamente por 30 dias e descubra como é fácil organizar seu comércio.
-            </p>
+
+            {/* Hero feature pills */}
+            <div className="flex flex-wrap justify-center gap-2 mb-8 animate-fade-in" style={{ animationDelay: "0.2s" }}>
+              {heroHighlights.map((h, i) => (
+                <div key={i} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary-foreground/10 border border-primary-foreground/20 text-primary-foreground/90 text-xs font-medium backdrop-blur-sm">
+                  <h.icon className="h-3.5 w-3.5" />
+                  {h.label}
+                </div>
+              ))}
+            </div>
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.25s" }}>
-              <Button size="lg" className="text-base px-8 shadow-glow" onClick={handleStartDemo} disabled={demoLoading}>
-                <FlaskConical className="mr-2 h-5 w-5" />
-                {demoLoading ? "Preparando..." : "Testar agora"}
+              <Button size="lg" className="text-base px-8 shadow-glow" asChild>
+                <Link to="/register">🚀 Teste grátis agora</Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" asChild>
-                <Link to="/register">🚀 Teste grátis por 30 dias</Link>
+              <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" onClick={handleStartDemo} disabled={demoLoading}>
+                <FlaskConical className="mr-2 h-5 w-5" />
+                {demoLoading ? "Preparando..." : "Ver demonstração"}
               </Button>
             </div>
             <p className="text-sm text-primary-foreground/50 mt-4 animate-fade-in" style={{ animationDelay: "0.3s" }}>
-              Sem cartão de crédito • Cancele quando quiser
+              Sem cartão de crédito • 30 dias grátis • Cancele quando quiser
             </p>
           </div>
           <div className="max-w-5xl mx-auto animate-fade-in" style={{ animationDelay: "0.4s" }}>
             <div className="rounded-xl overflow-hidden shadow-2xl border border-primary-foreground/10">
-              <img src={heroImage} alt="Dashboard YouControl — Sistema de gestão para comércio" className="w-full" />
+              <img src={heroImage} alt="Dashboard YouControl — Sistema de gestão para restaurantes e comércio" className="w-full" />
             </div>
           </div>
         </div>
@@ -167,9 +157,9 @@ const Landing = () => {
       <section className="py-24 bg-muted/50">
         <div className="container">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Seu comércio enfrenta esses problemas?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Seu restaurante enfrenta esses problemas?</h2>
           </div>
-          <div className="max-w-2xl mx-auto space-y-4 mb-12">
+          <div className="max-w-2xl mx-auto space-y-3 mb-12">
             {problems.map((p, i) => (
               <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-destructive/20 bg-destructive/5">
                 <div className="h-8 w-8 rounded-full bg-destructive/10 flex items-center justify-center flex-shrink-0">
@@ -180,94 +170,23 @@ const Landing = () => {
             ))}
           </div>
           <p className="text-center text-xl md:text-2xl font-bold text-gradient">
-            O YouControl resolve tudo isso automaticamente.
+            O YouControl resolve tudo isso em uma única plataforma.
           </p>
         </div>
       </section>
 
-      {/* Benefits */}
-      <section className="py-24">
-        <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Tudo que seu comércio precisa em um só lugar</h2>
-          </div>
-          <div className="max-w-3xl mx-auto grid sm:grid-cols-2 gap-6">
-            {benefitItems.map((b, i) => (
-              <div key={i} className="flex items-center gap-4 p-5 rounded-xl border border-border bg-card shadow-card">
-                <div className="h-10 w-10 rounded-lg gradient-primary flex items-center justify-center flex-shrink-0">
-                  <b.icon className="h-5 w-5 text-primary-foreground" />
-                </div>
-                <span className="font-medium">{b.text}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Benefits Grid */}
+      <div id="beneficios">
+        <BenefitsGrid />
+      </div>
 
-      {/* Features */}
-      <section id="features" className="py-24 bg-muted/50">
-        <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Funcionalidades completas</h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Do caixa ao relatório, tudo integrado para você focar no que importa: vender mais.
-            </p>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {features.map((f, i) => (
-              <div key={i} className="p-6 rounded-xl border border-border bg-card shadow-card hover:shadow-glow/20 transition-all duration-300 group">
-                <div className="h-12 w-12 rounded-lg gradient-primary flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <f.icon className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{f.title}</h3>
-                <p className="text-muted-foreground">{f.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Fiscal Block */}
+      <div id="fiscal">
+        <FiscalBlock />
+      </div>
 
       {/* Pricing */}
-      <section id="pricing" className="py-24">
-        <div className="container">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold mb-4">Preço simples e transparente</h2>
-            <p className="text-muted-foreground text-lg">Sistema completo para gerenciar seu comércio com mais organização e controle.</p>
-          </div>
-          <div className="max-w-md mx-auto">
-            <div className="rounded-2xl border-2 border-primary bg-card p-8 shadow-glow">
-              <div className="text-center mb-8">
-                <h3 className="text-xl font-bold mb-1">YouControl Profissional</h3>
-                <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-                  {pricing.countryCode === "BR" ? "Teste grátis por 30 dias" : "Free 30-day trial"}
-                </div>
-                <div className="flex items-baseline justify-center gap-1">
-                  <span className="text-5xl font-extrabold text-gradient">{pricing.label}</span>
-                  <span className="text-muted-foreground">{pricing.periodLabel}</span>
-                </div>
-              </div>
-              <ul className="space-y-3 mb-8">
-                {pricingFeatures.map((b, i) => (
-                  <li key={i} className="flex items-center gap-3">
-                    <div className="h-5 w-5 rounded-full gradient-primary flex items-center justify-center flex-shrink-0">
-                      <Check className="h-3 w-3 text-primary-foreground" />
-                    </div>
-                    <span className="text-sm">{b}</span>
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full" size="lg" asChild>
-                <Link to="/register">{pricing.countryCode === "BR" ? "Teste grátis por 30 dias" : "Start free 30-day trial"}</Link>
-              </Button>
-              <p className="text-center text-xs text-muted-foreground mt-3">
-                {pricing.countryCode === "BR"
-                  ? "Sem fidelidade • Sem cartão de crédito • Cancele quando quiser"
-                  : "No commitment • No credit card • Cancel anytime"}
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
+      <PricingBlock />
 
       {/* Lead Form */}
       <section id="contato" className="py-24 bg-muted/50">
@@ -275,34 +194,13 @@ const Landing = () => {
           <div className="max-w-lg mx-auto">
             <div className="text-center mb-8">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Quer saber mais?</h2>
-              <p className="text-muted-foreground">Preencha seus dados e entraremos em contato.</p>
+              <p className="text-muted-foreground">Preencha seus dados e nossa equipe entrará em contato.</p>
             </div>
             <form onSubmit={handleLeadSubmit} className="space-y-4 p-8 rounded-2xl border border-border bg-card shadow-card">
-              <Input
-                placeholder="Seu nome"
-                value={leadForm.name}
-                onChange={e => setLeadForm(p => ({ ...p, name: e.target.value }))}
-                maxLength={100}
-              />
-              <Input
-                type="email"
-                placeholder="Seu email"
-                value={leadForm.email}
-                onChange={e => setLeadForm(p => ({ ...p, email: e.target.value }))}
-                maxLength={255}
-              />
-              <Input
-                placeholder="WhatsApp (ex: 11999999999)"
-                value={leadForm.whatsapp}
-                onChange={e => setLeadForm(p => ({ ...p, whatsapp: e.target.value }))}
-                maxLength={20}
-              />
-              <Input
-                placeholder="Nome do seu comércio"
-                value={leadForm.business_name}
-                onChange={e => setLeadForm(p => ({ ...p, business_name: e.target.value }))}
-                maxLength={100}
-              />
+              <Input placeholder="Seu nome" value={leadForm.name} onChange={e => setLeadForm(p => ({ ...p, name: e.target.value }))} maxLength={100} />
+              <Input type="email" placeholder="Seu email" value={leadForm.email} onChange={e => setLeadForm(p => ({ ...p, email: e.target.value }))} maxLength={255} />
+              <Input placeholder="WhatsApp (ex: 11999999999)" value={leadForm.whatsapp} onChange={e => setLeadForm(p => ({ ...p, whatsapp: e.target.value }))} maxLength={20} />
+              <Input placeholder="Nome do seu comércio" value={leadForm.business_name} onChange={e => setLeadForm(p => ({ ...p, business_name: e.target.value }))} maxLength={100} />
               <Button type="submit" className="w-full" size="lg" disabled={loading}>
                 {loading ? "Enviando..." : "Enviar"}
                 {!loading && <Send className="ml-2 h-4 w-4" />}
@@ -336,10 +234,10 @@ const Landing = () => {
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Comece agora — é grátis por 30 dias</h2>
           <p className="text-primary-foreground/70 text-lg max-w-xl mx-auto mb-8">
-            Experimente o YouControl gratuitamente e descubra como é fácil organizar seu comércio.
+            Use o cupom <span className="font-bold text-primary-foreground">PRIMEIROS100</span> e pague apenas R$ 39,90/mês por 12 meses.
           </p>
           <Button size="lg" className="text-base px-10 shadow-glow" asChild>
-            <Link to="/register">🚀 Criar conta grátis</Link>
+            <Link to="/register">🚀 Teste grátis agora</Link>
           </Button>
         </div>
       </section>
@@ -360,10 +258,11 @@ const Landing = () => {
         href={whatsappUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 h-14 w-14 rounded-full bg-[#25D366] flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
-        aria-label="Contato via WhatsApp"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2 pl-4 pr-5 py-3 rounded-full bg-[#25D366] text-white shadow-lg hover:scale-105 transition-transform font-semibold"
+        aria-label="Quero testar agora — Contato via WhatsApp"
       >
-        <MessageCircle className="h-7 w-7 text-white" />
+        <MessageCircle className="h-5 w-5" />
+        <span className="hidden sm:inline text-sm">Quero testar agora</span>
       </a>
     </div>
   );
