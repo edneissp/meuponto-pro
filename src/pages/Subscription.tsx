@@ -177,9 +177,20 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
                   <span className="text-muted-foreground">{pricing.periodLabel}</span>
                 </div>
                 {discounted.duration && (
-                  <p className="text-xs text-muted-foreground">
-                    Por {discounted.duration} dias, depois {pricing.label}{pricing.periodLabel}
-                  </p>
+                  <div className="space-y-1 mt-2 p-3 rounded-md bg-primary/5 border border-primary/20">
+                    <p className="text-xs font-medium text-primary">
+                      🎉 Plano promocional ativo
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Vigência: {Math.round(discounted.duration / 30)} meses
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Reajuste em: {new Date(Date.now() + discounted.duration * 86400000).toLocaleDateString("pt-BR")}
+                    </p>
+                    <p className="text-xs font-semibold">
+                      Próximo valor: {pricing.label}{pricing.periodLabel}
+                    </p>
+                  </div>
                 )}
                 <div className="flex items-center justify-center gap-2 mt-2">
                   <Tag className="h-4 w-4 text-primary" />
