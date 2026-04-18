@@ -291,14 +291,18 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
             {table.table_name && <span className="text-muted-foreground font-normal text-sm ml-2">({table.table_name})</span>}
           </h2>
         </div>
-        {activeOrder && (
+        {table.status !== "available" && (
           <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" size="sm" onClick={openTransferDialog}>
-              <ArrowRightLeft className="h-4 w-4 mr-1" /> Transferir
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => setPrintOrder(true)}>
-              <Printer className="h-4 w-4 mr-1" /> Comanda
-            </Button>
+            {activeOrder && (
+              <>
+                <Button variant="outline" size="sm" onClick={openTransferDialog}>
+                  <ArrowRightLeft className="h-4 w-4 mr-1" /> Transferir
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setPrintOrder(true)}>
+                  <Printer className="h-4 w-4 mr-1" /> Comanda
+                </Button>
+              </>
+            )}
             <Button
               size="sm"
               className="bg-green-600 hover:bg-green-700"
