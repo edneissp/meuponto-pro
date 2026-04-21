@@ -262,11 +262,15 @@ const Landing = () => {
         className="fixed bottom-6 right-6 z-50 flex items-center gap-2 pl-4 pr-5 py-3 rounded-full bg-[#25D366] text-white shadow-lg hover:scale-105 transition-transform font-semibold"
         aria-label="Quero testar agora — Contato via WhatsApp"
       >
-        <MessageCircle classNamea"h-5 w-5" />
+        <MessageCircle className="h-5 w-5" />
         <span className="hidden sm:inline text-sm">Quero testar agora</span>
       </a>
+
+      {/* CHATBOT */}
+      <ChatBot />
+
     </div>
   );
 };
-<ChatBot />z
+
 export default Landing;
