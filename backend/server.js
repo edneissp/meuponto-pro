@@ -1,5 +1,8 @@
 import express from "express";
 
+app.get("/", (req, res) => {
+  res.send("Servidor OK 🚀");
+});
 const app = express();
 app.use(express.json());
 
