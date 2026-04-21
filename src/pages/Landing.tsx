@@ -83,7 +83,9 @@ const Landing = () => {
     }
   };
 
-  const whatsappMessage = encodeURIComponent("Olá! Quero testar agora o sistema YouControl para meu restaurante.");
+  const whatsappMessage = encodeURIComponent(
+  "Olá! Vim pelo site e quero testar o sistema YouControl. Pode me explicar como funciona?"
+);
   const whatsappUrl = `https://wa.me/5571983694848?text=${whatsappMessage}`;
 
   return (
