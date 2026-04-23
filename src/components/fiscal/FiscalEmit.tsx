@@ -43,7 +43,9 @@ const FiscalEmit = () => {
     setEmitting(false);
 
     if (result.success) {
-      toast({ title: "Nota fiscal registrada", description: "Status: pendente. Será processada quando a API fiscal for configurada." });
+      const status = (result as any).status;
+      const label = status === "issued" ? "autorizada pela SEFAZ ✅" : status === "processing" ? "em processamento (acompanhe no histórico)" : "registrada";
+      toast({ title: `Nota fiscal ${label}` });
       setForm({ type: "nfce", customerName: "", customerDocument: "", customerEmail: "", customerAddress: "", amount: "" });
     } else {
       toast({ title: "Erro ao emitir", description: result.error, variant: "destructive" });
@@ -55,8 +57,7 @@ const FiscalEmit = () => {
       <Alert>
         <AlertTriangle className="h-4 w-4" />
         <AlertDescription>
-          Módulo fiscal preparado para integração com API externa (Focus NFe, Enotas, Webmania). 
-          Configure a chave de API nas configurações para ativar a emissão automática.
+          Emissão integrada com Focus NFe. Configure a API Key e os dados fiscais da empresa antes de emitir notas reais.
         </AlertDescription>
       </Alert>
 

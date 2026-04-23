@@ -1,7 +1,11 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Printer } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Printer, FileText, Loader2 } from "lucide-react";
+import { focusNfeService } from "@/services/focusNfeService";
+import { toast } from "sonner";
 
 interface ReceiptItem {
   name: string;
@@ -32,6 +36,10 @@ const paymentLabels: Record<string, string> = {
 
 const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () => void; data: ReceiptData | null }) => {
   const receiptRef = useRef<HTMLDivElement>(null);
+  const [nfceOpen, setNfceOpen] = useState(false);
+  const [emitting, setEmitting] = useState(false);
+  const [customerDoc, setCustomerDoc] = useState("");
+  const [customerName, setCustomerName] = useState("");
 
   const handlePrint = () => {
     if (!receiptRef.current) return;
@@ -58,68 +66,131 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
     printWindow.document.close();
   };
 
+  const handleEmitNfce = async () => {
+    if (!data) return;
+    setEmitting(true);
+    const result = await focusNfeService.emitirNota({
+      type: "nfce",
+      amount: data.total,
+      sale_id: data.saleId,
+      customer_name: customerName || data.customerName || null,
+      customer_document: customerDoc || null,
+      items: data.items.map((it) => ({
+        descricao: it.name,
+        quantidade: it.quantity,
+        valor_unitario: it.unitPrice,
+      })),
+    });
+    setEmitting(false);
+
+    if (result.success) {
+      const statusLabel = (result as any).status === "issued" ? "autorizada" : "em processamento";
+      toast.success(`Nota fiscal ${statusLabel}!`, { description: "Acompanhe em Fiscal → Histórico." });
+      setNfceOpen(false);
+      setCustomerDoc("");
+      setCustomerName("");
+    } else {
+      toast.error("Falha ao emitir nota", { description: result.error || "Verifique a configuração fiscal." });
+    }
+  };
+
   if (!data) return null;
 
   const dateStr = data.date.toLocaleDateString("pt-BR");
   const timeStr = data.date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Printer className="h-5 w-5" /> Recibo da Venda
-          </DialogTitle>
-        </DialogHeader>
+    <>
+      <Dialog open={open} onOpenChange={onClose}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Printer className="h-5 w-5" /> Recibo da Venda
+            </DialogTitle>
+          </DialogHeader>
 
-        {/* Receipt preview */}
-        <div ref={receiptRef} className="font-mono text-xs p-4 bg-card border rounded-lg space-y-1">
-          <div className="text-center font-bold text-sm mb-1">MeuPonto</div>
-          <div className="text-center text-muted-foreground mb-1">{dateStr} {timeStr}</div>
-          <div className="text-center text-muted-foreground mb-2">Venda #{data.saleId.slice(0, 8)}</div>
-          <div className="border-t border-dashed border-border my-1" />
+          <div ref={receiptRef} className="font-mono text-xs p-4 bg-card border rounded-lg space-y-1">
+            <div className="text-center font-bold text-sm mb-1">MeuPonto</div>
+            <div className="text-center text-muted-foreground mb-1">{dateStr} {timeStr}</div>
+            <div className="text-center text-muted-foreground mb-2">Venda #{data.saleId.slice(0, 8)}</div>
+            <div className="border-t border-dashed border-border my-1" />
 
-          {data.items.map((item, i) => (
-            <div key={i} className="mb-1">
-              <div className="truncate">{item.name}</div>
-              <div className="flex justify-between text-muted-foreground">
-                <span>{item.quantity}x R$ {item.unitPrice.toFixed(2)}</span>
-                <span>R$ {item.total.toFixed(2)}</span>
+            {data.items.map((item, i) => (
+              <div key={i} className="mb-1">
+                <div className="truncate">{item.name}</div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>{item.quantity}x R$ {item.unitPrice.toFixed(2)}</span>
+                  <span>R$ {item.total.toFixed(2)}</span>
+                </div>
               </div>
+            ))}
+
+            <div className="border-t border-dashed border-border my-1" />
+            <div className="flex justify-between"><span>Subtotal</span><span>R$ {data.subtotal.toFixed(2)}</span></div>
+            {data.discount > 0 && (
+              <div className="flex justify-between"><span>Desconto</span><span>-R$ {data.discount.toFixed(2)}</span></div>
+            )}
+            {data.taxAmount > 0 && (
+              <div className="flex justify-between"><span>Taxa</span><span>+R$ {data.taxAmount.toFixed(2)}</span></div>
+            )}
+            <div className="border-t border-dashed border-border my-1" />
+            <div className="flex justify-between font-bold text-sm">
+              <span>TOTAL</span><span>R$ {data.total.toFixed(2)}</span>
             </div>
-          ))}
-
-          <div className="border-t border-dashed border-border my-1" />
-          <div className="flex justify-between"><span>Subtotal</span><span>R$ {data.subtotal.toFixed(2)}</span></div>
-          {data.discount > 0 && (
-            <div className="flex justify-between"><span>Desconto</span><span>-R$ {data.discount.toFixed(2)}</span></div>
-          )}
-          {data.taxAmount > 0 && (
-            <div className="flex justify-between"><span>Taxa</span><span>+R$ {data.taxAmount.toFixed(2)}</span></div>
-          )}
-          <div className="border-t border-dashed border-border my-1" />
-          <div className="flex justify-between font-bold text-sm">
-            <span>TOTAL</span><span>R$ {data.total.toFixed(2)}</span>
+            <div className="border-t border-dashed border-border my-1" />
+            <div className="flex justify-between"><span>Pagamento</span><span>{paymentLabels[data.paymentMethod] || data.paymentMethod}</span></div>
+            {data.customerName && (
+              <div className="flex justify-between"><span>Cliente</span><span>{data.customerName}</span></div>
+            )}
+            <div className="border-t border-dashed border-border my-2" />
+            <div className="text-center text-muted-foreground">Obrigado pela preferência!</div>
           </div>
-          <div className="border-t border-dashed border-border my-1" />
-          <div className="flex justify-between"><span>Pagamento</span><span>{paymentLabels[data.paymentMethod] || data.paymentMethod}</span></div>
-          {data.customerName && (
-            <div className="flex justify-between"><span>Cliente</span><span>{data.customerName}</span></div>
-          )}
-          <div className="border-t border-dashed border-border my-2" />
-          <div className="text-center text-muted-foreground">Obrigado pela preferência!</div>
-        </div>
 
-        <div className="flex gap-2">
-          <Button onClick={handlePrint} className="flex-1 gap-2">
-            <Printer className="h-4 w-4" /> Imprimir
-          </Button>
-          <Button variant="outline" onClick={onClose} className="flex-1">
-            Fechar
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="flex flex-col gap-2">
+            <div className="flex gap-2">
+              <Button onClick={handlePrint} className="flex-1 gap-2">
+                <Printer className="h-4 w-4" /> Imprimir
+              </Button>
+              <Button variant="outline" onClick={() => setNfceOpen(true)} className="flex-1 gap-2">
+                <FileText className="h-4 w-4" /> Emitir Nota
+              </Button>
+            </div>
+            <Button variant="ghost" onClick={onClose} className="w-full">
+              Fechar
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={nfceOpen} onOpenChange={setNfceOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Emitir NFC-e
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label>CPF do consumidor (opcional)</Label>
+              <Input value={customerDoc} onChange={(e) => setCustomerDoc(e.target.value)} placeholder="000.000.000-00" />
+            </div>
+            <div className="space-y-2">
+              <Label>Nome (opcional)</Label>
+              <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Consumidor" />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A nota será enviada para a SEFAZ via Focus NFe. Acompanhe o status em Fiscal → Histórico.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNfceOpen(false)} disabled={emitting}>Cancelar</Button>
+            <Button onClick={handleEmitNfce} disabled={emitting}>
+              {emitting ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Emitindo...</> : "Emitir Nota"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
