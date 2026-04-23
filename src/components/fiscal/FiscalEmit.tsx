@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTenant } from "@/contexts/TenantContext";
 import { fiscalService } from "@/lib/fiscalService";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,13 +7,20 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, AlertTriangle } from "lucide-react";
+import { FileText, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  checkTenantFiscalReady,
+  isValidCpfCnpj,
+  isValidCNPJ,
+  onlyDigits,
+} from "@/lib/fiscalValidation";
 
 const FiscalEmit = () => {
   const { tenantId } = useTenant();
   const { toast } = useToast();
   const [emitting, setEmitting] = useState(false);
+  const [readyCheck, setReadyCheck] = useState<{ ok: boolean; missing: string[] } | null>(null);
   const [form, setForm] = useState({
     type: "nfce" as "nfe" | "nfce",
     customerName: "",
@@ -23,10 +30,57 @@ const FiscalEmit = () => {
     amount: "",
   });
 
+  useEffect(() => {
+    if (!tenantId) return;
+    checkTenantFiscalReady(tenantId).then((r) =>
+      setReadyCheck({ ok: r.ok, missing: r.missing })
+    );
+  }, [tenantId]);
+
+  const validateBeforeEmit = (): string | null => {
+    if (!form.amount || Number(form.amount) <= 0) return "Informe um valor maior que zero.";
+
+    const docDigits = onlyDigits(form.customerDocument);
+
+    if (form.type === "nfe") {
+      // NF-e exige destinatário identificado
+      if (!docDigits) return "NF-e exige CPF ou CNPJ do destinatário.";
+      if (!isValidCpfCnpj(docDigits)) return "CPF/CNPJ do destinatário é inválido.";
+      if (!form.customerName.trim()) return "NF-e exige o nome/razão social do destinatário.";
+      if (!form.customerAddress.trim()) return "NF-e exige o endereço do destinatário.";
+      // Para NF-e com CNPJ destinatário, validar dígitos
+      if (docDigits.length === 14 && !isValidCNPJ(docDigits)) return "CNPJ do destinatário é inválido.";
+    } else if (docDigits) {
+      // NFC-e: documento é opcional, mas se informado precisa ser válido
+      if (!isValidCpfCnpj(docDigits)) return "CPF/CNPJ informado é inválido.";
+    }
+
+    if (form.customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.customerEmail)) {
+      return "E-mail do destinatário é inválido.";
+    }
+
+    return null;
+  };
+
   const handleEmit = async () => {
     if (!tenantId) return;
-    if (!form.amount || Number(form.amount) <= 0) {
-      toast({ title: "Informe o valor da nota", variant: "destructive" });
+
+    // 1) Tenant pronto? (CNPJ, endereço, regime, API key…)
+    const ready = await checkTenantFiscalReady(tenantId);
+    setReadyCheck({ ok: ready.ok, missing: ready.missing });
+    if (!ready.ok) {
+      toast({
+        title: "Configuração fiscal incompleta",
+        description: `Faltando: ${ready.missing.join(", ")}.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // 2) Formulário válido?
+    const formError = validateBeforeEmit();
+    if (formError) {
+      toast({ title: "Dados inválidos", description: formError, variant: "destructive" });
       return;
     }
 
@@ -35,7 +89,7 @@ const FiscalEmit = () => {
       tenantId,
       type: form.type,
       customerName: form.customerName || undefined,
-      customerDocument: form.customerDocument || undefined,
+      customerDocument: form.customerDocument ? onlyDigits(form.customerDocument) : undefined,
       customerEmail: form.customerEmail || undefined,
       customerAddress: form.customerAddress || undefined,
       amount: Number(form.amount),
@@ -54,12 +108,29 @@ const FiscalEmit = () => {
 
   return (
     <div className="space-y-4">
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription>
-          Emissão integrada com Focus NFe. Configure a API Key e os dados fiscais da empresa antes de emitir notas reais.
-        </AlertDescription>
-      </Alert>
+      {readyCheck && !readyCheck.ok ? (
+        <Alert variant="destructive">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            <strong>Configuração fiscal incompleta.</strong> Preencha antes de emitir:{" "}
+            {readyCheck.missing.join(", ")}.
+          </AlertDescription>
+        </Alert>
+      ) : readyCheck?.ok ? (
+        <Alert>
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>
+            Configuração fiscal completa. Você já pode emitir NF-e e NFC-e via Focus NFe.
+          </AlertDescription>
+        </Alert>
+      ) : (
+        <Alert>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>
+            Emissão integrada com Focus NFe. Configure a API Key e os dados fiscais da empresa antes de emitir notas reais.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card>
         <CardHeader>
