@@ -103,9 +103,9 @@ const Landing = () => {
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild><Link to="/login">Entrar</Link></Button>
-            <Button asChild><Link to="/register">Teste grátis agora</Link></Button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" size="sm" asChild className="px-2 sm:px-4"><Link to="/login">Entrar</Link></Button>
+            <Button size="sm" asChild className="px-3 sm:px-4 text-xs sm:text-sm"><Link to="/register">Teste grátis</Link></Button>
           </div>
         </div>
       </nav>
