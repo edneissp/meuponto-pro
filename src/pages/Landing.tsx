@@ -267,7 +267,6 @@ const Landing = () => {
         <MessageCircle className="h-5 w-5" />
         <span className="hidden sm:inline text-sm">Quero testar agora</span>
       </a>
-w
     </div>
   );
 };
