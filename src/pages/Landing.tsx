@@ -237,7 +237,7 @@ const Landing = () => {
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Comece agora — é grátis por 30 dias</h2>
           <p className="text-primary-foreground/70 text-lg max-w-xl mx-auto mb-8">
-            Use o cupom <span className="font-bold text-primary-foreground">PRIMEIROS100</span> e pague apenas R$ 69,90/mês por 12 meses.
+            Use o cupom <span className="font-bold text-primary-foreground">PRIMEIROS100</span> e pague apenas R$ 69,90/mês por 12 meses. Após esse período, R$ 119,90/mês.
           </p>
           <Button size="lg" className="text-base px-10 shadow-glow" asChild>
             <Link to="/register">🚀 Teste grátis agora</Link>
