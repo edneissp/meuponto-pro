@@ -38,10 +38,10 @@ export const PricingBlock = () => {
                 Teste grátis por 30 dias
               </div>
               <div className="flex items-baseline justify-center gap-2 mb-1">
-                <span className="text-2xl text-muted-foreground line-through">R$ 69,90</span>
+                <span className="text-2xl text-muted-foreground line-through">R$ 119,90</span>
               </div>
               <div className="flex items-baseline justify-center gap-1">
-                <span className="text-5xl font-extrabold text-gradient">R$ 39,90</span>
+                <span className="text-5xl font-extrabold text-gradient">R$ 69,90</span>
                 <span className="text-muted-foreground">/mês</span>
               </div>
               <p className="text-sm text-muted-foreground mt-2">por 12 meses para os 100 primeiros clientes</p>

@@ -40,7 +40,7 @@ const faqs = [
   { q: "O sistema emite NF-e e NFC-e?", a: "Sim. Temos módulo fiscal integrado com emissão direta do PDV, histórico e download de XML/PDF." },
   { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem burocracia." },
   { q: "Serve para qual tipo de comércio?", a: "Restaurantes, lanchonetes, açaiterias, padarias, mercadinhos e qualquer comércio que precise de PDV, estoque e fiscal." },
-  { q: "Como funciona o cupom PRIMEIROS100?", a: "Os 100 primeiros clientes pagam apenas R$ 39,90/mês durante 12 meses. Após esse período, o valor passa a ser R$ 69,90/mês." },
+  { q: "Como funciona o cupom PRIMEIROS100?", a: "Os 100 primeiros clientes pagam apenas R$ 69,90/mês durante 12 meses. Após esse período, o valor passa a ser R$ 119,90/mês." },
 ];
 
 const Landing = () => {
@@ -237,7 +237,7 @@ const Landing = () => {
         <div className="container text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Comece agora — é grátis por 30 dias</h2>
           <p className="text-primary-foreground/70 text-lg max-w-xl mx-auto mb-8">
-            Use o cupom <span className="font-bold text-primary-foreground">PRIMEIROS100</span> e pague apenas R$ 39,90/mês por 12 meses.
+            Use o cupom <span className="font-bold text-primary-foreground">PRIMEIROS100</span> e pague apenas R$ 69,90/mês por 12 meses.
           </p>
           <Button size="lg" className="text-base px-10 shadow-glow" asChild>
             <Link to="/register">🚀 Teste grátis agora</Link>
