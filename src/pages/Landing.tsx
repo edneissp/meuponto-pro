@@ -103,9 +103,9 @@ const Landing = () => {
             <a href="#pricing" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Preços</a>
             <a href="#faq" className="text-sm text-muted-foreground hover:text-foreground transition-colors">FAQ</a>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" asChild><Link to="/login">Entrar</Link></Button>
-            <Button asChild><Link to="/register">Teste grátis agora</Link></Button>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Button variant="ghost" size="sm" asChild className="px-2 sm:px-4"><Link to="/login">Entrar</Link></Button>
+            <Button size="sm" asChild className="px-3 sm:px-4 text-xs sm:text-sm"><Link to="/register">Teste grátis</Link></Button>
           </div>
         </div>
       </nav>
@@ -139,7 +139,7 @@ const Landing = () => {
               <Button size="lg" className="text-base px-8 shadow-glow" asChild>
                 <Link to="/register">🚀 Teste grátis agora</Link>
               </Button>
-              <Button size="lg" variant="outline" className="text-base px-8 border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10" onClick={handleStartDemo} disabled={demoLoading}>
+              <Button size="lg" variant="outline" className="text-base px-8 border-2 border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" onClick={handleStartDemo} disabled={demoLoading}>
                 <FlaskConical className="mr-2 h-5 w-5" />
                 {demoLoading ? "Preparando..." : "Ver demonstração"}
               </Button>
@@ -267,7 +267,6 @@ const Landing = () => {
         <MessageCircle className="h-5 w-5" />
         <span className="hidden sm:inline text-sm">Quero testar agora</span>
       </a>
-w
     </div>
   );
 };
