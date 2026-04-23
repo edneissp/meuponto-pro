@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Download, XCircle, FileText, Eye } from "lucide-react";
+import { Download, XCircle, FileText, Eye, RefreshCw } from "lucide-react";
 
 interface FiscalDoc {
   id: string;
@@ -29,9 +29,10 @@ interface FiscalDoc {
 
 const STATUS_BADGE: Record<string, { label: string; variant: "default" | "secondary" | "destructive" | "outline" }> = {
   pending: { label: "Pendente", variant: "secondary" },
-  issued: { label: "Emitida", variant: "default" },
+  processing: { label: "Processando", variant: "secondary" },
+  issued: { label: "Autorizada", variant: "default" },
   canceled: { label: "Cancelada", variant: "destructive" },
-  error: { label: "Erro", variant: "destructive" },
+  error: { label: "Rejeitada", variant: "destructive" },
 };
 
 const FiscalHistory = () => {
@@ -69,6 +70,16 @@ const FiscalHistory = () => {
       fetchDocs();
     } else {
       toast({ title: "Erro ao cancelar", description: result.error, variant: "destructive" });
+    }
+  };
+
+  const handleConsult = async (id: string) => {
+    const result = await fiscalService.consultInvoice(id);
+    if (result.success) {
+      toast({ title: "Status atualizado" });
+      fetchDocs();
+    } else {
+      toast({ title: "Erro ao consultar", description: result.error, variant: "destructive" });
     }
   };
 
@@ -132,6 +143,11 @@ const FiscalHistory = () => {
                         <TableCell>{new Date(doc.created_at).toLocaleDateString("pt-BR")}</TableCell>
                         <TableCell>
                           <div className="flex gap-1">
+                            {(doc.status === "pending" || doc.status === "processing") && (
+                              <Button size="icon" variant="ghost" onClick={() => handleConsult(doc.id)} title="Atualizar status">
+                                <RefreshCw className="h-4 w-4" />
+                              </Button>
+                            )}
                             {doc.pdf_url && (
                               <Button size="icon" variant="ghost" asChild title="Baixar DANFE">
                                 <a href={doc.pdf_url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
@@ -142,7 +158,7 @@ const FiscalHistory = () => {
                                 <a href={doc.xml_url} target="_blank" rel="noopener noreferrer"><Eye className="h-4 w-4" /></a>
                               </Button>
                             )}
-                            {(doc.status === "issued" || doc.status === "pending") && (
+                            {doc.status === "issued" && (
                               <Button size="icon" variant="ghost" onClick={() => setCancelDialog(doc.id)} title="Cancelar nota">
                                 <XCircle className="h-4 w-4 text-destructive" />
                               </Button>
