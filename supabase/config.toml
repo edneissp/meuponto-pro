@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.fiscal-webhook]
 verify_jwt = false
+
+[functions.focus-nfe-emit]
+verify_jwt = false
+
+[functions.focus-nfe-consult]
+verify_jwt = false
