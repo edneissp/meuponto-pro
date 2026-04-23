@@ -44,7 +44,10 @@ export const PricingBlock = () => {
                 <span className="text-5xl font-extrabold text-gradient">R$ 69,90</span>
                 <span className="text-muted-foreground">/mês</span>
               </div>
-              <p className="text-sm text-muted-foreground mt-2">por 12 meses para os 100 primeiros clientes</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                R$ 69,90/mês por 12 meses para os 100 primeiros clientes.<br />
+                Após 12 meses: R$ 119,90/mês.
+              </p>
             </div>
 
             <button
