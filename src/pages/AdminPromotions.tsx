@@ -130,7 +130,7 @@ const AdminPromotions = () => {
     } else {
       setEditingCampaign(null);
       setCampaignForm({
-        name: "", description: "", discount_price: "39.90", normal_price: "69.90",
+        name: "", description: "", discount_price: "69.90", normal_price: "119.90",
         currency: "BRL", duration_days: "365", max_users: "100",
         starts_at: new Date().toISOString().split("T")[0], ends_at: "",
       });
