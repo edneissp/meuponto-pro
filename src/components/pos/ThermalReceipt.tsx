@@ -84,7 +84,7 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
     setEmitting(false);
 
     if (result.success) {
-      const statusLabel = result.status === "issued" ? "autorizada" : "em processamento";
+      const statusLabel = (result as any).status === "issued" ? "autorizada" : "em processamento";
       toast.success(`Nota fiscal ${statusLabel}!`, { description: "Acompanhe em Fiscal → Histórico." });
       setNfceOpen(false);
       setCustomerDoc("");
