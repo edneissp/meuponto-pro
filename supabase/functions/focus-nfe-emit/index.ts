@@ -77,13 +77,13 @@ Deno.serve(async (req) => {
       supabase.from("fiscal_settings").select("*").eq("tenant_id", tenantId).maybeSingle(),
     ]);
 
-    if (!config?.api_key_encrypted) {
-      return new Response(JSON.stringify({ success: false, error: "Configure a API Key fiscal antes de emitir." }), {
+    if (!config?.fiscal_enabled || config?.status !== "active" || !config?.api_key_encrypted) {
+      return new Response(JSON.stringify({ success: false, error: "Configure o módulo fiscal para emitir notas." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    if (!settings?.cnpj || !settings?.razao_social) {
-      return new Response(JSON.stringify({ success: false, error: "Preencha as configurações fiscais (CNPJ, Razão Social, endereço)." }), {
+    if (!settings?.cnpj || !settings?.razao_social || !settings?.regime_tributario || !settings?.endereco || !settings?.cidade || !settings?.estado || !settings?.cep) {
+      return new Response(JSON.stringify({ success: false, error: "Configure o módulo fiscal para emitir notas." }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
