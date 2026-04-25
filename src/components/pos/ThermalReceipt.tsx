@@ -1,9 +1,10 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { jsPDF } from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Printer, FileText, Loader2 } from "lucide-react";
+import { Printer, FileText, Loader2, Download } from "lucide-react";
 import { focusNfeService } from "@/services/focusNfeService";
 import { checkTenantFiscalReady, isValidCpfCnpj, onlyDigits } from "@/lib/fiscalValidation";
 import { useTenant } from "@/contexts/TenantContext";
@@ -43,6 +44,87 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
   const [emitting, setEmitting] = useState(false);
   const [customerDoc, setCustomerDoc] = useState("");
   const [customerName, setCustomerName] = useState("");
+  const [fiscalEnabled, setFiscalEnabled] = useState(false);
+
+  useEffect(() => {
+    if (!open || !tenantId) return;
+    checkTenantFiscalReady(tenantId).then((ready) => setFiscalEnabled(ready.ok));
+  }, [open, tenantId]);
+
+  const buildReceiptPdf = () => {
+    if (!data) return null;
+    const doc = new jsPDF({ unit: "mm", format: [80, 180] });
+    let y = 8;
+    doc.setFont("courier", "bold");
+    doc.setFontSize(12);
+    doc.text("MeuPonto", 40, y, { align: "center" });
+    y += 6;
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.text(`${dateStr} ${timeStr}`, 40, y, { align: "center" });
+    y += 5;
+    doc.text(`Venda #${data.saleId.slice(0, 8)}`, 40, y, { align: "center" });
+    y += 5;
+    doc.text("--------------------------------", 4, y);
+    y += 5;
+    data.items.forEach((item) => {
+      const lines = doc.splitTextToSize(item.name, 70);
+      doc.text(lines, 4, y);
+      y += lines.length * 4;
+      doc.text(`${item.quantity}x R$ ${item.unitPrice.toFixed(2)}`, 4, y);
+      doc.text(`R$ ${item.total.toFixed(2)}`, 76, y, { align: "right" });
+      y += 5;
+    });
+    doc.text("--------------------------------", 4, y);
+    y += 5;
+    doc.text("Subtotal", 4, y);
+    doc.text(`R$ ${data.subtotal.toFixed(2)}`, 76, y, { align: "right" });
+    y += 5;
+    if (data.discount > 0) {
+      doc.text("Desconto", 4, y);
+      doc.text(`-R$ ${data.discount.toFixed(2)}`, 76, y, { align: "right" });
+      y += 5;
+    }
+    if (data.taxAmount > 0) {
+      doc.text("Taxa", 4, y);
+      doc.text(`+R$ ${data.taxAmount.toFixed(2)}`, 76, y, { align: "right" });
+      y += 5;
+    }
+    doc.text("--------------------------------", 4, y);
+    y += 6;
+    doc.setFont("courier", "bold");
+    doc.setFontSize(10);
+    doc.text("TOTAL", 4, y);
+    doc.text(`R$ ${data.total.toFixed(2)}`, 76, y, { align: "right" });
+    y += 6;
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.text(`Pagamento: ${paymentLabels[data.paymentMethod] || data.paymentMethod}`, 4, y);
+    y += 5;
+    if (data.customerName) {
+      doc.text(`Cliente: ${data.customerName}`, 4, y);
+      y += 5;
+    }
+    doc.text("--------------------------------", 4, y);
+    y += 5;
+    doc.text("Recibo sem valor fiscal", 40, y, { align: "center" });
+    y += 5;
+    doc.text("Obrigado pela preferencia!", 40, y, { align: "center" });
+    return doc;
+  };
+
+  const handleDownloadPdf = () => {
+    const doc = buildReceiptPdf();
+    if (!doc || !data) return;
+    doc.save(`recibo-venda-${data.saleId.slice(0, 8)}.pdf`);
+  };
+
+  const handlePrintPdf = () => {
+    const doc = buildReceiptPdf();
+    if (!doc) return;
+    const blobUrl = doc.output("bloburl");
+    window.open(blobUrl, "_blank");
+  };
 
   const handlePrint = () => {
     if (!receiptRef.current) return;
@@ -165,10 +247,21 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
               <Button onClick={handlePrint} className="flex-1 gap-2">
                 <Printer className="h-4 w-4" /> Imprimir
               </Button>
-              <Button variant="outline" onClick={() => setNfceOpen(true)} className="flex-1 gap-2">
-                <FileText className="h-4 w-4" /> Emitir Nota
-              </Button>
+              {fiscalEnabled ? (
+                <Button variant="outline" onClick={() => setNfceOpen(true)} className="flex-1 gap-2">
+                  <FileText className="h-4 w-4" /> Emitir Nota
+                </Button>
+              ) : (
+                <Button variant="outline" onClick={handleDownloadPdf} className="flex-1 gap-2">
+                  <Download className="h-4 w-4" /> Baixar PDF
+                </Button>
+              )}
             </div>
+            {!fiscalEnabled && (
+              <Button variant="outline" onClick={handlePrintPdf} className="w-full gap-2">
+                <Printer className="h-4 w-4" /> Imprimir recibo em PDF
+              </Button>
+            )}
             <Button variant="ghost" onClick={onClose} className="w-full">
               Fechar
             </Button>
