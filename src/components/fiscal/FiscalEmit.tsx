@@ -20,7 +20,7 @@ const FiscalEmit = () => {
   const { tenantId } = useTenant();
   const { toast } = useToast();
   const [emitting, setEmitting] = useState(false);
-  const [readyCheck, setReadyCheck] = useState<{ ok: boolean; missing: string[] } | null>(null);
+  const [readyCheck, setReadyCheck] = useState<{ ok: boolean; missing: string[]; fiscalEnabled: boolean } | null>(null);
   const [form, setForm] = useState({
     type: "nfce" as "nfe" | "nfce",
     customerName: "",
@@ -33,7 +33,7 @@ const FiscalEmit = () => {
   useEffect(() => {
     if (!tenantId) return;
     checkTenantFiscalReady(tenantId).then((r) =>
-      setReadyCheck({ ok: r.ok, missing: r.missing })
+      setReadyCheck({ ok: r.ok, missing: r.missing, fiscalEnabled: r.fiscalEnabled })
     );
   }, [tenantId]);
 
@@ -67,11 +67,11 @@ const FiscalEmit = () => {
 
     // 1) Tenant pronto? (CNPJ, endereço, regime, API key…)
     const ready = await checkTenantFiscalReady(tenantId);
-    setReadyCheck({ ok: ready.ok, missing: ready.missing });
+    setReadyCheck({ ok: ready.ok, missing: ready.missing, fiscalEnabled: ready.fiscalEnabled });
     if (!ready.ok) {
       toast({
-        title: "Configuração fiscal incompleta",
-        description: `Faltando: ${ready.missing.join(", ")}.`,
+        title: "Módulo fiscal inativo",
+        description: "Configure o módulo fiscal para emitir notas.",
         variant: "destructive",
       });
       return;
@@ -112,8 +112,7 @@ const FiscalEmit = () => {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            <strong>Configuração fiscal incompleta.</strong> Preencha antes de emitir:{" "}
-            {readyCheck.missing.join(", ")}.
+            <strong>Configure o módulo fiscal para emitir notas.</strong> Faltando: {readyCheck.missing.join(", ")}.
           </AlertDescription>
         </Alert>
       ) : readyCheck?.ok ? (
@@ -171,9 +170,9 @@ const FiscalEmit = () => {
             </div>
           </div>
 
-          <Button onClick={handleEmit} disabled={emitting} className="w-full md:w-auto">
+          <Button onClick={handleEmit} disabled={emitting || !readyCheck?.ok} className="w-full md:w-auto">
             <FileText className="h-4 w-4 mr-2" />
-            {emitting ? "Emitindo..." : "Emitir Nota Fiscal"}
+            {emitting ? "Emitindo..." : readyCheck?.ok ? "Emitir Nota Fiscal" : "Configure o módulo fiscal para emitir notas"}
           </Button>
         </CardContent>
       </Card>
