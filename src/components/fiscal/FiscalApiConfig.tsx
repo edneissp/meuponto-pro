@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Plug, CheckCircle2, XCircle, Eye, EyeOff, Copy } from "lucide-react";
+import { getMissingTenantFiscalFields } from "@/lib/fiscalValidation";
 
 const PROVIDERS = [
   { value: "focus_nfe", label: "Focus NFe" },
@@ -134,13 +135,21 @@ const FiscalApiConfig = () => {
 
       const success = !error && data?.success;
       const resultText = success ? "success" : (data?.error || error?.message || "Falha na conexão");
+      const { data: settings } = await supabase
+        .from("fiscal_settings" as any)
+        .select("*")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      const fiscalMissing = getMissingTenantFiscalFields(settings);
+      const fiscalEnabled = success && fiscalMissing.length === 0;
 
       await supabase
         .from("fiscal_api_config" as any)
         .update({
           status: success ? "active" : "error",
+          fiscal_enabled: fiscalEnabled,
           last_test_at: new Date().toISOString(),
-          last_test_result: resultText,
+          last_test_result: fiscalEnabled ? resultText : `Configuração incompleta: ${fiscalMissing.join(", ")}`,
         } as any)
         .eq("tenant_id", tenantId);
 
@@ -148,13 +157,13 @@ const FiscalApiConfig = () => {
         ...prev,
         status: success ? "active" : "error",
         last_test_at: new Date().toISOString(),
-        last_test_result: resultText,
+        last_test_result: fiscalEnabled ? resultText : `Configuração incompleta: ${fiscalMissing.join(", ")}`,
       }));
 
       toast({
-        title: success ? "Integração ativa!" : "Falha na conexão",
-        description: success ? "Conexão com o provedor fiscal verificada." : resultText,
-        variant: success ? "default" : "destructive",
+        title: fiscalEnabled ? "Integração ativa!" : success ? "Configure o módulo fiscal para emitir notas" : "Falha na conexão",
+        description: fiscalEnabled ? "Conexão e dados fiscais verificados." : success ? fiscalMissing.join(", ") : resultText,
+        variant: fiscalEnabled ? "default" : "destructive",
       });
     } catch {
       toast({ title: "Erro ao testar", description: "Não foi possível testar a conexão.", variant: "destructive" });

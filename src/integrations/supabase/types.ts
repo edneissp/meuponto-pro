@@ -666,6 +666,7 @@ export type Database = {
           certificate_url: string | null
           created_at: string
           environment: string
+          fiscal_enabled: boolean
           id: string
           last_test_at: string | null
           last_test_result: string | null
@@ -681,6 +682,7 @@ export type Database = {
           certificate_url?: string | null
           created_at?: string
           environment?: string
+          fiscal_enabled?: boolean
           id?: string
           last_test_at?: string | null
           last_test_result?: string | null
@@ -696,6 +698,7 @@ export type Database = {
           certificate_url?: string | null
           created_at?: string
           environment?: string
+          fiscal_enabled?: boolean
           id?: string
           last_test_at?: string | null
           last_test_result?: string | null

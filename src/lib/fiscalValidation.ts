@@ -51,20 +51,7 @@ export const isValidCpfCnpj = (raw: string): boolean => {
 export const isValidCEP = (raw: string) => onlyDigits(raw).length === 8;
 export const isValidUF = (raw: string) => /^[A-Za-z]{2}$/.test((raw || "").trim());
 
-export interface TenantFiscalCheck {
-  ok: boolean;
-  missing: string[];
-  settings: any | null;
-  apiConfigured: boolean;
-}
-
-/** Loads tenant fiscal_settings + fiscal_api_config and reports missing required fields. */
-export const checkTenantFiscalReady = async (tenantId: string): Promise<TenantFiscalCheck> => {
-  const [{ data: settings }, { data: config }] = await Promise.all([
-    supabase.from("fiscal_settings" as any).select("*").eq("tenant_id", tenantId).maybeSingle(),
-    supabase.from("fiscal_api_config" as any).select("api_key_encrypted").eq("tenant_id", tenantId).maybeSingle(),
-  ]);
-
+export const getMissingTenantFiscalFields = (settings: any | null | undefined): string[] => {
   const s = (settings || {}) as any;
   const missing: string[] = [];
 
@@ -76,8 +63,31 @@ export const checkTenantFiscalReady = async (tenantId: string): Promise<TenantFi
   if (!s.estado || !isValidUF(s.estado)) missing.push("Estado (UF)");
   if (!s.cep || !isValidCEP(s.cep)) missing.push("CEP válido");
 
+  return missing;
+};
+
+export interface TenantFiscalCheck {
+  ok: boolean;
+  missing: string[];
+  settings: any | null;
+  apiConfigured: boolean;
+  fiscalEnabled: boolean;
+}
+
+/** Loads tenant fiscal_settings + fiscal_api_config and reports missing required fields. */
+export const checkTenantFiscalReady = async (tenantId: string): Promise<TenantFiscalCheck> => {
+  const [{ data: settings }, { data: config }] = await Promise.all([
+    supabase.from("fiscal_settings" as any).select("*").eq("tenant_id", tenantId).maybeSingle(),
+    supabase.from("fiscal_api_config" as any).select("api_key_encrypted,status,fiscal_enabled").eq("tenant_id", tenantId).maybeSingle(),
+  ]);
+
+  const s = (settings || {}) as any;
+  const missing = getMissingTenantFiscalFields(s);
+
   const apiConfigured = !!(config as any)?.api_key_encrypted;
   if (!apiConfigured) missing.push("API Key da Focus NFe");
+  const fiscalEnabled = !!(config as any)?.fiscal_enabled && (config as any)?.status === "active";
+  if (!fiscalEnabled) missing.push("Módulo fiscal ativo");
 
-  return { ok: missing.length === 0, missing, settings: s, apiConfigured };
+  return { ok: missing.length === 0, missing, settings: s, apiConfigured, fiscalEnabled };
 };
