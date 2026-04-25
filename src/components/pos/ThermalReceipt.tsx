@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Printer, FileText, Loader2 } from "lucide-react";
 import { focusNfeService } from "@/services/focusNfeService";
+import { checkTenantFiscalReady, isValidCpfCnpj, onlyDigits } from "@/lib/fiscalValidation";
+import { useTenant } from "@/contexts/TenantContext";
 import { toast } from "sonner";
 
 interface ReceiptItem {
@@ -35,6 +37,7 @@ const paymentLabels: Record<string, string> = {
 };
 
 const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () => void; data: ReceiptData | null }) => {
+  const { tenantId } = useTenant();
   const receiptRef = useRef<HTMLDivElement>(null);
   const [nfceOpen, setNfceOpen] = useState(false);
   const [emitting, setEmitting] = useState(false);
@@ -68,13 +71,24 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
 
   const handleEmitNfce = async () => {
     if (!data) return;
+    if (!tenantId) return;
+    const ready = await checkTenantFiscalReady(tenantId);
+    if (!ready.ok) {
+      toast.error("Configure o módulo fiscal para emitir notas", { description: ready.missing.join(", ") });
+      return;
+    }
+    const docDigits = onlyDigits(customerDoc);
+    if (docDigits && !isValidCpfCnpj(docDigits)) {
+      toast.error("CPF/CNPJ inválido", { description: "Corrija o documento do consumidor antes de emitir." });
+      return;
+    }
     setEmitting(true);
     const result = await focusNfeService.emitirNota({
       type: "nfce",
       amount: data.total,
       sale_id: data.saleId,
       customer_name: customerName || data.customerName || null,
-      customer_document: customerDoc || null,
+      customer_document: docDigits || null,
       items: data.items.map((it) => ({
         descricao: it.name,
         quantidade: it.quantity,
@@ -179,7 +193,7 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
               <Input value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Consumidor" />
             </div>
             <p className="text-xs text-muted-foreground">
-              A nota será enviada para a SEFAZ via Focus NFe. Acompanhe o status em Fiscal → Histórico.
+              Configure o módulo fiscal para emitir notas. A venda funciona normalmente mesmo sem nota fiscal.
             </p>
           </div>
           <DialogFooter>
