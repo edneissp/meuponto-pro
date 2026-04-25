@@ -51,6 +51,21 @@ export const isValidCpfCnpj = (raw: string): boolean => {
 export const isValidCEP = (raw: string) => onlyDigits(raw).length === 8;
 export const isValidUF = (raw: string) => /^[A-Za-z]{2}$/.test((raw || "").trim());
 
+export const getMissingTenantFiscalFields = (settings: any | null | undefined): string[] => {
+  const s = (settings || {}) as any;
+  const missing: string[] = [];
+
+  if (!s.cnpj || !isValidCNPJ(s.cnpj)) missing.push("CNPJ válido");
+  if (!s.razao_social) missing.push("Razão Social");
+  if (!s.regime_tributario) missing.push("Regime Tributário");
+  if (!s.endereco) missing.push("Endereço");
+  if (!s.cidade) missing.push("Cidade");
+  if (!s.estado || !isValidUF(s.estado)) missing.push("Estado (UF)");
+  if (!s.cep || !isValidCEP(s.cep)) missing.push("CEP válido");
+
+  return missing;
+};
+
 export interface TenantFiscalCheck {
   ok: boolean;
   missing: string[];
@@ -67,15 +82,7 @@ export const checkTenantFiscalReady = async (tenantId: string): Promise<TenantFi
   ]);
 
   const s = (settings || {}) as any;
-  const missing: string[] = [];
-
-  if (!s.cnpj || !isValidCNPJ(s.cnpj)) missing.push("CNPJ válido");
-  if (!s.razao_social) missing.push("Razão Social");
-  if (!s.regime_tributario) missing.push("Regime Tributário");
-  if (!s.endereco) missing.push("Endereço");
-  if (!s.cidade) missing.push("Cidade");
-  if (!s.estado || !isValidUF(s.estado)) missing.push("Estado (UF)");
-  if (!s.cep || !isValidCEP(s.cep)) missing.push("CEP válido");
+  const missing = getMissingTenantFiscalFields(s);
 
   const apiConfigured = !!(config as any)?.api_key_encrypted;
   if (!apiConfigured) missing.push("API Key da Focus NFe");
