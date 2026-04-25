@@ -56,13 +56,14 @@ export interface TenantFiscalCheck {
   missing: string[];
   settings: any | null;
   apiConfigured: boolean;
+  fiscalEnabled: boolean;
 }
 
 /** Loads tenant fiscal_settings + fiscal_api_config and reports missing required fields. */
 export const checkTenantFiscalReady = async (tenantId: string): Promise<TenantFiscalCheck> => {
   const [{ data: settings }, { data: config }] = await Promise.all([
     supabase.from("fiscal_settings" as any).select("*").eq("tenant_id", tenantId).maybeSingle(),
-    supabase.from("fiscal_api_config" as any).select("api_key_encrypted").eq("tenant_id", tenantId).maybeSingle(),
+    supabase.from("fiscal_api_config" as any).select("api_key_encrypted,status,fiscal_enabled").eq("tenant_id", tenantId).maybeSingle(),
   ]);
 
   const s = (settings || {}) as any;
@@ -78,6 +79,8 @@ export const checkTenantFiscalReady = async (tenantId: string): Promise<TenantFi
 
   const apiConfigured = !!(config as any)?.api_key_encrypted;
   if (!apiConfigured) missing.push("API Key da Focus NFe");
+  const fiscalEnabled = !!(config as any)?.fiscal_enabled && (config as any)?.status === "active";
+  if (!fiscalEnabled) missing.push("Módulo fiscal ativo");
 
-  return { ok: missing.length === 0, missing, settings: s, apiConfigured };
+  return { ok: missing.length === 0, missing, settings: s, apiConfigured, fiscalEnabled };
 };
