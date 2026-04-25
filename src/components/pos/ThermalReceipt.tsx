@@ -45,11 +45,19 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
   const [customerDoc, setCustomerDoc] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [fiscalEnabled, setFiscalEnabled] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
+  const [pdfPreviewUrl, setPdfPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !tenantId) return;
     checkTenantFiscalReady(tenantId).then((ready) => setFiscalEnabled(ready.ok));
   }, [open, tenantId]);
+
+  useEffect(() => {
+    return () => {
+      if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+    };
+  }, [pdfPreviewUrl]);
 
   const buildReceiptPdf = () => {
     if (!data) return null;
@@ -117,6 +125,15 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
     const doc = buildReceiptPdf();
     if (!doc || !data) return;
     doc.save(`recibo-venda-${data.saleId.slice(0, 8)}.pdf`);
+  };
+
+  const handleOpenPdfPreview = () => {
+    const doc = buildReceiptPdf();
+    if (!doc) return;
+    if (pdfPreviewUrl) URL.revokeObjectURL(pdfPreviewUrl);
+    const url = URL.createObjectURL(doc.output("blob"));
+    setPdfPreviewUrl(url);
+    setPdfPreviewOpen(true);
   };
 
   const handlePrintPdf = () => {
@@ -252,20 +269,39 @@ const ThermalReceipt = ({ open, onClose, data }: { open: boolean; onClose: () =>
                   <FileText className="h-4 w-4" /> Emitir Nota
                 </Button>
               ) : (
-                <Button variant="outline" onClick={handleDownloadPdf} className="flex-1 gap-2">
-                  <Download className="h-4 w-4" /> Baixar PDF
+                <Button variant="outline" onClick={handleOpenPdfPreview} className="flex-1 gap-2">
+                  <FileText className="h-4 w-4" /> Prévia PDF
                 </Button>
               )}
             </div>
-            {!fiscalEnabled && (
-              <Button variant="outline" onClick={handlePrintPdf} className="w-full gap-2">
-                <Printer className="h-4 w-4" /> Imprimir recibo em PDF
-              </Button>
-            )}
             <Button variant="ghost" onClick={onClose} className="w-full">
               Fechar
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={pdfPreviewOpen} onOpenChange={setPdfPreviewOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5" /> Prévia do recibo em PDF
+            </DialogTitle>
+          </DialogHeader>
+          <div className="h-[520px] overflow-hidden rounded-lg border bg-muted">
+            {pdfPreviewUrl && (
+              <iframe title="Prévia do recibo em PDF" src={pdfPreviewUrl} className="h-full w-full" />
+            )}
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setPdfPreviewOpen(false)}>Fechar</Button>
+            <Button variant="outline" onClick={handlePrintPdf} className="gap-2">
+              <Printer className="h-4 w-4" /> Imprimir
+            </Button>
+            <Button onClick={handleDownloadPdf} className="gap-2">
+              <Download className="h-4 w-4" /> Baixar
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
