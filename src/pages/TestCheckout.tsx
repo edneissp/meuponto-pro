@@ -10,6 +10,9 @@ type CheckoutResponse = {
   init_point?: string;
   sandbox_init_point?: string;
   preference_id?: string;
+  amount?: number;
+  plan_type?: string;
+  coupon_used?: string;
   error?: string;
   details?: unknown;
 };
@@ -69,9 +72,9 @@ const TestCheckout = () => {
           </CardHeader>
           <CardContent className="space-y-5">
             <div className="rounded-md border border-border bg-muted/50 p-4">
-              <p className="text-sm font-medium">Payload de teste</p>
+              <p className="text-sm font-medium">Payload de teste com cupom</p>
               <pre className="mt-3 overflow-x-auto rounded-md bg-background p-3 text-xs text-muted-foreground">
-{JSON.stringify({ title: "Plano SouEFI", price: 39.9, quantity: 1 }, null, 2)}
+{JSON.stringify({ title: "Plano SouEFI", price: 69.9, quantity: 1, coupon: "Primeiros100", plan_type: "promo" }, null, 2)}
               </pre>
             </div>
 
@@ -84,6 +87,8 @@ const TestCheckout = () => {
               <p className="text-sm font-medium">Debug visual</p>
               <div className="space-y-2 text-sm">
                 <p><span className="text-muted-foreground">Status:</span> {requestStatus}</p>
+                <p><span className="text-muted-foreground">Valor:</span> {response?.amount ? `R$ ${response.amount.toFixed(2).replace(".", ",")}` : "—"}</p>
+                <p><span className="text-muted-foreground">Cupom:</span> {response?.coupon_used || "—"}</p>
                 <p className="break-all"><span className="text-muted-foreground">init_point:</span> {response?.init_point || "—"}</p>
                 <p className="break-all"><span className="text-muted-foreground">preference_id:</span> {response?.preference_id || "—"}</p>
               </div>
