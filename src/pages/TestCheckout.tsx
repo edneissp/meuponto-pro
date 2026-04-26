@@ -32,7 +32,7 @@ const TestCheckout = () => {
       const apiResponse = await fetch("/api/test-mercadopago", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: { origin: window.location.origin },
+        body: JSON.stringify({ origin: window.location.origin }),
       });
       const data = (await apiResponse.json().catch(() => null)) as CheckoutResponse | null;
 
