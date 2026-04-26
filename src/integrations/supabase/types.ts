@@ -329,6 +329,27 @@ export type Database = {
           },
         ]
       }
+      coupon_usage_counts: {
+        Row: {
+          code: string
+          max_uses: number
+          updated_at: string
+          usage_count: number
+        }
+        Insert: {
+          code: string
+          max_uses?: number
+          updated_at?: string
+          usage_count?: number
+        }
+        Update: {
+          code?: string
+          max_uses?: number
+          updated_at?: string
+          usage_count?: number
+        }
+        Relationships: []
+      }
       customers: {
         Row: {
           created_at: string
@@ -1229,6 +1250,7 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          coupon_used: string | null
           created_at: string
           id: string
           mercado_pago_payment_id: string | null
@@ -1237,12 +1259,15 @@ export type Database = {
           payment_method: string | null
           period_end: string
           period_start: string
+          plan_type: string
+          promo_expires_at: string | null
           status: string
           tenant_id: string
           updated_at: string
         }
         Insert: {
           amount?: number
+          coupon_used?: string | null
           created_at?: string
           id?: string
           mercado_pago_payment_id?: string | null
@@ -1251,12 +1276,15 @@ export type Database = {
           payment_method?: string | null
           period_end?: string
           period_start?: string
+          plan_type?: string
+          promo_expires_at?: string | null
           status?: string
           tenant_id: string
           updated_at?: string
         }
         Update: {
           amount?: number
+          coupon_used?: string | null
           created_at?: string
           id?: string
           mercado_pago_payment_id?: string | null
@@ -1265,6 +1293,8 @@ export type Database = {
           payment_method?: string | null
           period_end?: string
           period_start?: string
+          plan_type?: string
+          promo_expires_at?: string | null
           status?: string
           tenant_id?: string
           updated_at?: string
@@ -2173,11 +2203,13 @@ export type Database = {
       tenants: {
         Row: {
           ativo: boolean
+          billing_amount: number
           billing_contact_email: string | null
           billing_country_code: string | null
           billing_country_source: string | null
           billing_currency: string | null
           billing_customer_name: string | null
+          billing_cycle: string
           billing_detection_checked_at: string | null
           billing_gateway: string | null
           created_at: string
@@ -2193,6 +2225,8 @@ export type Database = {
           pix_key: string | null
           plano: string
           primary_color: string | null
+          promo_active: boolean
+          promo_expires_at: string | null
           public_slug: string
           store_lat: number | null
           store_lng: number | null
@@ -2204,11 +2238,13 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean
+          billing_amount?: number
           billing_contact_email?: string | null
           billing_country_code?: string | null
           billing_country_source?: string | null
           billing_currency?: string | null
           billing_customer_name?: string | null
+          billing_cycle?: string
           billing_detection_checked_at?: string | null
           billing_gateway?: string | null
           created_at?: string
@@ -2224,6 +2260,8 @@ export type Database = {
           pix_key?: string | null
           plano?: string
           primary_color?: string | null
+          promo_active?: boolean
+          promo_expires_at?: string | null
           public_slug: string
           store_lat?: number | null
           store_lng?: number | null
@@ -2235,11 +2273,13 @@ export type Database = {
         }
         Update: {
           ativo?: boolean
+          billing_amount?: number
           billing_contact_email?: string | null
           billing_country_code?: string | null
           billing_country_source?: string | null
           billing_currency?: string | null
           billing_customer_name?: string | null
+          billing_cycle?: string
           billing_detection_checked_at?: string | null
           billing_gateway?: string | null
           created_at?: string
@@ -2255,6 +2295,8 @@ export type Database = {
           pix_key?: string | null
           plano?: string
           primary_color?: string | null
+          promo_active?: boolean
+          promo_expires_at?: string | null
           public_slug?: string
           store_lat?: number | null
           store_lng?: number | null
