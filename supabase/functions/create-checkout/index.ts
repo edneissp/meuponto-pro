@@ -19,6 +19,12 @@ const addMonths = (date: Date, months: number) => {
   return result;
 };
 
+type CouponReservation = {
+  allowed: boolean;
+  usage_count: number;
+  max_uses: number;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -114,7 +120,7 @@ Deno.serve(async (req) => {
 
       const { data: reservation, error: reserveError } = await serviceClient
         .rpc("reserve_coupon_usage", { _code: PROMO_COUPON })
-        .single();
+        .single<CouponReservation>();
 
       if (reserveError || !reservation?.allowed) {
         return new Response(JSON.stringify({ error: "Cupom esgotado" }), {
