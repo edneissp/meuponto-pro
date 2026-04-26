@@ -6,6 +6,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const NORMAL_PRICE = 119.90;
+const PROMO_PRICE = 69.90;
+
+const addMonths = (date: Date, months: number) => {
+  const result = new Date(date);
+  result.setMonth(result.getMonth() + months);
+  return result;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -77,9 +86,13 @@ Deno.serve(async (req) => {
     // Update or insert payment record
     const { data: existingPayment } = await supabase
       .from("payments")
-      .select("id")
+      .select("id, amount, plan_type, coupon_used, promo_expires_at")
       .eq("mercado_pago_preference_id", payment.preference_id)
       .maybeSingle();
+
+    const planType = existingPayment?.plan_type === "promo" ? "promo" : "normal";
+    const appliedAmount = Number(existingPayment?.amount || payment.transaction_amount || (planType === "promo" ? PROMO_PRICE : NORMAL_PRICE));
+    const promoExpiresAt = existingPayment?.promo_expires_at || (planType === "promo" ? addMonths(new Date(), 12).toISOString() : null);
 
     if (existingPayment) {
       await supabase
@@ -94,7 +107,10 @@ Deno.serve(async (req) => {
     } else {
       await supabase.from("payments").insert({
         tenant_id: tenantId,
-        amount: payment.transaction_amount || 39.90,
+        amount: appliedAmount,
+        plan_type: planType,
+        coupon_used: existingPayment?.coupon_used || null,
+        promo_expires_at: promoExpiresAt,
         status: mappedStatus,
         mercado_pago_payment_id: String(paymentId),
         mercado_pago_preference_id: payment.preference_id,
@@ -107,16 +123,27 @@ Deno.serve(async (req) => {
     if (mappedStatus === "approved") {
       await supabase
         .from("tenants")
-        .update({ subscription_status: "active" })
+        .update({
+          plano: "active",
+          subscription_status: "active",
+          billing_amount: appliedAmount,
+          billing_cycle: "monthly",
+          promo_active: planType === "promo",
+          promo_expires_at: planType === "promo" ? promoExpiresAt : null,
+        })
         .eq("id", tenantId);
 
-      // Update period_end to 30 days from now
+      const periodEnd = planType === "promo"
+        ? addMonths(new Date(), 12).toISOString().split("T")[0]
+        : addMonths(new Date(), 1).toISOString().split("T")[0];
+
       if (existingPayment) {
         await supabase
           .from("payments")
           .update({
             period_start: new Date().toISOString().split("T")[0],
-            period_end: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
+            period_end: periodEnd,
+            promo_expires_at: promoExpiresAt,
           })
           .eq("id", existingPayment.id);
       }
