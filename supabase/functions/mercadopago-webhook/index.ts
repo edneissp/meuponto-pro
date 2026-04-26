@@ -119,7 +119,7 @@ Deno.serve(async (req) => {
         tenant_id: tenantId,
         amount: appliedAmount,
         plan_type: planType,
-        coupon_used: existingPayment?.coupon_used || null,
+        coupon_used: null,
         promo_expires_at: promoExpiresAt,
         status: mappedStatus,
         mercado_pago_payment_id: String(paymentId),
