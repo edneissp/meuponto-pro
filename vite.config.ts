@@ -11,6 +11,18 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    proxy: {
+      "/api/test-mercadopago": {
+        target: "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/test-mercadopago",
+        changeOrigin: true,
+        rewrite: () => "",
+      },
+      "/api/test-mercadopago-webhook": {
+        target: "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/test-mercadopago-webhook",
+        changeOrigin: true,
+        rewrite: () => "",
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

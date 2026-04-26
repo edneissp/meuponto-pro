@@ -1,6 +1,14 @@
 {
   "rewrites": [
     {
+      "source": "/api/test-mercadopago",
+      "destination": "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/test-mercadopago"
+    },
+    {
+      "source": "/api/test-mercadopago-webhook",
+      "destination": "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/test-mercadopago-webhook"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
