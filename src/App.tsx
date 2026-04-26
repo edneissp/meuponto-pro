@@ -30,6 +30,7 @@ import SupplierDeliveries from "./pages/SupplierDeliveries";
 import Optionals from "./pages/Optionals";
 import Kitchen from "./pages/Kitchen";
 import FiscalPage from "./pages/Fiscal";
+import TestCheckout from "./pages/TestCheckout";
 import NotFound from "./pages/NotFound";
 
 
@@ -51,6 +52,7 @@ const App = () => (
           <Route path="/admin" element={<AdminPanel />} />
           <Route path="/admin/promotions" element={<AdminPromotions />} />
           <Route path="/subscription" element={<Subscription />} />
+          <Route path="/test-checkout" element={<TestCheckout />} />
           <Route path="/menu/:tenantId" element={<DigitalMenu />} />
           <Route path="/app" element={<AppLayout />}>
             <Route index element={<Dashboard />} />
