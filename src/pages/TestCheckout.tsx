@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
 import { AlertTriangle, CheckCircle, CreditCard, Loader2 } from "lucide-react";
 
 type CheckoutResponse = {
@@ -30,11 +29,14 @@ const TestCheckout = () => {
     setRequestStatus("Criando preferência no Mercado Pago...");
 
     try {
-      const { data, error: invokeError } = await supabase.functions.invoke<CheckoutResponse>("test-mercadopago", {
+      const apiResponse = await fetch("/api/test-mercadopago", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: { origin: window.location.origin },
       });
+      const data = (await apiResponse.json().catch(() => null)) as CheckoutResponse | null;
 
-      if (invokeError) throw invokeError;
+      if (!apiResponse.ok) throw new Error(data?.error || `Erro HTTP ${apiResponse.status}`);
       if (!data?.init_point) throw new Error(data?.error || "init_point não retornado");
 
       setResponse(data);
