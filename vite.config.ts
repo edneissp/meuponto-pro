@@ -12,6 +12,11 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
     proxy: {
+      "/api/checkout": {
+        target: "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/create-checkout",
+        changeOrigin: true,
+        rewrite: () => "",
+      },
       "/api/test-mercadopago": {
         target: "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/test-mercadopago",
         changeOrigin: true,
