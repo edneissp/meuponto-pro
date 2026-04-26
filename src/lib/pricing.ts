@@ -2,6 +2,9 @@
 // Base price in USD for international customers
 const BASE_PRICE_USD = 19.90;
 const BRAZIL_PRICE_BRL = 119.90;
+export const BRAZIL_PROMO_PRICE_BRL = 69.90;
+export const PROMO_COUPON_CODE = "Primeiros100";
+export const PROMO_DURATION_MONTHS = 12;
 
 // Fixed exchange rates (mock — ready for future API integration)
 const exchangeRates: Record<string, Record<string, number>> = {

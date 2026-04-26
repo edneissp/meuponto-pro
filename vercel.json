@@ -1,6 +1,10 @@
 {
   "rewrites": [
     {
+      "source": "/api/checkout",
+      "destination": "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/create-checkout"
+    },
+    {
       "source": "/api/test-mercadopago",
       "destination": "https://zhfzltrxhgdnwzfxnzxl.supabase.co/functions/v1/test-mercadopago"
     },
