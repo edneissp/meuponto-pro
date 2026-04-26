@@ -4,6 +4,9 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+const TEST_PROMO_PRICE = 69.90;
+const TEST_COUPON = "Primeiros100";
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -30,7 +33,7 @@ Deno.serve(async (req) => {
         {
           title: "Plano SouEFI",
           quantity: 1,
-          unit_price: 39.9,
+          unit_price: TEST_PROMO_PRICE,
           currency_id: "BRL",
         },
       ],
@@ -42,6 +45,10 @@ Deno.serve(async (req) => {
       auto_return: "approved",
       external_reference: `test-checkout-${Date.now()}`,
       notification_url: `${Deno.env.get("SUPABASE_URL")}/functions/v1/test-mercadopago-webhook`,
+      metadata: {
+        plan_type: "promo",
+        coupon_used: TEST_COUPON,
+      },
     };
 
     const mpResponse = await fetch("https://api.mercadopago.com/checkout/preferences", {
@@ -77,6 +84,9 @@ Deno.serve(async (req) => {
         init_point: mpData.init_point,
         sandbox_init_point: mpData.sandbox_init_point,
         preference_id: mpData.id,
+        amount: TEST_PROMO_PRICE,
+        plan_type: "promo",
+        coupon_used: TEST_COUPON,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
