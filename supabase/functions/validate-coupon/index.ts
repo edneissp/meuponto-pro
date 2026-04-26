@@ -51,6 +51,37 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
+    if (code === "PRIMEIROS100") {
+      const { data: usage } = await serviceClient
+        .from("coupon_usage_counts")
+        .select("usage_count, max_uses")
+        .eq("code", "PRIMEIROS100")
+        .maybeSingle();
+
+      if (usage && usage.usage_count >= usage.max_uses) {
+        return new Response(JSON.stringify({ valid: false, error: "Cupom esgotado" }), {
+          status: 200,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      return new Response(JSON.stringify({
+        valid: true,
+        coupon_id: "primeiros100",
+        campaign_id: null,
+        code: "Primeiros100",
+        type: "special_offer",
+        value: 69.90,
+        discount_price: 69.90,
+        normal_price: 119.90,
+        duration_days: 365,
+        currency: "BRL",
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Look up the coupon
     const { data: coupon, error: couponError } = await serviceClient
       .from("discount_coupons")
