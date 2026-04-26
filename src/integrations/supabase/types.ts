@@ -2405,6 +2405,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      reserve_coupon_usage: {
+        Args: { _code: string }
+        Returns: {
+          allowed: boolean
+          max_uses: number
+          usage_count: number
+        }[]
+      }
     }
     Enums: {
       app_role: "owner" | "manager" | "cashier" | "admin"
