@@ -99,6 +99,10 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
         return;
       }
 
+      if (!tenantId) {
+        throw new Error("Tenant não carregado");
+      }
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: {
