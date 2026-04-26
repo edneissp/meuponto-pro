@@ -7,7 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock, Clock, ShoppingCart, Package, BarChart3, Printer, LayoutDashboard, Bell, TrendingDown, Tag, X } from "lucide-react";
 import { usePricing } from "@/hooks/use-pricing";
-import { BRAZIL_PROMO_PRICE_BRL, PROMO_COUPON_CODE, PROMO_DURATION_MONTHS, formatPrice } from "@/lib/pricing";
+import { useTenant } from "@/contexts/TenantContext";
+import { PROMO_DURATION_MONTHS, formatPrice } from "@/lib/pricing";
 
 type SubscriptionPageProps = {
   blocked?: boolean;
@@ -28,6 +29,7 @@ const benefits = [
 
 const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", trialExpired = false, billingCountryCode }: SubscriptionPageProps) => {
   const navigate = useNavigate();
+  const { tenantId } = useTenant();
   const [loading, setLoading] = useState(false);
   const pricing = usePricing(billingCountryCode);
   const [couponCode, setCouponCode] = useState("");
@@ -97,16 +99,22 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: {
+      const response = await fetch("/api/checkout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
           origin: window.location.origin,
           user_id: session.user.id,
-          tenant_id: undefined,
-          coupon: appliedCoupon?.code || undefined,
-        },
+          tenant_id: tenantId,
+          coupon: appliedCoupon?.code,
+        }),
       });
 
-      if (error) throw error;
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.error || "Erro ao iniciar checkout");
 
       if (data?.checkout_url) {
         window.location.href = data.checkout_url;
