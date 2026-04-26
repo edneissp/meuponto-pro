@@ -15,6 +15,14 @@ const addMonths = (date: Date, months: number) => {
   return result;
 };
 
+type PaymentRecord = {
+  id: string;
+  amount: number;
+  plan_type: string | null;
+  coupon_used: string | null;
+  promo_expires_at: string | null;
+};
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -84,11 +92,13 @@ Deno.serve(async (req) => {
     const mappedStatus = statusMap[payment.status] || "pending";
 
     // Update or insert payment record
-    const { data: existingPayment } = await supabase
+    const { data: paymentRecord } = await supabase
       .from("payments")
       .select("id, amount, plan_type, coupon_used, promo_expires_at")
       .eq("mercado_pago_preference_id", payment.preference_id)
       .maybeSingle();
+
+    const existingPayment = paymentRecord as PaymentRecord | null;
 
     const planType = existingPayment?.plan_type === "promo" ? "promo" : "normal";
     const appliedAmount = Number(existingPayment?.amount || payment.transaction_amount || (planType === "promo" ? PROMO_PRICE : NORMAL_PRICE));
