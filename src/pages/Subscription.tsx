@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { CreditCard, AlertTriangle, CheckCircle, Loader2, Lock, Clock, ShoppingCart, Package, BarChart3, Printer, LayoutDashboard, Bell, TrendingDown, Tag, X } from "lucide-react";
 import { usePricing } from "@/hooks/use-pricing";
-import { formatPrice } from "@/lib/pricing";
+import { BRAZIL_PROMO_PRICE_BRL, PROMO_COUPON_CODE, PROMO_DURATION_MONTHS, formatPrice } from "@/lib/pricing";
 
 type SubscriptionPageProps = {
   blocked?: boolean;
@@ -59,6 +59,8 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
   };
 
   const discounted = getDiscountedPrice();
+  const displayedPrice = discounted?.price ?? pricing.price;
+  const displayedCurrency = discounted?.currency ?? pricing.currency;
 
   const validateCoupon = async () => {
     if (!couponCode.trim()) return;
@@ -96,7 +98,12 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
       }
 
       const { data, error } = await supabase.functions.invoke("create-checkout", {
-        body: { origin: window.location.origin },
+        body: {
+          origin: window.location.origin,
+          user_id: session.user.id,
+          tenant_id: undefined,
+          coupon: appliedCoupon?.code || undefined,
+        },
       });
 
       if (error) throw error;
@@ -181,11 +188,9 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
                     <p className="text-xs font-medium text-primary">
                       🎉 Plano promocional ativo
                     </p>
+                    <p className="text-xs text-muted-foreground">Vigência: {PROMO_DURATION_MONTHS} meses</p>
                     <p className="text-xs text-muted-foreground">
-                      Vigência: {Math.round(discounted.duration / 30)} meses
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Reajuste em: {new Date(Date.now() + discounted.duration * 86400000).toLocaleDateString("pt-BR")}
+                      Reajuste em: {new Date(new Date().setMonth(new Date().getMonth() + PROMO_DURATION_MONTHS)).toLocaleDateString("pt-BR")}
                     </p>
                     <p className="text-xs font-semibold">
                       Próximo valor: {pricing.label}{pricing.periodLabel}
@@ -214,7 +219,7 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
               <Input
                 placeholder="Cupom promocional"
                 value={couponCode}
-                onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                onChange={e => setCouponCode(e.target.value)}
                 className="font-mono"
               />
               <Button variant="outline" onClick={validateCoupon} disabled={couponLoading || !couponCode.trim()}>
@@ -243,7 +248,7 @@ const Subscription = ({ blocked = false, tenantName = "Seu Estabelecimento", tri
             ) : (
               <>
                 <CreditCard className="h-4 w-4" />
-                Assinar agora
+                Assinar {formatPrice(displayedPrice, displayedCurrency)}
               </>
             )}
           </Button>
