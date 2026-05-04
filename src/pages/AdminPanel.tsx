@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import AdminNotificationBell from "@/components/admin/AdminNotificationBell";
 import DeleteTenantDialog from "@/components/admin/DeleteTenantDialog";
 import AdminHealthPanel from "@/components/admin/AdminHealthPanel";
+import TenantUsagePanel from "@/components/admin/TenantUsagePanel";
 
 type Tenant = {
   id: string;
