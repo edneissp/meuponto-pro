@@ -2200,6 +2200,39 @@ export type Database = {
           },
         ]
       }
+      tenant_usage: {
+        Row: {
+          actions_count: number
+          created_at: string
+          id: string
+          last_activity_at: string | null
+          last_login_at: string | null
+          login_count: number
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          actions_count?: number
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          last_login_at?: string | null
+          login_count?: number
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          actions_count?: number
+          created_at?: string
+          id?: string
+          last_activity_at?: string | null
+          last_login_at?: string | null
+          login_count?: number
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenants: {
         Row: {
           ativo: boolean
@@ -2413,6 +2446,8 @@ export type Database = {
           usage_count: number
         }[]
       }
+      track_tenant_activity: { Args: never; Returns: undefined }
+      track_tenant_login: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "owner" | "manager" | "cashier" | "admin"
