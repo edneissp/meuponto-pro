@@ -71,6 +71,8 @@ const Login = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        // Track login (best-effort, never blocks)
+        supabase.rpc("track_tenant_login" as any).then(() => {}, () => {});
         navigate("/app");
       }
     } catch (err: any) {
