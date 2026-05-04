@@ -2203,32 +2203,44 @@ export type Database = {
       tenant_usage: {
         Row: {
           actions_count: number
+          activated_at: string | null
           created_at: string
           id: string
+          is_activated: boolean
+          is_trial: boolean
           last_activity_at: string | null
           last_login_at: string | null
           login_count: number
           tenant_id: string
+          trial_started_at: string | null
           updated_at: string
         }
         Insert: {
           actions_count?: number
+          activated_at?: string | null
           created_at?: string
           id?: string
+          is_activated?: boolean
+          is_trial?: boolean
           last_activity_at?: string | null
           last_login_at?: string | null
           login_count?: number
           tenant_id: string
+          trial_started_at?: string | null
           updated_at?: string
         }
         Update: {
           actions_count?: number
+          activated_at?: string | null
           created_at?: string
           id?: string
+          is_activated?: boolean
+          is_trial?: boolean
           last_activity_at?: string | null
           last_login_at?: string | null
           login_count?: number
           tenant_id?: string
+          trial_started_at?: string | null
           updated_at?: string
         }
         Relationships: []
