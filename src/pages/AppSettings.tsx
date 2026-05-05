@@ -9,6 +9,7 @@ import { Save, Upload, Palette, Store, QrCode, Copy, ExternalLink, Truck, Messag
 import { Badge } from "@/components/ui/badge";
 import { QRCodeSVG } from "qrcode.react";
 import { useTenantTheme } from "@/hooks/use-tenant-theme";
+import StoresManager from "@/components/settings/StoresManager";
 
 const PRESET_COLORS = [
   "#F97316", "#EF4444", "#8B5CF6", "#3B82F6",
