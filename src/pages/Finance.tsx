@@ -9,9 +9,11 @@ import CashFlowTab from "@/components/finance/CashFlowTab";
 import FinanceReportsTab from "@/components/finance/FinanceReportsTab";
 import SubscriptionTab from "@/components/finance/SubscriptionTab";
 import InvoicesTab from "@/components/finance/InvoicesTab";
+import { useStore } from "@/contexts/StoreContext";
 import type { InvoiceRecord, SubscriptionRecord } from "@/components/finance/types";
 
 const Finance = () => {
+  const { currentStoreId } = useStore();
   const [expenses, setExpenses] = useState<any[]>([]);
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionRecord | null>(null);
