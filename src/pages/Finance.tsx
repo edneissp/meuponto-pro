@@ -29,8 +29,10 @@ const Finance = () => {
   const loadData = async () => {
     const tenantId = await getTenantId();
 
+    let expQ = supabase.from("expenses").select("*").order("created_at", { ascending: false });
+    if (currentStoreId) expQ = expQ.eq("store_id", currentStoreId);
     const [expRes, supRes, subscriptionRes, invoicesRes] = await Promise.all([
-      supabase.from("expenses").select("*").order("created_at", { ascending: false }),
+      expQ,
       supabase.from("suppliers").select("id, name").order("name"),
       tenantId
         ? supabase.from("subscriptions").select("*").eq("tenant_id", tenantId).order("created_at", { ascending: false }).limit(1).maybeSingle()
@@ -57,7 +59,7 @@ const Finance = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [currentStoreId]);
 
   return (
     <div className="space-y-6 animate-fade-in">
