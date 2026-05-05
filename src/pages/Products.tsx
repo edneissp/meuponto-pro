@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Plus, Search, Edit, Trash2, Upload, ImageIcon, X } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Product {
   id: string;
@@ -30,6 +31,7 @@ interface OptionalGroup {
 }
 
 const Products = () => {
+  const { currentStoreId } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -45,7 +47,9 @@ const Products = () => {
   const [selectedGroupIds, setSelectedGroupIds] = useState<Set<string>>(new Set());
 
   const loadProducts = async () => {
-    const { data } = await supabase.from("products").select("*").order("name");
+    let q = supabase.from("products").select("*").order("name");
+    if (currentStoreId) q = q.eq("store_id", currentStoreId);
+    const { data } = await q;
     if (data) setProducts(data as Product[]);
   };
 
@@ -54,7 +58,7 @@ const Products = () => {
     if (data) setAllGroups(data as OptionalGroup[]);
   };
 
-  useEffect(() => { loadProducts(); loadGroups(); }, []);
+  useEffect(() => { loadProducts(); loadGroups(); }, [currentStoreId]);
 
   const getTenantId = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -130,7 +134,8 @@ const Products = () => {
       expiry_date: form.expiry_date || null,
       image_url: imageUrl,
       tenant_id: tenantId,
-    };
+      store_id: currentStoreId,
+    } as any;
 
     let productId: string;
     if (editingProduct) {
