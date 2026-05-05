@@ -1711,6 +1711,42 @@ export type Database = {
           },
         ]
       }
+      stores: {
+        Row: {
+          address: string | null
+          created_at: string
+          deleted_at: string | null
+          id: string
+          is_active: boolean
+          is_default: boolean
+          name: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          name?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       subscriptions: {
         Row: {
           billing_cycle: string
@@ -2389,6 +2425,41 @@ export type Database = {
           },
         ]
       }
+      user_stores: {
+        Row: {
+          created_at: string
+          id: string
+          role: string
+          store_id: string
+          tenant_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: string
+          store_id: string
+          tenant_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: string
+          store_id?: string
+          tenant_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_stores_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       public_tenants: {
@@ -2460,6 +2531,10 @@ export type Database = {
       }
       track_tenant_activity: { Args: never; Returns: undefined }
       track_tenant_login: { Args: never; Returns: undefined }
+      user_has_store_access: {
+        Args: { _store_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       app_role: "owner" | "manager" | "cashier" | "admin"
