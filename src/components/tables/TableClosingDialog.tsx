@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useStore } from "@/contexts/StoreContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -87,6 +88,7 @@ const paymentOptions: { value: PaymentMethod; label: string; icon: React.ReactNo
 
 const TableClosingDialog = ({ open, onOpenChange, table, activeOrder, allOrders, onComplete }: Props) => {
   const { tenantId, userId } = useTenant();
+  const { currentStoreId } = useStore();
   const [serviceFee, setServiceFee] = useState("");
   const [discount, setDiscount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("dinheiro");
@@ -187,6 +189,7 @@ const TableClosingDialog = ({ open, onOpenChange, table, activeOrder, allOrders,
       if (userId && paymentMethod !== "fiado") {
         await supabase.from("sales").insert({
           tenant_id: tenantId,
+          store_id: currentStoreId,
           user_id: userId,
           payment_method: paymentMethod === "multiplo" ? "multiplo" : paymentMethod,
           subtotal,
@@ -194,7 +197,7 @@ const TableClosingDialog = ({ open, onOpenChange, table, activeOrder, allOrders,
           tax_amount: serviceFeeValue,
           total: paidAmount,
           status: "completed",
-        });
+        } as any);
       }
 
       // 3. If fiado, create fiado record (requires customer - skip for now, just mark)
