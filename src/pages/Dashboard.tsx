@@ -60,7 +60,7 @@ const Dashboard = () => {
     const todayStart = startOfDay(now).toISOString();
     const todayEnd = endOfDay(now).toISOString();
 
-    const withStore = <T,>(q: any): T => (currentStoreId ? q.eq("store_id", currentStoreId) : q);
+    const withStore = (q: any): any => (currentStoreId ? q.eq("store_id", currentStoreId) : q);
 
     const [
       salesRes, saleItemsRes, productsRes, expensesRes, tablesRes,
