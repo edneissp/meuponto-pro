@@ -11,6 +11,7 @@ import FiadoPanel from "@/components/pos/FiadoPanel";
 import CustomerSelectDialog from "@/components/pos/CustomerSelectDialog";
 import ThermalReceipt from "@/components/pos/ThermalReceipt";
 import OptionalSelectDialog from "@/components/pos/OptionalSelectDialog";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Product {
   id: string;
