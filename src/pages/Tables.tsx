@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useStore } from "@/contexts/StoreContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -62,6 +63,7 @@ const statusConfig: Record<string, { label: string; color: string; emoji: string
 
 const Tables = () => {
   const { tenantId } = useTenant();
+  const { currentStoreId } = useStore();
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -77,26 +79,26 @@ const Tables = () => {
   const loadTables = useCallback(async () => {
     if (!tenantId) return;
     setLoading(true);
-    const { data, error } = await supabase
-      .from("tables")
-      .select("*")
-      .eq("tenant_id", tenantId)
-      .order("table_number");
+    let q = supabase.from("tables").select("*").eq("tenant_id", tenantId).order("table_number");
+    if (currentStoreId) q = q.eq("store_id", currentStoreId);
+    const { data, error } = await q;
 
     if (data) setTables(data as Table[]);
     if (error) toast.error("Erro ao carregar mesas");
     setLoading(false);
-  }, [tenantId]);
+  }, [tenantId, currentStoreId]);
 
   const loadActiveOrders = useCallback(async () => {
     if (!tenantId) return;
-    const { data } = await supabase
+    let q = supabase
       .from("orders")
       .select("*, order_items(*)")
       .eq("tenant_id", tenantId)
       .not("table_id", "is", null)
       .in("status", ["received", "preparing", "ready"])
       .order("created_at", { ascending: false });
+    if (currentStoreId) q = q.eq("store_id", currentStoreId);
+    const { data } = await q;
 
     if (data) {
       const map: Record<string, ActiveOrder> = {};
@@ -107,7 +109,7 @@ const Tables = () => {
       });
       setActiveOrders(map);
     }
-  }, [tenantId]);
+  }, [tenantId, currentStoreId]);
 
   useEffect(() => {
     loadTables();
@@ -152,10 +154,11 @@ const Tables = () => {
 
     const payload = {
       tenant_id: tenantId,
+      store_id: currentStoreId,
       table_number: parseInt(formNumber),
       table_name: formName || null,
       capacity: parseInt(formCapacity) || 4,
-    };
+    } as any;
 
     if (editingTable) {
       const { error } = await supabase
