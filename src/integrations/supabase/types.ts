@@ -505,6 +505,7 @@ export type Database = {
           paid_amount: number
           paid_at: string | null
           payment_status: string
+          store_id: string | null
           supplier_id: string | null
           tenant_id: string
         }
@@ -519,6 +520,7 @@ export type Database = {
           paid_amount?: number
           paid_at?: string | null
           payment_status?: string
+          store_id?: string | null
           supplier_id?: string | null
           tenant_id: string
         }
@@ -533,10 +535,18 @@ export type Database = {
           paid_amount?: number
           paid_at?: string | null
           payment_status?: string
+          store_id?: string | null
           supplier_id?: string | null
           tenant_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "expenses_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "expenses_supplier_id_fkey"
             columns: ["supplier_id"]
@@ -1109,6 +1119,7 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          store_id: string | null
           tenant_id: string
           total: number
           unit_price: number
@@ -1121,6 +1132,7 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity?: number
+          store_id?: string | null
           tenant_id: string
           total: number
           unit_price: number
@@ -1133,6 +1145,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          store_id?: string | null
           tenant_id?: string
           total?: number
           unit_price?: number
@@ -1150,6 +1163,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
           {
@@ -1180,6 +1200,7 @@ export type Database = {
           public_token: string
           source: string
           status: string
+          store_id: string | null
           subtotal: number
           table_id: string | null
           table_number: string | null
@@ -1198,6 +1219,7 @@ export type Database = {
           public_token?: string
           source?: string
           status?: string
+          store_id?: string | null
           subtotal?: number
           table_id?: string | null
           table_number?: string | null
@@ -1216,6 +1238,7 @@ export type Database = {
           public_token?: string
           source?: string
           status?: string
+          store_id?: string | null
           subtotal?: number
           table_id?: string | null
           table_number?: string | null
@@ -1224,6 +1247,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_table_id_fkey"
             columns: ["table_id"]
@@ -1381,6 +1411,7 @@ export type Database = {
           purchase_price: number
           sale_price: number
           stock_quantity: number
+          store_id: string | null
           tenant_id: string
           updated_at: string
         }
@@ -1398,6 +1429,7 @@ export type Database = {
           purchase_price?: number
           sale_price?: number
           stock_quantity?: number
+          store_id?: string | null
           tenant_id: string
           updated_at?: string
         }
@@ -1415,6 +1447,7 @@ export type Database = {
           purchase_price?: number
           sale_price?: number
           stock_quantity?: number
+          store_id?: string | null
           tenant_id?: string
           updated_at?: string
         }
@@ -1424,6 +1457,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
           {
@@ -1550,6 +1590,7 @@ export type Database = {
           product_id: string
           quantity: number
           sale_id: string
+          store_id: string | null
           tenant_id: string
           total: number
           unit_price: number
@@ -1560,6 +1601,7 @@ export type Database = {
           product_id: string
           quantity?: number
           sale_id: string
+          store_id?: string | null
           tenant_id: string
           total: number
           unit_price: number
@@ -1570,6 +1612,7 @@ export type Database = {
           product_id?: string
           quantity?: number
           sale_id?: string
+          store_id?: string | null
           tenant_id?: string
           total?: number
           unit_price?: number
@@ -1587,6 +1630,13 @@ export type Database = {
             columns: ["sale_id"]
             isOneToOne: false
             referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
           {
@@ -1612,6 +1662,7 @@ export type Database = {
           id: string
           payment_method: string
           status: string
+          store_id: string | null
           subtotal: number
           tax_amount: number
           tenant_id: string
@@ -1624,6 +1675,7 @@ export type Database = {
           id?: string
           payment_method: string
           status?: string
+          store_id?: string | null
           subtotal?: number
           tax_amount?: number
           tenant_id: string
@@ -1636,6 +1688,7 @@ export type Database = {
           id?: string
           payment_method?: string
           status?: string
+          store_id?: string | null
           subtotal?: number
           tax_amount?: number
           tenant_id?: string
@@ -1643,6 +1696,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_tenant_id_fkey"
             columns: ["tenant_id"]
@@ -2194,6 +2254,7 @@ export type Database = {
           created_at: string
           id: string
           status: string
+          store_id: string | null
           table_name: string | null
           table_number: number
           tenant_id: string
@@ -2204,6 +2265,7 @@ export type Database = {
           created_at?: string
           id?: string
           status?: string
+          store_id?: string | null
           table_name?: string | null
           table_number: number
           tenant_id: string
@@ -2214,12 +2276,20 @@ export type Database = {
           created_at?: string
           id?: string
           status?: string
+          store_id?: string | null
           table_name?: string | null
           table_number?: number
           tenant_id?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tables_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tables_tenant_id_fkey"
             columns: ["tenant_id"]
