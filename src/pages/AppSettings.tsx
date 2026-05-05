@@ -190,6 +190,7 @@ const AppSettings = () => {
         </CardContent>
       </Card>
 
+      <StoresManager />
 
       <Card>
         <CardHeader>
