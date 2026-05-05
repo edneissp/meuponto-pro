@@ -11,6 +11,7 @@ import { useSessionHeartbeat } from "@/hooks/use-session-heartbeat";
 import Subscription from "@/pages/Subscription";
 import TrialBanner from "@/components/TrialBanner";
 import DemoBanner from "@/components/DemoBanner";
+import StoreSelector from "@/components/StoreSelector";
 
 const navItems = [
   { icon: LayoutDashboard, label: "Dashboard", path: "/app" },
@@ -232,9 +233,10 @@ const AppLayout = () => {
           <Button variant="ghost" size="icon" className="lg:hidden mr-2" onClick={() => setSidebarOpen(true)}>
             <Menu className="h-5 w-5" />
           </Button>
-          <h1 className="text-lg font-semibold">
+          <h1 className="text-lg font-semibold flex-1">
             {navItems.find(n => n.path === location.pathname)?.label || "MeuPonto"}
           </h1>
+          {!isDemoMode && <StoreSelector />}
         </header>
         {(isDemoMode || tenantOrigin === "demo") && !demoSession.isExpired && (
           <DemoBanner remainingMinutes={demoSession.remainingMinutes} />

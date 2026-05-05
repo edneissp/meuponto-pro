@@ -5,6 +5,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { TenantProvider } from "./contexts/TenantContext";
+import { StoreProvider } from "./contexts/StoreContext";
 import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -38,6 +39,7 @@ import NotFound from "./pages/NotFound";
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TenantProvider>
+      <StoreProvider>
       <TooltipProvider>
         <Toaster />
         <Sonner />
@@ -75,6 +77,7 @@ const App = () => (
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
+      </StoreProvider>
     </TenantProvider>
   </QueryClientProvider>
 );
