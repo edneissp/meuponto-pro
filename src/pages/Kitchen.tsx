@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useStore } from "@/contexts/StoreContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -71,6 +72,7 @@ function getUrgencyIcon(minutes: number) {
 
 const Kitchen = () => {
   const { tenantId } = useTenant();
+  const { currentStoreId } = useStore();
   const { toast } = useToast();
   const [orders, setOrders] = useState<KdsOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,12 +94,14 @@ const Kitchen = () => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const { data: ordersData, error } = await supabase
+    let q = supabase
       .from("orders")
       .select("id, order_number, source, status, table_number, customer_name, notes, created_at, updated_at")
       .eq("tenant_id", tenantId)
       .gte("created_at", today.toISOString())
       .order("created_at", { ascending: true });
+    if (currentStoreId) q = q.eq("store_id", currentStoreId);
+    const { data: ordersData, error } = await q;
 
     if (error || !ordersData) {
       setLoading(false);
@@ -137,7 +141,7 @@ const Kitchen = () => {
     knownOrderIds.current = new Set(mapped.map((o) => o.id));
     setOrders(mapped);
     setLoading(false);
-  }, [tenantId, soundEnabled]);
+  }, [tenantId, soundEnabled, currentStoreId]);
 
   useEffect(() => {
     fetchOrders();

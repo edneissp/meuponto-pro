@@ -10,6 +10,7 @@ import BiFinancialSummary from "@/components/dashboard/BiFinancialSummary";
 import BiTablesMesas from "@/components/dashboard/BiTablesMesas";
 import BiFiadoSummary from "@/components/dashboard/BiFiadoSummary";
 import BiExportButtons from "@/components/dashboard/BiExportButtons";
+import { useStore } from "@/contexts/StoreContext";
 
 const paymentLabel = (m: string) => {
   const map: Record<string, string> = { cash: "Dinheiro", pix: "Pix", credit_card: "Crédito", debit_card: "Débito", fiado: "Fiado" };
@@ -17,6 +18,7 @@ const paymentLabel = (m: string) => {
 };
 
 const Dashboard = () => {
+  const { currentStoreId } = useStore();
   const [preset, setPreset] = useState<FilterPreset>("today");
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
   const [loading, setLoading] = useState(true);
@@ -58,26 +60,24 @@ const Dashboard = () => {
     const todayStart = startOfDay(now).toISOString();
     const todayEnd = endOfDay(now).toISOString();
 
+    const withStore = (q: any): any => (currentStoreId ? q.eq("store_id", currentStoreId) : q);
+
     const [
       salesRes, saleItemsRes, productsRes, expensesRes, tablesRes,
       fiadosRes, fiadoPaymentsRes, ordersRes,
       sales30dRes, sales12mRes, expenses6mRes, fiados6mRes, fp6mRes,
     ] = await Promise.all([
-      supabase.from("sales").select("*").eq("status", "completed").gte("created_at", fromISO).lte("created_at", toISO),
-      supabase.from("sale_items").select("product_id, quantity, unit_price, total, sale_id, created_at").gte("created_at", fromISO).lte("created_at", toISO),
-      supabase.from("products").select("id, name, purchase_price, sale_price, stock_quantity, min_stock"),
-      supabase.from("expenses").select("amount, created_at, paid").gte("created_at", fromISO).lte("created_at", toISO),
-      supabase.from("tables").select("id, status"),
+      withStore(supabase.from("sales").select("*").eq("status", "completed").gte("created_at", fromISO).lte("created_at", toISO)),
+      withStore(supabase.from("sale_items").select("product_id, quantity, unit_price, total, sale_id, created_at").gte("created_at", fromISO).lte("created_at", toISO)),
+      withStore(supabase.from("products").select("id, name, purchase_price, sale_price, stock_quantity, min_stock")),
+      withStore(supabase.from("expenses").select("amount, created_at, paid").gte("created_at", fromISO).lte("created_at", toISO)),
+      withStore(supabase.from("tables").select("id, status")),
       supabase.from("fiados").select("id, amount, paid_amount, paid, customer_id, customers(name)").eq("paid", false),
       supabase.from("fiado_payments").select("amount, paid_at").gte("paid_at", fromISO).lte("paid_at", toISO),
-      supabase.from("orders").select("id, created_at, total, source").gte("created_at", todayStart).lte("created_at", todayEnd),
-      // 30 days for daily chart
-      supabase.from("sales").select("created_at, total, payment_method").eq("status", "completed").gte("created_at", startOfDay(subDays(now, 29)).toISOString()).lte("created_at", toISO),
-      // 12 months
-      supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", startOfMonth(m12ago).toISOString()),
-      // expenses 6m
-      supabase.from("expenses").select("amount, created_at").gte("created_at", startOfMonth(m6ago).toISOString()),
-      // fiados 6m
+      withStore(supabase.from("orders").select("id, created_at, total, source").gte("created_at", todayStart).lte("created_at", todayEnd)),
+      withStore(supabase.from("sales").select("created_at, total, payment_method").eq("status", "completed").gte("created_at", startOfDay(subDays(now, 29)).toISOString()).lte("created_at", toISO)),
+      withStore(supabase.from("sales").select("created_at, total").eq("status", "completed").gte("created_at", startOfMonth(m12ago).toISOString())),
+      withStore(supabase.from("expenses").select("amount, created_at").gte("created_at", startOfMonth(m6ago).toISOString())),
       supabase.from("fiados").select("amount, paid_amount, created_at").gte("created_at", startOfMonth(m6ago).toISOString()),
       supabase.from("fiado_payments").select("amount, paid_at").gte("paid_at", startOfMonth(m6ago).toISOString()),
     ]);
@@ -96,7 +96,7 @@ const Dashboard = () => {
     setFiados6m(fiados6mRes.data || []);
     setFiadoPayments6m(fp6mRes.data || []);
     setLoading(false);
-  }, [range]);
+  }, [range, currentStoreId]);
 
   useEffect(() => { loadData(); }, [loadData]);
 

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, ChefHat, CheckCircle, Truck, RefreshCw, Bell, BellOff, Volume2, VolumeX, Printer } from "lucide-react";
 import { toast } from "sonner";
 import OrderReceipt from "@/components/pos/OrderReceipt";
+import { useStore } from "@/contexts/StoreContext";
 
 interface OrderItem {
   id: string;
@@ -48,6 +49,7 @@ const sourceLabels: Record<string, string> = {
 const statusFlow = ["received", "preparing", "ready", "delivered"];
 
 const Orders = () => {
+  const { currentStoreId } = useStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string | null>(null);
@@ -84,11 +86,13 @@ const Orders = () => {
 
   const loadOrders = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from("orders")
       .select("*, order_items(*)")
       .order("created_at", { ascending: false })
       .limit(100);
+    if (currentStoreId) q = q.eq("store_id", currentStoreId);
+    const { data, error } = await q;
 
     if (data) setOrders(data as Order[]);
     if (error) toast.error("Erro ao carregar pedidos");
@@ -124,7 +128,7 @@ const Orders = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [playNotificationSound]);
+  }, [playNotificationSound, currentStoreId]);
 
   const updateStatus = async (orderId: string, currentStatus: string) => {
     const currentIdx = statusFlow.indexOf(currentStatus);

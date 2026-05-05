@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
+import { useStore } from "@/contexts/StoreContext";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -74,6 +75,7 @@ interface Props {
 
 const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTable }: Props) => {
   const { tenantId, userId } = useTenant();
+  const { currentStoreId } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -154,12 +156,13 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
       const items = cart.map(c => ({
         order_id: activeOrder.id,
         tenant_id: tenantId,
+        store_id: currentStoreId,
         product_id: c.product.id,
         product_name: c.product.name,
         quantity: c.quantity,
         unit_price: c.product.sale_price,
         total: c.product.sale_price * c.quantity,
-      }));
+      })) as any[];
 
       const { error: itemsError } = await supabase.from("order_items").insert(items);
       if (itemsError) {
@@ -182,13 +185,14 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
         .from("orders")
         .insert({
           tenant_id: tenantId,
+          store_id: currentStoreId,
           table_id: table.id,
           table_number: String(table.table_number),
           source: "waiter",
           status: "received",
           subtotal: cartTotal,
           total: cartTotal,
-        })
+        } as any)
         .select()
         .single();
 
@@ -201,12 +205,13 @@ const TableOrderPanel = ({ table, activeOrder: initialOrder, onBack, onCloseTabl
       const items = cart.map(c => ({
         order_id: orderData.id,
         tenant_id: tenantId,
+        store_id: currentStoreId,
         product_id: c.product.id,
         product_name: c.product.name,
         quantity: c.quantity,
         unit_price: c.product.sale_price,
         total: c.product.sale_price * c.quantity,
-      }));
+      })) as any[];
 
       const { error: itemsError } = await supabase.from("order_items").insert(items);
       if (itemsError) {

@@ -11,6 +11,7 @@ import FiadoPanel from "@/components/pos/FiadoPanel";
 import CustomerSelectDialog from "@/components/pos/CustomerSelectDialog";
 import ThermalReceipt from "@/components/pos/ThermalReceipt";
 import OptionalSelectDialog from "@/components/pos/OptionalSelectDialog";
+import { useStore } from "@/contexts/StoreContext";
 
 interface Product {
   id: string;
@@ -47,6 +48,7 @@ const paymentMethods = [
 ] as const;
 
 const POS = () => {
+  const { currentStoreId } = useStore();
   const [products, setProducts] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [search, setSearch] = useState("");
@@ -66,10 +68,11 @@ const POS = () => {
 
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase.from("products").select("id, name, sale_price, stock_quantity").eq("is_active", true).order("name");
+      let q = supabase.from("products").select("id, name, sale_price, stock_quantity").eq("is_active", true).order("name");
+      if (currentStoreId) q = q.eq("store_id", currentStoreId);
+      const { data } = await q;
       if (data) setProducts(data as Product[]);
 
-      // Load which products have optional groups linked
       const { data: links } = await supabase.from("product_option_groups").select("product_id");
       if (links) {
         const ids = new Set(links.map(l => (l as any).product_id as string));
@@ -77,7 +80,7 @@ const POS = () => {
       }
     };
     load();
-  }, []);
+  }, [currentStoreId]);
 
   // When fiado is selected, prompt customer selection
   useEffect(() => {
@@ -170,13 +173,14 @@ const POS = () => {
 
     const { data: sale, error: saleError } = await supabase.from("sales").insert({
       tenant_id: profile.tenant_id,
+      store_id: currentStoreId,
       user_id: user.id,
       payment_method: payment,
       subtotal,
       discount,
       tax_amount: taxAmount,
       total,
-    }).select("id").single();
+    } as any).select("id").single();
 
     if (saleError || !sale) { 
       console.error("Erro ao registrar venda:", saleError);
@@ -188,10 +192,11 @@ const POS = () => {
       sale_id: sale.id,
       product_id: c.product.id,
       tenant_id: profile.tenant_id,
+      store_id: currentStoreId,
       quantity: c.quantity,
       unit_price: getItemPrice(c),
       total: getItemPrice(c) * c.quantity,
-    }));
+    })) as any[];
 
     const { data: insertedItems, error: itemsError } = await supabase.from("sale_items").insert(items).select("id");
     if (itemsError) { 
