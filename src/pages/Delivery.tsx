@@ -9,6 +9,7 @@ import {
   Smartphone, Settings2, Link2, AlertCircle, Package
 } from "lucide-react";
 import { toast } from "sonner";
+import { useStore } from "@/contexts/StoreContext";
 
 interface OrderItem {
   id: string;
@@ -51,18 +52,21 @@ const platformConfig = {
 };
 
 const Delivery = () => {
+  const { currentStoreId } = useStore();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("orders");
 
   const loadOrders = async () => {
     setLoading(true);
-    const { data, error } = await supabase
+    let q = supabase
       .from("orders")
       .select("*, order_items(*)")
       .in("source", ["ifood", "99food", "whatsapp", "site", "delivery"])
       .order("created_at", { ascending: false })
       .limit(100);
+    if (currentStoreId) q = q.eq("store_id", currentStoreId);
+    const { data, error } = await q;
 
     if (data) setOrders(data as Order[]);
     if (error) toast.error("Erro ao carregar pedidos");
@@ -78,7 +82,7 @@ const Delivery = () => {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, []);
+  }, [currentStoreId]);
 
   const updateStatus = async (orderId: string, currentStatus: string) => {
     const currentIdx = statusFlow.indexOf(currentStatus);
