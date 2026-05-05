@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Plus, Edit, Trash2, AlertCircle, CheckCircle2, DollarSign, Eye } from "lucide-react";
 import { toast } from "sonner";
+import { useStore } from "@/contexts/StoreContext";
 
 const EXPENSE_CATEGORIES = [
   "Mercadoria", "Aluguel", "Energia", "Água", "Internet",
@@ -64,6 +65,7 @@ const statusBadge = (status: string) => {
 };
 
 const ExpensesTab = ({ expenses, suppliers, onReload, getTenantId }: ExpensesTabProps) => {
+  const { currentStoreId } = useStore();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<Expense | null>(null);
   const [form, setForm] = useState({ description: "", amount: "", category: "", due_date: "", supplier_id: "", notes: "" });
@@ -91,7 +93,8 @@ const ExpensesTab = ({ expenses, suppliers, onReload, getTenantId }: ExpensesTab
       due_date: form.due_date || null,
       supplier_id: form.supplier_id || null,
       tenant_id: tenantId,
-    };
+      store_id: currentStoreId,
+    } as any;
 
     if (editing) {
       const { error } = await supabase.from("expenses").update(payload).eq("id", editing.id);
