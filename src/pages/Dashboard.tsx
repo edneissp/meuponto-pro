@@ -292,7 +292,12 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in print:space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-foreground">Dashboard BI</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Dashboard BI</h2>
+          {scopeLabel && (
+            <p className="text-xs text-muted-foreground mt-0.5">Visão: {scopeLabel}</p>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-4">
           <BiExportButtons onExport={handleExport} />
         </div>
