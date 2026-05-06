@@ -15,7 +15,7 @@ interface StoreContextType {
   stores: Store[];
   currentStoreId: string | null;
   currentStore: Store | null;
-  setCurrentStoreId: (id: string) => void;
+  setCurrentStoreId: (id: string | null) => void;
   loading: boolean;
   refresh: () => Promise<void>;
 }
