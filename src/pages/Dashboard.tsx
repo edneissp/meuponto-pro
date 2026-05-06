@@ -18,7 +18,9 @@ const paymentLabel = (m: string) => {
 };
 
 const Dashboard = () => {
-  const { currentStoreId } = useStore();
+  const { currentStoreId, currentStore, stores } = useStore();
+  const scopeLabel = currentStoreId ? currentStore?.name : (stores.length > 1 ? "Todas as lojas (consolidado)" : null);
+
   const [preset, setPreset] = useState<FilterPreset>("today");
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
   const [loading, setLoading] = useState(true);
