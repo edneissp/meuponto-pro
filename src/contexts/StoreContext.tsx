@@ -15,7 +15,7 @@ interface StoreContextType {
   stores: Store[];
   currentStoreId: string | null;
   currentStore: Store | null;
-  setCurrentStoreId: (id: string) => void;
+  setCurrentStoreId: (id: string | null) => void;
   loading: boolean;
   refresh: () => Promise<void>;
 }
@@ -74,9 +74,10 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => { load(); }, [load]);
 
-  const setCurrentStoreId = (id: string) => {
+  const setCurrentStoreId = (id: string | null) => {
     setCurrentStoreIdState(id);
-    localStorage.setItem(STORAGE_KEY, id);
+    if (id) localStorage.setItem(STORAGE_KEY, id);
+    else localStorage.removeItem(STORAGE_KEY);
   };
 
   const currentStore = stores.find((s) => s.id === currentStoreId) || null;

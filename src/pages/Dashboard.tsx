@@ -18,7 +18,9 @@ const paymentLabel = (m: string) => {
 };
 
 const Dashboard = () => {
-  const { currentStoreId } = useStore();
+  const { currentStoreId, currentStore, stores } = useStore();
+  const scopeLabel = currentStoreId ? currentStore?.name : (stores.length > 1 ? "Todas as lojas (consolidado)" : null);
+
   const [preset, setPreset] = useState<FilterPreset>("today");
   const [dateRange, setDateRange] = useState({ from: new Date(), to: new Date() });
   const [loading, setLoading] = useState(true);
@@ -290,7 +292,12 @@ const Dashboard = () => {
     <div className="space-y-6 animate-fade-in print:space-y-4">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <h2 className="text-lg font-semibold text-foreground">Dashboard BI</h2>
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Dashboard BI</h2>
+          {scopeLabel && (
+            <p className="text-xs text-muted-foreground mt-0.5">Visão: {scopeLabel}</p>
+          )}
+        </div>
         <div className="flex flex-wrap items-center gap-4">
           <BiExportButtons onExport={handleExport} />
         </div>
