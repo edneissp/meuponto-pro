@@ -183,9 +183,19 @@ const Landing = () => {
         </div>
       </section>
 
+      {/* Modules */}
+      <div id="modulos">
+        <ModulesGrid />
+      </div>
+
       {/* Benefits Grid */}
       <div id="beneficios">
         <BenefitsGrid />
+      </div>
+
+      {/* Multi-loja */}
+      <div id="multi-loja">
+        <MultiStoreBlock />
       </div>
 
       {/* Fiscal Block */}
