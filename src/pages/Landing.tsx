@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { startDemoSession } from "@/lib/demo";
 import heroImage from "@/assets/hero-dashboard.jpg";
 import { BenefitsGrid } from "@/components/landing/BenefitsGrid";
+import { ModulesGrid } from "@/components/landing/ModulesGrid";
+import { MultiStoreBlock } from "@/components/landing/MultiStoreBlock";
 import { FiscalBlock } from "@/components/landing/FiscalBlock";
 import { PricingBlock } from "@/components/landing/PricingBlock";
 
@@ -119,10 +121,10 @@ const Landing = () => {
               <span className="text-sm font-medium text-primary">Sistema completo para restaurantes</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-primary-foreground mb-6 animate-fade-in" style={{ animationDelay: "0.1s" }}>
-              PDV, Estoque, Mesas, Cozinha, Financeiro e <span className="text-gradient">NF-e / NFC-e</span> em um só sistema
+              Controle seu restaurante <span className="text-gradient">inteiro</span> em um só sistema
             </h1>
             <p className="text-base md:text-lg text-primary-foreground/70 mb-6 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: "0.15s" }}>
-              Gerencie todo o seu restaurante ou comércio em uma plataforma completa. Emita notas fiscais, controle mesas e cozinha em tempo real.
+              PDV, mesas, cozinha, delivery, financeiro, fiscal e multi-loja em tempo real.
             </p>
 
             {/* Hero feature pills */}
@@ -136,8 +138,11 @@ const Landing = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in" style={{ animationDelay: "0.25s" }}>
-              <Button size="lg" className="text-base px-8 shadow-glow" asChild>
-                <Link to="/register">🚀 Teste grátis agora</Link>
+              <Button size="lg" className="text-base px-8 shadow-glow bg-[#25D366] hover:bg-[#25D366]/90 text-white" asChild>
+                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  Falar com a Nina no WhatsApp
+                </a>
               </Button>
               <Button size="lg" variant="outline" className="text-base px-8 border-2 border-primary-foreground/40 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground" onClick={handleStartDemo} disabled={demoLoading}>
                 <FlaskConical className="mr-2 h-5 w-5" />
