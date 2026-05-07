@@ -1,10 +1,10 @@
 import { FileText, History, Download, ShieldCheck, Check } from "lucide-react";
 
 const fiscalFeatures = [
-  { icon: FileText, title: "Nota Fiscal Integrada", desc: "Emita NF-e e NFC-e direto do PDV com poucos cliques." },
-  { icon: History, title: "Histórico Fiscal Completo", desc: "Consulte, filtre e reimprima todas as notas emitidas." },
-  { icon: Download, title: "Download XML e PDF", desc: "Baixe os arquivos fiscais a qualquer momento, prontos para a contabilidade." },
-  { icon: ShieldCheck, title: "Conformidade SEFAZ", desc: "Integração homologada com transmissão segura e rastreável." },
+  { icon: FileText, title: "NF-e e NFC-e", desc: "Emissão opcional de notas direto do PDV, quando você precisar." },
+  { icon: History, title: "Integração Focus NFe", desc: "Homologada e estável, com transmissão segura à SEFAZ." },
+  { icon: Download, title: "XML e PDF prontos", desc: "Baixe os arquivos fiscais a qualquer momento para a contabilidade." },
+  { icon: ShieldCheck, title: "Ative quando quiser", desc: "Módulo fiscal opcional — ative apenas quando precisar emitir." },
 ];
 
 export const FiscalBlock = () => (
@@ -17,10 +17,10 @@ export const FiscalBlock = () => (
             <span className="text-sm font-medium text-primary">Módulo Fiscal</span>
           </div>
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Emita <span className="text-gradient">NF-e e NFC-e</span> sem complicação
+            Módulo fiscal <span className="text-gradient">opcional</span> — NF-e e NFC-e
           </h2>
           <p className="text-muted-foreground text-lg mb-8">
-            Sistema fiscal integrado ao PDV. Emita, consulte e gerencie todas as suas notas com total segurança e conformidade.
+            Integração homologada com a Focus NFe. Emita NF-e e NFC-e direto do PDV apenas quando precisar — sem custo adicional para começar.
           </p>
           <ul className="space-y-3">
             {[
