@@ -197,6 +197,8 @@ const Landing = () => {
         <BenefitsGrid />
       </div>
 
+      <TestimonialsSection />
+
       {/* Multi-loja */}
       <div id="multi-loja">
         <MultiStoreBlock />
