@@ -17,6 +17,8 @@ import { ModulesGrid } from "@/components/landing/ModulesGrid";
 import { MultiStoreBlock } from "@/components/landing/MultiStoreBlock";
 import { FiscalBlock } from "@/components/landing/FiscalBlock";
 import { PricingBlock } from "@/components/landing/PricingBlock";
+import { SocialProofSection } from "@/components/landing/SocialProofSection";
+import { TestimonialsSection } from "@/components/landing/TestimonialsSection";
 
 const problems = [
   "Não sabe quanto realmente lucrou no dia",
@@ -183,6 +185,8 @@ const Landing = () => {
         </div>
       </section>
 
+      <SocialProofSection />
+
       {/* Modules */}
       <div id="modulos">
         <ModulesGrid />
@@ -192,6 +196,8 @@ const Landing = () => {
       <div id="beneficios">
         <BenefitsGrid />
       </div>
+
+      <TestimonialsSection />
 
       {/* Multi-loja */}
       <div id="multi-loja">
