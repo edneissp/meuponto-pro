@@ -41,8 +41,10 @@ const heroHighlights = [
 const faqs = [
   { q: "Preciso instalar algo?", a: "Não. O sistema funciona direto no navegador, em qualquer dispositivo." },
   { q: "Funciona no celular?", a: "Sim. Celular, tablet ou computador — acesse de onde quiser." },
-  { q: "O sistema emite NF-e e NFC-e?", a: "Sim. Temos módulo fiscal integrado com emissão direta do PDV, histórico e download de XML/PDF." },
-  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem burocracia." },
+  { q: "O que está incluído no teste grátis?", a: "Você tem acesso completo a todas as funcionalidades por 30 dias: PDV, estoque, mesas, cozinha, financeiro e multi-loja. Sem limites de uso e sem pedir cartão de crédito." },
+  { q: "Como funciona a emissão fiscal? É obrigatória?", a: "O módulo fiscal é opcional. Você ativa quando quiser e emite NF-e e NFC-e direto do PDV. Enquanto isso, o sistema funciona perfeitamente com nota não fiscal ou cupom." },
+  { q: "Posso usar em mais de uma loja?", a: "Sim. O plano inclui multi-loja ilimitada. Você gerencia todas as unidades em um só lugar, com visão consolidada ou individual por loja." },
+  { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem burocracia. Basta acessar as configurações da conta e suspender quando desejar." },
   { q: "Serve para qual tipo de comércio?", a: "Restaurantes, lanchonetes, açaiterias, padarias, mercadinhos e qualquer comércio que precise de PDV, estoque e fiscal." },
   { q: "Como funciona o cupom PRIMEIROS100?", a: "Os 100 primeiros clientes pagam apenas R$ 69,90/mês durante 12 meses. Após esse período, o valor passa a ser R$ 119,90/mês." },
 ];
