@@ -42,7 +42,7 @@ const faqs = [
   { q: "Preciso instalar algo?", a: "Não. O sistema funciona direto no navegador, em qualquer dispositivo." },
   { q: "Funciona no celular?", a: "Sim. Celular, tablet ou computador — acesse de onde quiser." },
   { q: "O que está incluído no teste grátis?", a: "Você tem acesso completo a todas as funcionalidades por 30 dias: PDV, estoque, mesas, cozinha, financeiro e multi-loja. Sem limites de uso e sem pedir cartão de crédito." },
-  { q: "Como funciona a emissão fiscal? É obrigatória?", a: "O módulo fiscal é opcional. Você ativa quando quiser e emite NF-e e NFC-e direto do PDV. Enquanto isso, o sistema funciona perfeitamente com nota não fiscal ou cupom." },
+  { q: "Como funciona a emissão fiscal? É obrigatória?", a: "O módulo fiscal é 100% opcional. Você ativa quando quiser e emite NF-e e NFC-e direto do PDV. Enquanto isso, o sistema funciona perfeitamente com nota não fiscal ou cupom. Para ativar: (1) entre no menu Fiscal → Integração API, escolha Focus NFe e cole sua API Key; (2) preencha os dados fiscais da empresa em Fiscal → Configurações (Razão Social, CNPJ, Inscrição Estadual, Regime Tributário e endereço); (3) teste a conexão. Tudo pronto em poucos minutos." },
   { q: "Posso usar em mais de uma loja?", a: "Sim. O plano inclui multi-loja ilimitada. Você gerencia todas as unidades em um só lugar, com visão consolidada ou individual por loja." },
   { q: "Posso cancelar quando quiser?", a: "Sim, sem fidelidade e sem burocracia. Basta acessar as configurações da conta e suspender quando desejar." },
   { q: "Serve para qual tipo de comércio?", a: "Restaurantes, lanchonetes, açaiterias, padarias, mercadinhos e qualquer comércio que precise de PDV, estoque e fiscal." },
