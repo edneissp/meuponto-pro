@@ -185,6 +185,8 @@ const Landing = () => {
         </div>
       </section>
 
+      <SocialProofSection />
+
       {/* Modules */}
       <div id="modulos">
         <ModulesGrid />
